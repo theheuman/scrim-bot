@@ -1,28 +1,26 @@
-import {nhostDb} from "../src/db/nhost.db";
-import {ErrorPayload, NhostClient} from "@nhost/nhost-js";
-import {JSONValue} from "../src/db/db";
-import {GraphQLError} from "graphql/error";
-import {PlayerInsert} from "../src/models/Player";
-import {Scrims} from "../src/db/table.interfaces";
+import { nhostDb } from "../src/db/nhost.db";
+import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
+import { JSONValue } from "../src/db/db";
+import { GraphQLError } from "graphql/error";
+import { PlayerInsert } from "../src/models/Player";
+import { Scrims } from "../src/db/table.interfaces";
 
-let mockRequest: (query: string) => Promise<any> = jest.fn()
+let mockRequest: (query: string) => Promise<any> = jest.fn();
 
 jest.mock("@nhost/nhost-js", () => {
   return {
     NhostClient: jest.fn().mockImplementation(() => {
       return {
         graphql: {
-          request: (query: string) => mockRequest(query)
+          request: (query: string) => mockRequest(query),
         },
       };
     }),
-    ...jest.requireActual
+    ...jest.requireActual,
   };
-})
-describe('DB connection', () => {
-
-  beforeEach(() => {
-  })
+});
+describe("DB connection", () => {
+  beforeEach(() => {});
 
   /*
   it('Should fetch scrims', async ()=> {
@@ -32,7 +30,7 @@ describe('DB connection', () => {
   })
   */
 
-  describe('get()', () => {
+  describe("get()", () => {
     it("Should have no search fields", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -43,13 +41,17 @@ describe('DB connection', () => {
           overstat_link
         }
       }
-    `
-        expect(query).toEqual(expected)
-        return Promise.resolve({ data: { scrims: [] }})
-      }
-      await nhostDb.get('players', undefined, ['id', 'display_name', 'overstat_link'])
-      expect.assertions(1)
-    })
+    `;
+        expect(query).toEqual(expected);
+        return Promise.resolve({ data: { scrims: [] } });
+      };
+      await nhostDb.get("players", undefined, [
+        "id",
+        "display_name",
+        "overstat_link",
+      ]);
+      expect.assertions(1);
+    });
 
     it("Should have one search field", async () => {
       mockRequest = (query) => {
@@ -61,15 +63,17 @@ describe('DB connection', () => {
           overstat_link
         }
       }
-    `
-        expect(query).toEqual(expected)
-        return Promise.resolve({ data: { players: [] }})
-      }
-      await nhostDb.get('players', {id: "f272a11e-5b30-4aea-b596-af2464de59ba"}, ['id', 'display_name', 'overstat_link'])
-      expect.assertions(1)
-    })
-
-
+    `;
+        expect(query).toEqual(expected);
+        return Promise.resolve({ data: { players: [] } });
+      };
+      await nhostDb.get(
+        "players",
+        { id: "f272a11e-5b30-4aea-b596-af2464de59ba" },
+        ["id", "display_name", "overstat_link"],
+      );
+      expect.assertions(1);
+    });
 
     it("Should have multiple search fields", async () => {
       mockRequest = (query) => {
@@ -81,15 +85,42 @@ describe('DB connection', () => {
           overstat_link
         }
       }
-    `
-        expect(query).toEqual(expected)
-        return Promise.resolve({ data: { players: [{id: "f272a11e-5b30-4aea-b596-af2464de59ba", display_name: "TheHeuman", overstat_link: "https://overstat.gg/player/357606.TheHeuman/overview"}] }})
-      }
+    `;
+        expect(query).toEqual(expected);
+        return Promise.resolve({
+          data: {
+            players: [
+              {
+                id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                display_name: "TheHeuman",
+                overstat_link:
+                  "https://overstat.gg/player/357606.TheHeuman/overview",
+              },
+            ],
+          },
+        });
+      };
 
-      const data = await nhostDb.get('players', {id: "f272a11e-5b30-4aea-b596-af2464de59ba", display_name: "TheHeuman"}, ['id', 'display_name', 'overstat_link'])
-      expect(data).toEqual({ players: [{ id: "f272a11e-5b30-4aea-b596-af2464de59ba", display_name: "TheHeuman", overstat_link: "https://overstat.gg/player/357606.TheHeuman/overview"}]})
-      expect.assertions(2)
-    })
+      const data = await nhostDb.get(
+        "players",
+        {
+          id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+          display_name: "TheHeuman",
+        },
+        ["id", "display_name", "overstat_link"],
+      );
+      expect(data).toEqual({
+        players: [
+          {
+            id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+            display_name: "TheHeuman",
+            overstat_link:
+              "https://overstat.gg/player/357606.TheHeuman/overview",
+          },
+        ],
+      });
+      expect.assertions(2);
+    });
 
     it("Should get active scrims", async () => {
       mockRequest = (query) => {
@@ -100,26 +131,29 @@ describe('DB connection', () => {
           id
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
-          "data": {
-            "scrims": [
+          data: {
+            scrims: [
               {
-                "id": "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-                "discord_channel": "something"
-              }
-            ]
-          }
-        })
-      }
+                id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                discord_channel: "something",
+              },
+            ],
+          },
+        });
+      };
 
-      await nhostDb.get('scrims', {"active": true}, ["discord_channel", "id"]) as { scrims: Partial<Scrims>[]}
-      expect.assertions(1)
-    })
-  })
+      (await nhostDb.get("scrims", { active: true }, [
+        "discord_channel",
+        "id",
+      ])) as { scrims: Partial<Scrims>[] };
+      expect.assertions(1);
+    });
+  });
 
-  describe('post()', () => {
+  describe("post()", () => {
     it("Should have correct post query", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -130,24 +164,27 @@ describe('DB connection', () => {
           }
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
           data: {
             insert_players: {
               returning: [
                 {
-                  id: "7605b2bf-1875-4415-a04b-75fe47768565"
-                }
-              ]
-            }
-          }
-        })
-      }
-      const newID = await nhostDb.post('players', {'display_name': "Supreme", 'discord_id': "244307424838811648"})
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565")
-      expect.assertions(2)
-    })
+                  id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                },
+              ],
+            },
+          },
+        });
+      };
+      const newID = await nhostDb.post("players", {
+        display_name: "Supreme",
+        discord_id: "244307424838811648",
+      });
+      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      expect.assertions(2);
+    });
     it("Should have correct post query", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -158,27 +195,32 @@ describe('DB connection', () => {
           }
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
           data: {
             insert_players: {
               returning: [
                 {
-                  id: "7605b2bf-1875-4415-a04b-75fe47768565"
-                }
-              ]
-            }
-          }
-        })
-      }
-      const newID = await nhostDb.post('players', {'display_name': "Supreme", 'discord_id': "244307424838811648", elo: 1, stats: null})
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565")
-      expect.assertions(2)
-    })
-  })
+                  id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                },
+              ],
+            },
+          },
+        });
+      };
+      const newID = await nhostDb.post("players", {
+        display_name: "Supreme",
+        discord_id: "244307424838811648",
+        elo: 1,
+        stats: null,
+      });
+      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      expect.assertions(2);
+    });
+  });
 
-  describe('update()', () => {
+  describe("update()", () => {
     it("Should have correct update query", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -198,38 +240,53 @@ describe('DB connection', () => {
            }
          }
        }
-`
-        expect(query.replace(/\s+/g, ` `)).toEqual(expected.replace(/\s+/g, ` `))
+`;
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
         return Promise.resolve({
-          "data": {
-            "update_scrim_signups": {
-              "returning": [
+          data: {
+            update_scrim_signups: {
+              returning: [
                 {
-                  "team_name": "Dude Cube",
-                  "player_one_id": "f272a11e-5b30-4aea-b596-af2464de59ba",
-                  "player_two_id": "c450684a-d423-4e52-b6ea-0778bf021910",
-                  "player_three_id": "7605b2bf-1875-4415-a04b-75fe47768565",
-                  "scrim_id": "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9"
-                }
-              ]
-            }
-          }
-        })
-      }
-      const newData = await nhostDb.update('scrim_signups', {scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", team_name: "Fineapples"}, {team_name: "Dude Cube"}, ["team_name", "player_one_id", "player_two_id", "player_three_id", "scrim_id",])
-      expect(newData).toEqual(
+                  team_name: "Dude Cube",
+                  player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                  player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+                  player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                  scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                },
+              ],
+            },
+          },
+        });
+      };
+      const newData = await nhostDb.update(
+        "scrim_signups",
         {
-          "team_name": "Dude Cube",
-          "player_one_id": "f272a11e-5b30-4aea-b596-af2464de59ba",
-          "player_two_id": "c450684a-d423-4e52-b6ea-0778bf021910",
-          "player_three_id": "7605b2bf-1875-4415-a04b-75fe47768565",
-          "scrim_id": "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9"
-        })
-      expect.assertions(2)
-    })
-  })
+          scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+          team_name: "Fineapples",
+        },
+        { team_name: "Dude Cube" },
+        [
+          "team_name",
+          "player_one_id",
+          "player_two_id",
+          "player_three_id",
+          "scrim_id",
+        ],
+      );
+      expect(newData).toEqual({
+        team_name: "Dude Cube",
+        player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+        player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+      });
+      expect.assertions(2);
+    });
+  });
 
-  describe('delete()', () => {
+  describe("delete()", () => {
     it("Should have correct delete by unique fields query", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -240,28 +297,28 @@ describe('DB connection', () => {
           }
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
-          "data": {
-            "delete_scrim_signups": {
-              "returning": [
+          data: {
+            delete_scrim_signups: {
+              returning: [
                 {
-                  "id": "6237fd9b-9f72-4748-96fb-620b8e087c1f"
-                }
-              ]
-            }
-          }
-        })
-      }
+                  id: "6237fd9b-9f72-4748-96fb-620b8e087c1f",
+                },
+              ],
+            },
+          },
+        });
+      };
 
       const deletedID = await nhostDb.delete("scrim_signups", {
         scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
         team_name: "Fineapples",
       });
-      expect(deletedID).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f")
-      expect.assertions(2)
-    })
+      expect(deletedID).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
+      expect.assertions(2);
+    });
 
     it("Should have correct delete by id query", async () => {
       mockRequest = (query) => {
@@ -273,36 +330,50 @@ describe('DB connection', () => {
           }
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
-          "data": {
-            "delete_players": {
-              "returning": [
+          data: {
+            delete_players: {
+              returning: [
                 {
-                  "id": "02ac47c9-bde8-4f74-abf6-59b2c534d965",
-                }
-              ]
-            }
-          }
-        })
-      }
-      const deletedID = await nhostDb.deleteById('players', "02ac47c9-bde8-4f74-abf6-59b2c534d965")
-      expect(deletedID).toEqual("02ac47c9-bde8-4f74-abf6-59b2c534d965")
-      expect.assertions(2)
-    })
-  })
+                  id: "02ac47c9-bde8-4f74-abf6-59b2c534d965",
+                },
+              ],
+            },
+          },
+        });
+      };
+      const deletedID = await nhostDb.deleteById(
+        "players",
+        "02ac47c9-bde8-4f74-abf6-59b2c534d965",
+      );
+      expect(deletedID).toEqual("02ac47c9-bde8-4f74-abf6-59b2c534d965");
+      expect.assertions(2);
+    });
+  });
 
+  const createPlayer = (
+    discordId: string,
+    displayName: string,
+    overstatLink?: string,
+    elo?: number,
+  ): PlayerInsert => {
+    return { discordId, displayName, overstatLink, elo };
+  };
+  const zboy = createPlayer(
+    "316280734115430403",
+    "zboy",
+    "https://overstat.gg/player/749174.Zboy5z5/overview",
+  );
+  const supreme = createPlayer("244307424838811648", "Supreme", undefined, 1);
+  const theheuman = createPlayer(
+    "315310843317321732",
+    "TheHeuman",
+    "https://overstat.gg/player/357606.TheHeuman/overview",
+  );
 
-
-  const createPlayer = (discordId: string, displayName: string, overstatLink?: string, elo?: number): PlayerInsert => {
-    return { discordId, displayName, overstatLink, elo}
-  }
-  const zboy = createPlayer('316280734115430403', 'zboy', 'https://overstat.gg/player/749174.Zboy5z5/overview')
-  const supreme = createPlayer('244307424838811648', 'Supreme', undefined, 1)
-  const theheuman = createPlayer('315310843317321732', 'TheHeuman', 'https://overstat.gg/player/357606.TheHeuman/overview')
-
-  describe('insert player()', () => {
+  describe("insert player()", () => {
     it("Should have correct mutation query with no overstat link", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -319,20 +390,23 @@ describe('DB connection', () => {
           id  # Return the ID of the player, whether newly inserted or found
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
           data: {
             insert_players_one: {
-              id: "7605b2bf-1875-4415-a04b-75fe47768565"
-            }
-          }
-        })
-      }
-      const newID = await nhostDb.insertPlayerIfNotExists('316280734115430403', "zboy")
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565")
-      expect.assertions(2)
-    })
+              id: "7605b2bf-1875-4415-a04b-75fe47768565",
+            },
+          },
+        });
+      };
+      const newID = await nhostDb.insertPlayerIfNotExists(
+        "316280734115430403",
+        "zboy",
+      );
+      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      expect.assertions(2);
+    });
 
     it("Should have correct mutation query with overstat link", async () => {
       mockRequest = (query) => {
@@ -351,23 +425,27 @@ describe('DB connection', () => {
           id  # Return the ID of the player, whether newly inserted or found
         }
       }
-    `
-        expect(query).toEqual(expected)
+    `;
+        expect(query).toEqual(expected);
         return Promise.resolve({
           data: {
             insert_players_one: {
-              id: "7605b2bf-1875-4415-a04b-75fe47768565"
-            }
-          }
-        })
-      }
-      const newID = await nhostDb.insertPlayerIfNotExists('316280734115430403', "zboy", "https://overstat.gg/player/749174.Zboy5z5/overview")
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565")
-      expect.assertions(2)
-    })
-  })
+              id: "7605b2bf-1875-4415-a04b-75fe47768565",
+            },
+          },
+        });
+      };
+      const newID = await nhostDb.insertPlayerIfNotExists(
+        "316280734115430403",
+        "zboy",
+        "https://overstat.gg/player/749174.Zboy5z5/overview",
+      );
+      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      expect.assertions(2);
+    });
+  });
 
-  describe('insert multiple players', () => {
+  describe("insert multiple players", () => {
     it("Should have correct mutation query", async () => {
       mockRequest = (query) => {
         const expected = `
@@ -419,44 +497,49 @@ describe('DB connection', () => {
               affected_rows
             }
           }
-        `
-        expect(query.replace(/\s+/g, ` `)).toEqual(expected.replace(/\s+/g, ` `))
+        `;
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
         return Promise.resolve({
-          "data": {
-            "insert_players": {
-              "returning": [
+          data: {
+            insert_players: {
+              returning: [
                 {
-                  "id": "11583f2c-184f-4ab5-9f6f-ff33f2741117"
+                  id: "11583f2c-184f-4ab5-9f6f-ff33f2741117",
                 },
                 {
-                  "id": "7605b2bf-1875-4415-a04b-75fe47768565"
+                  id: "7605b2bf-1875-4415-a04b-75fe47768565",
                 },
                 {
-                  "id": "f272a11e-5b30-4aea-b596-af2464de59ba"
-                }
-              ]
+                  id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                },
+              ],
             },
-            "update_player_1": {
-              "affected_rows": 1
+            update_player_1: {
+              affected_rows: 1,
             },
-            "update_player_2": {
-              "affected_rows": 1
+            update_player_2: {
+              affected_rows: 1,
             },
-            "update_player_3": {
-              "affected_rows": 1
-            }
-          }
-        })
-      }
-      const newID = await nhostDb.insertPlayers([zboy, supreme, theheuman])
-      expect(newID).toEqual(["11583f2c-184f-4ab5-9f6f-ff33f2741117", "7605b2bf-1875-4415-a04b-75fe47768565", "f272a11e-5b30-4aea-b596-af2464de59ba"])
-      expect.assertions(2)
-    })
-  })
+            update_player_3: {
+              affected_rows: 1,
+            },
+          },
+        });
+      };
+      const newID = await nhostDb.insertPlayers([zboy, supreme, theheuman]);
+      expect(newID).toEqual([
+        "11583f2c-184f-4ab5-9f6f-ff33f2741117",
+        "7605b2bf-1875-4415-a04b-75fe47768565",
+        "f272a11e-5b30-4aea-b596-af2464de59ba",
+      ]);
+      expect.assertions(2);
+    });
+  });
 
-  describe('replaceTeammate()', () => {
+  describe("replaceTeammate()", () => {
     it("should replace teammate", async () => {
-
       mockRequest = (query) => {
         const expected = `
       mutation {
@@ -494,41 +577,46 @@ describe('DB connection', () => {
     }
   }
 }
-`
-        expect(query).toEqual(expected)
+`;
+        expect(query).toEqual(expected);
         return Promise.resolve({
-          "data": {
-            "update_scrim_signups_many": [
+          data: {
+            update_scrim_signups_many: [
               {
-                "returning": []
+                returning: [],
               },
               {
-                "returning": [
+                returning: [
                   {
-                    "team_name": "Fineapples",
-                    "player_one_id": "f272a11e-5b30-4aea-b596-af2464de59ba",
-                    "player_two_id": "c450684a-d423-4e52-b6ea-0778bf021910",
-                    "player_three_id": "7605b2bf-1875-4415-a04b-75fe47768565",
-                    "scrim_id": "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9"
-                  }
-                ]
+                    team_name: "Fineapples",
+                    player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                    player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+                    player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                    scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                  },
+                ],
               },
               {
-                "returning": []
-              }
-            ]
-          }
-        })
-      }
-      const signup = await nhostDb.replaceTeammate( "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", "Fineapples", "11583f2c-184f-4ab5-9f6f-ff33f2741117", "c450684a-d423-4e52-b6ea-0778bf021910")
+                returning: [],
+              },
+            ],
+          },
+        });
+      };
+      const signup = await nhostDb.replaceTeammate(
+        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        "Fineapples",
+        "11583f2c-184f-4ab5-9f6f-ff33f2741117",
+        "c450684a-d423-4e52-b6ea-0778bf021910",
+      );
       expect(signup).toEqual({
-        "team_name": "Fineapples",
-        "player_one_id": "f272a11e-5b30-4aea-b596-af2464de59ba",
-        "player_two_id": "c450684a-d423-4e52-b6ea-0778bf021910",
-        "player_three_id": "7605b2bf-1875-4415-a04b-75fe47768565",
-        "scrim_id": "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9"
-      })
-      expect.assertions(2)
-    })
-  })
-})
+        team_name: "Fineapples",
+        player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+        player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+      });
+      expect.assertions(2);
+    });
+  });
+});
