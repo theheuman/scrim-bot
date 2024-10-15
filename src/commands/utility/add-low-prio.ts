@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import lowPrioUsers from "../../models/lowPrioUsers";
 
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
         .setRequired(false),
     ),
 
-  async execute(interaction: any) {
+  async execute(interaction: ChatInputCommandInteraction) {
     const user1 = interaction.options.getUser("user1");
     const user2 = interaction.options.getUser("user2");
     const user3 = interaction.options.getUser("user3");

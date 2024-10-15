@@ -1,5 +1,6 @@
 import { Events } from "discord.js";
 
+// TODO can we delete this file?
 module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction: any) {
@@ -49,7 +50,7 @@ module.exports = {
   },
 };
 
-async function findUserIdByUsername(username: any, interaction: any) {
+async function findUserIdByUsername(username: string, interaction: any) {
   try {
     const guild = interaction.client.guilds.cache.first(); // Get the first guild the bot is in
     if (!guild) return null;

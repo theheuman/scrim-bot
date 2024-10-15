@@ -1,5 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
-import { CommandInteraction } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import lowPrioUsers from "../../models/lowPrioUsers";
 
 module.exports = {
@@ -13,9 +12,13 @@ module.exports = {
         .setRequired(true),
     ),
 
-  async execute(interaction: any) {
+  async execute(interaction: ChatInputCommandInteraction) {
     const user = interaction.options.getUser("user");
-    lowPrioUsers.delete(user.id);
+    if (!user) {
+      interaction.reply("User not found, no command executed");
+      return;
+    }
+    lowPrioUsers.delete(user.id as string);
     await interaction.reply(
       `User ${user.username} has been removed from the low priority list.`,
     );
