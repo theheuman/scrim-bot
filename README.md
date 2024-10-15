@@ -1,4 +1,4 @@
-## Welcome to the VESA scrim bot
+## Welcome to the Void scrim bot
 
 ### Setup
 This bot makes use of the npm package discord.js.
