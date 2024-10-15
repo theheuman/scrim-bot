@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
-const lowPrioUsers_1 = __importDefault(require("../../models/lowPrioUsers"));
 const signups_1 = __importDefault(require("../../models/signups"));
 module.exports = {
     data: new discord_js_1.SlashCommandBuilder()
@@ -41,49 +40,26 @@ module.exports = {
             const player1 = interaction.options.getUser('player1');
             const player2 = interaction.options.getUser('player2');
             const player3 = interaction.options.getUser('player3');
-            if (!signups_1.default.has(channelId)) {
-                signups_1.default.set(channelId, { mainList: [], waitList: [] });
+            if (!teamName) {
+                yield interaction.reply(`Signup NOT registered, no team name provided`);
+                return;
             }
-            const channelSignups = signups_1.default.get(channelId) || { mainList: [], waitList: [] };
-            if (channelSignups) {
-                const waitlistCutoff = 20;
-                const { mainList, waitList } = channelSignups;
-                const newTeam = { teamName, players: [player1, player2, player3] };
-                if (mainList.length < waitlistCutoff) {
-                    mainList.push(newTeam);
+            else if (!player1 || !player2 || !player3) {
+                yield interaction.reply(`Signup NOT registered, a team needs three players`);
+                return;
+            }
+            const scrimId = signups_1.default.scrimChannelMap.get(channelId);
+            if (scrimId) {
+                try {
+                    const signupId = yield signups_1.default.addTeam(scrimId, teamName, [player1, player2, player3]);
+                    interaction.reply(`Team ${teamName} signed up with players: ${player1}, ${player2}, ${player3}, Signup id: ${signupId}`);
                 }
-                else if (mainList.length >= waitlistCutoff) {
-                    waitList.push(newTeam);
+                catch (error) {
+                    interaction.reply(`Team not created: ${error === null || error === void 0 ? void 0 : error.message}`);
                 }
-                // Ensure the main list does not exceed the cutoff
-                while (mainList.length > waitlistCutoff) {
-                    const lowPrioTeamIndex = mainList.findIndex(team => team.players.some(player => lowPrioUsers_1.default.has(player.id)));
-                    if (lowPrioTeamIndex !== -1) {
-                        const lowPrioTeam = mainList.splice(lowPrioTeamIndex, 1)[0];
-                        waitList.push(lowPrioTeam);
-                    }
-                    else {
-                        waitList.unshift(mainList.pop());
-                    }
-                }
-                if (waitList.length > 0) {
-                    const nonLowPrioWaitlist = waitList.filter(team => !team.players.some(player => lowPrioUsers_1.default.has(player.id)));
-                    const lowPrioWaitlist = waitList.filter(team => team.players.some(player => lowPrioUsers_1.default.has(player.id)));
-                    // Update the signups with the adjusted lists
-                    if (nonLowPrioWaitlist && lowPrioWaitlist) {
-                        // Combine the non-low priority and low priority waitlists
-                        const finalWaitlist = nonLowPrioWaitlist.concat(lowPrioWaitlist);
-                        signups_1.default.set(channelId, { mainList, waitList: finalWaitlist });
-                    }
-                    else if (nonLowPrioWaitlist && !lowPrioWaitlist) {
-                        signups_1.default.set(channelId, { mainList, waitList });
-                    }
-                    // Update the signups with the adjusted lists
-                }
-                else {
-                    signups_1.default.set(channelId, { mainList, waitList });
-                }
-                yield interaction.reply(`Team ${teamName} signed up with players: ${player1}, ${player2}, ${player3}`);
+            }
+            else if (scrimId) {
+                interaction.reply("Associated scrim not found, team not created, this is probably a configuration error, contact admins");
             }
         });
     }

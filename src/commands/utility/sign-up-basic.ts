@@ -43,14 +43,14 @@ module.exports = {
           return
         }
 
-        const scrimId = signups.scrimChannelMap.get(channelId as String);
+        const scrimId = signups.scrimChannelMap.get(channelId as string);
         if (scrimId) {
           try {
             const signupId = await signups.addTeam(scrimId, teamName, [player1, player2, player3])
             interaction.reply(`Team ${teamName} signed up with players: ${player1}, ${player2}, ${player3}, Signup id: ${signupId}`);
           }
           catch (error) {
-            interaction.reply(`Team not created: ${error.message}`)
+            interaction.reply(`Team not created: ${(error as Error)?.message}`)
           }
         }
         else if (scrimId) {

@@ -8,12 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // Importing SlashCommandBuilder is required for every slash command
 // We import PermissionFlagsBits so we can restrict this command usage
 // We also import ChannelType to define what kind of channel we are creating
 const discord_js_1 = require("discord.js");
-const scrimChannelData_1 = require("../../models/scrimChannelData");
+const signups_1 = __importDefault(require("../../models/signups"));
 module.exports = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('createscrimsignup') // Command name matching file name
@@ -52,6 +55,13 @@ module.exports = {
         .setDMPermission(false),
     execute(interaction) {
         return __awaiter(this, void 0, void 0, function* () {
+            /*
+             TODO change variable names for date, time, type
+             can we change so discord only accepts date times?
+      
+             reply that channel was created
+             try to add scrim to db, if unsucessfull, delete channel, reply with error
+             */
             // Before executing any other code, we need to acknowledge the interaction.
             // Discord only gives us 3 seconds to acknowledge an interaction before
             // the interaction gets voided and can't be used anymore.
@@ -67,7 +77,7 @@ module.exports = {
             // Do note that the string passed to the method .getString() needs to
             // match EXACTLY the name of the option provided (line 12 in this file).
             // If it's not a perfect match, this will always return null
-            var channelId;
+            let channelId;
             try {
                 // Check if this channel where the command was used is stray
                 if (!interaction.channel.parent) {
@@ -87,22 +97,10 @@ module.exports = {
                     yield interaction.editReply({
                         content: 'Your channel was successfully created!',
                     });
-                    if (channelId) {
-                        const channel = yield interaction.client.channels.cache.get(channelId);
-                        if (channel && channel.isTextBased()) {
-                            yield channel.send(`Scrims will begin at ${channelTime} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`);
-                        }
-                        else {
-                            console.error('Channel is not text-based or does not exist.');
-                        }
-                    }
-                    else {
-                        console.error("MISSING CHANNEL ID");
-                    }
                     return;
                 }
                 // Check if this channel where the command was used belongs to a category
-                if (interaction.channel.parent) {
+                else if (interaction.channel.parent) {
                     // If the channel where the command belongs to a category,
                     // create another channel in the same category.
                     const createdChannel = yield interaction.channel.parent.children.create({
@@ -114,23 +112,26 @@ module.exports = {
                     // If we managed to create the channel, edit the initial response with
                     // a success message
                     yield interaction.editReply({
-                        content: 'Your channel was successfully created in the same category!',
+                        content: `Channel created <#${channelId}>`,
                     });
-                    if (channelId) {
-                        scrimChannelData_1.scrimSignupChannels.add(channelId);
-                        const channel = yield interaction.client.channels.cache.get(channelId);
-                        if (channel && channel.isTextBased()) {
-                            yield channel.send(`Scrims will begin at ${channelTime} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`);
-                        }
-                        else {
-                            console.error('Channel is not text-based or does not exist.');
-                        }
+                }
+                if (channelId) {
+                    const dateTime = `${channelDate} - ${channelTime}`;
+                    console.log(dateTime);
+                    const scrimDate = new Date(dateTime);
+                    signups_1.default.createScrim(channelId, scrimDate);
+                    const channel = yield interaction.client.channels.cache.get(channelId);
+                    if (channel && channel.isTextBased()) {
+                        yield channel.send(`Scrims will begin at ${channelTime} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`);
                     }
                     else {
-                        console.error("MISSING CHANNEL ID");
+                        console.error('Channel is not text-based or does not exist.');
                     }
-                    return;
                 }
+                else {
+                    console.error("MISSING CHANNEL ID");
+                }
+                return;
             }
             catch (error) {
                 // If an error occurred and we were not able to create the channel
