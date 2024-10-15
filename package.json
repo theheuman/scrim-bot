@@ -7,7 +7,8 @@
     "lint": "eslint src/",
     "lint:staged": "npx lint-staged",
     "test:watch": "jest --watch",
-    "prepare": "husky"
+    "prepare": "husky",
+    "create-config": "sh scripts/create-config.sh"
   },
   "dependencies": {
     "@nhost/nhost-js": "^3.1.10",

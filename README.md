@@ -27,6 +27,10 @@ Where BOT_TOKEN is the bot token taken from the discord application portal bot p
 DISCORD_CLIENT_ID is the application ID from the discord application portal general information page
 DISCORD_GUILD_ID is the server ID of the server the bot is running in
 
+You can create a template config file by running 
+`
+npm run create-config
+`
 
 The bot currently makes use of hot reloads for saving while running the application. Please run with
 ```sh

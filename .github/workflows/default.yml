@@ -20,5 +20,6 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
+      - run: npm run create-config
       - run: npm run build
       - run: npm run test
