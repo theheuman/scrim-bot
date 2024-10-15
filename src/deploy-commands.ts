@@ -12,7 +12,7 @@ interface Config {
 import configJson from "../config.json";
 const config: Config = configJson as Config;
 
-const commands: any[] = [];
+const commands: {}[] = [];
 // Grab all the command folders from the commands directory you created earlier
 const foldersPath = path.join(__dirname, "commands");
 const commandFolders = fs.readdirSync(foldersPath);

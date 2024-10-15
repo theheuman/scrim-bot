@@ -5,6 +5,10 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
+  ChatInputCommandInteraction,
+  CategoryChannel,
+  SlashCommandStringOption,
+  TextChannel,
 } from "discord.js";
 import signups from "../../models/signups";
 
@@ -13,7 +17,7 @@ module.exports = {
     .setName("createscrimsignup") // Command name matching file name
     .setDescription("Creates a new scrim signup text channel")
     // Text channel name
-    .addStringOption((option: any) =>
+    .addStringOption((option: SlashCommandStringOption) =>
       option
         .setName("scrimdate") // option names need to always be lowercase and have no spaces
         .setDescription("Choose date of the scrim")
@@ -22,7 +26,7 @@ module.exports = {
         // so that's a good hard limit to set. You can manually increase this if you wish
         .setRequired(true),
     )
-    .addStringOption((option: any) =>
+    .addStringOption((option: SlashCommandStringOption) =>
       option
         .setName("scrimtime") // option names need to always be lowercase and have no spaces
         .setDescription("Choose the time of the scrim")
@@ -31,7 +35,7 @@ module.exports = {
         // so that's a good hard limit to set. You can manually increase this if you wish
         .setRequired(true),
     )
-    .addStringOption((option: any) =>
+    .addStringOption((option: SlashCommandStringOption) =>
       option
         .setName("scrimtype") // option names need to always be lowercase and have no spaces
         .setDescription("Choose the type of scrim")
@@ -50,7 +54,7 @@ module.exports = {
     // as well. Threads, however, can be created in DMs, but we will see
     // more about them later in this post
     .setDMPermission(false),
-  async execute(interaction: any) {
+  async execute(interaction: ChatInputCommandInteraction) {
     /*
        TODO change variable names for date, time, type
        can we change so discord only accepts date times?
@@ -72,13 +76,18 @@ module.exports = {
     const controllerSpacer = `🎮┋`;
     const chosenChannelName = `${controllerSpacer}${channelDate}-${channelTime}-eastern-${channelType}-scrims`;
 
+    if (!interaction.guild) {
+      interaction.reply("Can't find server, contact admin");
+      return;
+    }
     // Do note that the string passed to the method .getString() needs to
     // match EXACTLY the name of the option provided (line 12 in this file).
     // If it's not a perfect match, this will always return null
-    let channelId: string;
+    let channelId: string | undefined = undefined;
     try {
-      // Check if this channel where the command was used is stray
-      if (!interaction.channel.parent) {
+      const channel = interaction.channel as TextChannel;
+      const category = channel.parent as CategoryChannel;
+      if (!category) {
         // If the channel where the command was used is stray,
         // create another stray channel in the server.
         const createdChannel = await interaction.guild.channels.create({
@@ -92,30 +101,22 @@ module.exports = {
         channelId = createdChannel.id;
         // If we managed to create the channel, edit the initial response with
         // a success message
-        await interaction.editReply({
-          content: "Your channel was successfully created!",
-        });
+        await interaction.editReply("Your channel was successfully created!");
 
         return;
-      }
-      // Check if this channel where the command was used belongs to a category
-      else if (interaction.channel.parent) {
+      } else if (category) {
         // If the channel where the command belongs to a category,
         // create another channel in the same category.
-        const createdChannel = await interaction.channel.parent.children.create(
-          {
-            name: chosenChannelName, // The name given to the channel by the user
-            type: ChannelType.GuildText, // The type of the channel created.
-            // Since "text" is the default channel created, this could be ommitted
-          },
-        );
+        const createdChannel = await category.children.create({
+          name: chosenChannelName, // The name given to the channel by the user
+          type: ChannelType.GuildText, // The type of the channel created.
+          // Since "text" is the default channel created, this could be ommitted
+        });
         channelId = createdChannel.id;
 
         // If we managed to create the channel, edit the initial response with
         // a success message
-        await interaction.editReply({
-          content: `Channel created <#${channelId}>`,
-        });
+        await interaction.editReply(`Channel created <#${channelId}>`);
       }
 
       if (channelId) {
@@ -123,7 +124,10 @@ module.exports = {
         console.log(dateTime);
         const scrimDate = new Date(dateTime);
         signups.createScrim(channelId, scrimDate);
-        const channel = await interaction.client.channels.cache.get(channelId);
+        const channel: TextChannel =
+          (await interaction.client.channels.cache.get(
+            channelId,
+          )) as TextChannel;
         if (channel && channel.isTextBased()) {
           await channel.send(
             `Scrims will begin at ${channelTime} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`,
@@ -142,10 +146,9 @@ module.exports = {
       console.log(error);
       // Also inform the user that an error occurred and give them feedback
       // about how to avoid this error if they want to try again
-      await interaction.editReply({
-        content:
-          "Your channel could not be created! Please check if the bot has the necessary permissions!",
-      });
+      await interaction.editReply(
+        "Your channel could not be created! Please check if the bot has the necessary permissions!",
+      );
     }
   },
 };

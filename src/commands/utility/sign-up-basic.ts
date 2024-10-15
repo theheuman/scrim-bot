@@ -1,5 +1,4 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import lowPrioUsers from "../../models/lowPrioUsers";
 import signups from "../../models/signups";
 
 module.exports = {
@@ -55,7 +54,7 @@ module.exports = {
       } catch (error) {
         interaction.reply(`Team not created: ${(error as Error)?.message}`);
       }
-    } else if (scrimId) {
+    } else {
       interaction.reply(
         "Associated scrim not found, team not created, this is probably a configuration error, contact admins",
       );

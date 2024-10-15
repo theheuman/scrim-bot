@@ -1,13 +1,14 @@
-import { Snowflake, User } from "discord.js";
+import { User } from "discord.js";
 import { Player, PlayerInsert } from "./Player";
 import { DB } from "../db/db";
 import { nhostDb } from "../db/nhost.db";
 import { Scrims, ScrimSignupsWithPlayers } from "../db/table.interfaces";
 
-interface ScrimSignup {
+export interface ScrimSignup {
   teamName: string;
   players: Player[];
   signupId: string;
+  prio?: number;
 }
 
 export class ScrimSignups {

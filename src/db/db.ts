@@ -8,13 +8,7 @@ export type JSONValue =
   | { [x: string]: JSONValue }
   | Array<JSONValue>;
 
-export interface JSONObject {
-  [x: string]: JSONValue;
-}
-
 export type DbValue = string | number | boolean | null;
-
-export interface JSONArray extends Array<JSONValue> {}
 
 export abstract class DB {
   abstract get(
@@ -210,10 +204,10 @@ export abstract class DB {
     return this.update(
       "scrim_signups",
       {
-        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-        team_name: "Fineapples",
+        scrim_id: scrimId,
+        team_name: oldTeamName,
       },
-      { team_name: "Dude Cube" },
+      { team_name: newTeamName },
       [
         "team_name",
         "player_one_id",

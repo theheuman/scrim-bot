@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { GatewayIntentBits, Events } from "discord.js";
+import { GatewayIntentBits } from "discord.js";
 import config from "../config.json";
 import ExtendedClient, { Command } from "./ExtendedClient";
 

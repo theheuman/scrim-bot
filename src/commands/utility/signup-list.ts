@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction } from "discord.js";
-import signups from "../../models/signups";
-import lowPrioUsers from "../../models/lowPrioUsers";
+import signups, { ScrimSignup } from "../../models/signups";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,42 +10,34 @@ module.exports = {
 
   async execute(interaction: CommandInteraction) {
     const channelId = interaction.channelId;
-
-    if (!signups.has(channelId)) {
+    const scrimId = signups.scrimChannelMap.get(channelId as string);
+    if (!scrimId) {
       await interaction.reply({
-        content: "No teams have signed up in this channel yet.",
+        content: "No scrim set up for this channel, contact admin",
         ephemeral: true,
       });
       return;
     }
 
-    const channelSignups = signups.get(channelId) || {
-      mainList: [],
-      waitList: [],
-    };
-    if (!channelSignups) {
-      await interaction.reply({
-        content: "No teams have signed up in this channel yet.",
-        ephemeral: true,
-      });
-      return;
-    }
+    // Before executing any other code, we need to acknowledge the interaction.
+    // Discord only gives us 3 seconds to acknowledge an interaction before
+    // the interaction gets voided and can't be used anymore.
+    await interaction.reply({
+      content: "Fetching teams",
+    });
+
+    const channelSignups = await signups.getSignups(scrimId);
 
     const { mainList, waitList } = channelSignups;
 
-    const formatTeams = (
-      teams: { teamName: string; players: any[] }[],
-      startIndex: number,
-    ) => {
+    const formatTeams = (teams: ScrimSignup[], startIndex: number) => {
       return teams
         .map((signup, index) => {
           const players = signup.players
             .map((player) => `<@${player.id}>`)
             .join(", ");
-          const isLowPrio = signup.players.some((player) =>
-            lowPrioUsers.has(player.id),
-          );
-          return `${startIndex + index + 1}. ${signup.teamName}: ${players}${isLowPrio ? " * <-- LOW PRIO" : ""}\n`;
+
+          return `${startIndex + index + 1}. ${signup.teamName}: ${players} Priority: ${signup.prio ?? 0}`;
         })
         .join("");
     };
@@ -57,13 +48,10 @@ module.exports = {
       }
     };
 
-    let messages: string[] = [];
+    const messages: string[] = [];
     let currentMessage = "Signed up teams for one lobby:\n";
 
-    const addTeamsToMessages = (
-      teams: { teamName: string; players: any[] }[],
-      startIndex: number,
-    ) => {
+    const addTeamsToMessages = (teams: ScrimSignup[], startIndex: number) => {
       for (let i = 0; i < teams.length; i += 20) {
         const chunk = teams.slice(i, i + 20);
         currentMessage += formatTeams(chunk, startIndex + i);

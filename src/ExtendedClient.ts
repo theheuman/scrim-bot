@@ -1,5 +1,6 @@
 import {
   Client,
+  ClientOptions,
   Collection,
   CommandInteraction,
   SlashCommandBuilder,
@@ -13,7 +14,7 @@ export interface Command {
 class ExtendedClient extends Client {
   commands: Collection<string, Command>;
 
-  constructor(options: any) {
+  constructor(options: ClientOptions) {
     super(options);
     this.commands = new Collection();
   }
