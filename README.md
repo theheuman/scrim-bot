@@ -24,7 +24,7 @@ The file should contain:
 }
 ```
 Where BOT_TOKEN is the bot token taken from the discord application portal bot page
-DISCORD_CLIENT_ID is the application ID from ther discord application portal general information page
+DISCORD_CLIENT_ID is the application ID from the discord application portal general information page
 DISCORD_GUILD_ID is the server ID of the server the bot is running in
 
 
