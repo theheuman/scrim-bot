@@ -1,13 +1,15 @@
-import {signups, ScrimSignups} from "../src/models/signups";
-import {DbMock} from "./mocks/db.mock";
-import {PlayerInsert} from "../src/models/Player";
-import {User} from "discord.js";
+import { signups, ScrimSignups } from "../src/models/signups";
+import { DbMock } from "./mocks/db.mock";
+import { PlayerInsert } from "../src/models/Player";
+import { User } from "discord.js";
 
 describe("Integration", () => {
 
+  it("Should use this fake test case to run integration tests when they are commented out", async () => {
+    expect("orange").toBeDefined()
+  })
+  /*
   describe("addTeam()", () => {
-
-    /*
     it("Should add a team", async () => {
       const theheuman = {id: "315310843317321732", displayName: "TheHeuman"} as User
       const zboy = {id: "316280734115430403", displayName: "Zboy"} as User
@@ -41,21 +43,20 @@ describe("Integration", () => {
       console.log(signupId)
       expect(signupId).toBeDefined()
     })
+  });
 
-    it("Should add a scrim", async () => {
-      const scrimId = await signups.createScrim("not a valid id", new Date())
-      console.log(scrimId)
-      expect(scrimId).toBeDefined()
-    })
-
-    it("Should replace a team mate", async () => {
-      const revy = {id: "123", displayName: "Revy"} as User
-      const mikey = {id: "not valid", displayName: "Mikey"} as User
-      const scrimSignup = await signups.replaceTeammate("something", "Test Team", revy, mikey)
-      console.log(scrimSignup)
-      expect(scrimSignup).toBeDefined()
-    })
-    */
+  it("Should add a scrim", async () => {
+    const scrimId = await signups.createScrim("not a valid id", new Date())
+    console.log(scrimId)
+    expect(scrimId).toBeDefined()
   })
 
-})
+  it("Should replace a team mate", async () => {
+    const revy = {id: "123", displayName: "Revy"} as User
+    const mikey = {id: "not valid", displayName: "Mikey"} as User
+    const scrimSignup = await signups.replaceTeammate("something", "Test Team", revy, mikey)
+    console.log(scrimSignup)
+    expect(scrimSignup).toBeDefined()
+  })
+  */
+});
