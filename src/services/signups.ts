@@ -1,8 +1,9 @@
 import { User } from "discord.js";
-import { Player, PlayerInsert } from "./Player";
+import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { nhostDb } from "../db/nhost.db";
 import { Scrims, ScrimSignupsWithPlayers } from "../db/table.interfaces";
+import { cache, Cache } from "./cache";
 
 export interface ScrimSignup {
   teamName: string;
@@ -14,23 +15,24 @@ export interface ScrimSignup {
 export class ScrimSignups {
   activeScrimSignups: Map<string, ScrimSignup[]>;
   db: DB;
+  cache: Cache;
 
-  // maps discord channel id's to scrim id
-  scrimChannelMap: Map<string, string>;
-
-  constructor(db: DB) {
+  constructor(db: DB, cache: Cache) {
     this.activeScrimSignups = new Map();
     this.db = db;
-    this.scrimChannelMap = new Map();
+    this.cache = cache;
     this.updateActiveScrims();
   }
 
-  async updateActiveScrims() {
+  async updateActiveScrims(log?: boolean) {
     const activeScrims: { scrims: Partial<Scrims>[] } =
       await this.db.getActiveScrims();
     for (const scrim of activeScrims.scrims) {
       if (scrim.id && scrim.discord_channel) {
-        this.scrimChannelMap.set(scrim.discord_channel, scrim.id);
+        this.cache.addScrimChannel(scrim.discord_channel, scrim.id);
+        if (log) {
+          console.log("Added scrim channel", this.cache);
+        }
         this.getSignups(scrim.id);
       }
     }
@@ -38,7 +40,7 @@ export class ScrimSignups {
 
   async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
     const scrimId = await this.db.createNewScrim(dateTime, discordChannelID, 1);
-    this.scrimChannelMap.set(discordChannelID, scrimId);
+    this.cache.addScrimChannel(discordChannelID, scrimId);
     this.activeScrimSignups.set(scrimId, []);
     return scrimId;
   }
@@ -106,7 +108,7 @@ export class ScrimSignups {
   }
 
   removeTeam(discordChannel: string, teamName: string): Promise<string> {
-    const scrimId = this.scrimChannelMap.get(discordChannel);
+    const scrimId = this.cache.getScrimId(discordChannel);
     if (!scrimId) {
       throw Error(
         "No scrim id matching that scrim channel present, contact admin",
@@ -121,7 +123,7 @@ export class ScrimSignups {
     oldPlayer: User,
     newPlayer: User,
   ) {
-    const scrimId = this.scrimChannelMap.get(discordChannel);
+    const scrimId = this.cache.getScrimId(discordChannel);
     if (!scrimId) {
       throw Error(
         "No scrim id matching that scrim channel present, contact admin",
@@ -162,6 +164,10 @@ export class ScrimSignups {
     // TODO make call for all users who are low prio
     this.activeScrimSignups.set(scrimId, teams);
     return ScrimSignups.sortTeams(teams);
+  }
+
+  getScrimId(discordChannel: string) {
+    return this.cache.getScrimId(discordChannel);
   }
 
   static sortTeams(teams: ScrimSignup[]): {
@@ -220,5 +226,5 @@ export class ScrimSignups {
   }
 }
 
-export const signups = new ScrimSignups(nhostDb);
+export const signups = new ScrimSignups(nhostDb, cache);
 export default signups;

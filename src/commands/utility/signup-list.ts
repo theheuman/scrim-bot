@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction } from "discord.js";
-import signups, { ScrimSignup } from "../../models/signups";
+import signups, { ScrimSignup } from "../../services/signups";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -10,7 +10,7 @@ module.exports = {
 
   async execute(interaction: CommandInteraction) {
     const channelId = interaction.channelId;
-    const scrimId = signups.scrimChannelMap.get(channelId as string);
+    const scrimId = signups.getScrimId(channelId as string);
     if (!scrimId) {
       await interaction.reply({
         content: "No scrim set up for this channel, contact admin",

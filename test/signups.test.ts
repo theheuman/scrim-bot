@@ -1,15 +1,18 @@
-import { ScrimSignups } from "../src/models/signups";
+import { ScrimSignups } from "../src/services/signups";
 import { DbMock } from "./mocks/db.mock";
 import { PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
+import { Cache } from "../src/services/cache";
 
 describe("Signups", () => {
   let dbMock: DbMock;
+  let cache: Cache;
   let signups: ScrimSignups;
 
   beforeEach(() => {
     dbMock = new DbMock();
-    signups = new ScrimSignups(dbMock);
+    cache = new Cache();
+    signups = new ScrimSignups(dbMock, cache);
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -200,9 +203,8 @@ describe("Signups", () => {
         });
       });
 
-      await signups.updateActiveScrims();
-      expect(signups.scrimChannelMap.size).toEqual(1);
-      expect(signups.scrimChannelMap.get("something")).toEqual(
+      await signups.updateActiveScrims(true);
+      expect(cache.getScrimId("something")).toEqual(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
       );
     });
@@ -212,7 +214,7 @@ describe("Signups", () => {
     it("Should create scrim", async () => {
       const channelId = "a valid id";
       signups.activeScrimSignups.clear();
-      signups.scrimChannelMap.clear();
+      cache.clear();
       jest
         .spyOn(dbMock, "createNewScrim")
         .mockImplementation(
@@ -225,9 +227,7 @@ describe("Signups", () => {
 
       await signups.createScrim(channelId, new Date());
       expect(signups.activeScrimSignups.size).toEqual(1);
-      expect(signups.scrimChannelMap.get(channelId)).toEqual(
-        "a valid scrim id",
-      );
+      expect(cache.getScrimId(channelId)).toEqual("a valid scrim id");
       expect.assertions(4);
     });
   });

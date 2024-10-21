@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import signups from "../../models/signups";
+import signups from "../../services/signups";
 
 module.exports = {
   data: new SlashCommandBuilder()
