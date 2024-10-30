@@ -37,6 +37,7 @@ export abstract class DB {
   abstract replaceTeammate(
     scrimId: string,
     teamName: string,
+    userId: string, // the user making the change, this gets authorized by the db
     oldPlayerId: string,
     newPlayerId: string,
   ): Promise<JSONValue>;

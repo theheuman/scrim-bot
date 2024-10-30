@@ -182,6 +182,7 @@ class NhostDb extends DB {
   async replaceTeammate(
     scrimId: string,
     teamName: string,
+    userId: string,
     oldPlayerId: string,
     newPlayerId: string,
   ): Promise<{
@@ -195,31 +196,14 @@ class NhostDb extends DB {
       mutation {
   update_scrim_signups_many(
     updates: [
-      {
-        where: {
-          scrim_id: { _eq: "${scrimId}" },
-          player_one_id: { _eq: "${oldPlayerId}" }
-        },
-        _set: { player_one_id: "${newPlayerId}" }
-      },
-      {
-        where: {
-          scrim_id: { _eq: "${scrimId}" },
-          player_two_id: { _eq: "${oldPlayerId}" }
-        },
-        _set: { player_two_id: "${newPlayerId}" }
-      },
-      {
-        where: {
-          scrim_id: { _eq: "${scrimId}" },
-          player_three_id: { _eq: "${oldPlayerId}" }
-        },
-        _set: { player_three_id: "${newPlayerId}" }
-      }
+      {${this.getReplaceTeammateMutationBlock("one", scrimId, userId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlock("two", scrimId, userId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlock("three", scrimId, userId, oldPlayerId, newPlayerId)}}
     ]
   ) {
     returning {
       team_name
+      signup_player_id
       player_one_id
       player_two_id
       player_three_id
@@ -256,6 +240,28 @@ class NhostDb extends DB {
       throw Error("Changes not made");
     }
     return teamData.returning[0];
+  }
+
+  private getReplaceTeammateMutationBlock(
+    playerNumber: "one" | "two" | "three",
+    scrimId: string,
+    userId: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ) {
+    return `
+        where: {
+          scrim_id: { _eq: "${scrimId}" },
+          player_${playerNumber}_id: { _eq: "${oldPlayerId}" },
+          _or: [
+            { signup_player_id: { _eq: "${userId}" } },
+            { player_one_id: { _eq: "${userId}" } },
+            { player_two_id: { _eq: "${userId}" } },
+            { player_three_id: { _eq: "${userId}" } }
+          ]
+        },
+        _set: { player_${playerNumber}_id: "${newPlayerId}" }
+      `;
   }
 
   async customQuery(query: string): Promise<JSONValue> {

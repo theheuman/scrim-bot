@@ -548,21 +548,39 @@ describe("DB connection", () => {
       {
         where: {
           scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" },
-          player_one_id: { _eq: "11583f2c-184f-4ab5-9f6f-ff33f2741117" }
+          player_one_id: { _eq: "11583f2c-184f-4ab5-9f6f-ff33f2741117" },
+          _or: [
+            { signup_player_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_one_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_two_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_three_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }
+          ]
         },
         _set: { player_one_id: "c450684a-d423-4e52-b6ea-0778bf021910" }
       },
       {
         where: {
           scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" },
-          player_two_id: { _eq: "11583f2c-184f-4ab5-9f6f-ff33f2741117" }
+          player_two_id: { _eq: "11583f2c-184f-4ab5-9f6f-ff33f2741117" },
+          _or: [
+            { signup_player_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_one_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_two_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_three_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }
+          ]
         },
         _set: { player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910" }
       },
       {
         where: {
           scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" },
-          player_three_id: { _eq: "11583f2c-184f-4ab5-9f6f-ff33f2741117" }
+          player_three_id: { _eq: "11583f2c-184f-4ab5-9f6f-ff33f2741117" },
+          _or: [
+            { signup_player_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_one_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_two_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_three_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }
+          ]
         },
         _set: { player_three_id: "c450684a-d423-4e52-b6ea-0778bf021910" }
       }
@@ -570,6 +588,7 @@ describe("DB connection", () => {
   ) {
     returning {
       team_name
+      signup_player_id
       player_one_id
       player_two_id
       player_three_id
@@ -589,6 +608,7 @@ describe("DB connection", () => {
                 returning: [
                   {
                     team_name: "Fineapples",
+                    signup_player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
                     player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
                     player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
                     player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
@@ -606,11 +626,13 @@ describe("DB connection", () => {
       const signup = await nhostDb.replaceTeammate(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
         "Fineapples",
+        "f272a11e-5b30-4aea-b596-af2464de59ba",
         "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "c450684a-d423-4e52-b6ea-0778bf021910",
       );
       expect(signup).toEqual({
         team_name: "Fineapples",
+        signup_player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
         player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
         player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
         player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",

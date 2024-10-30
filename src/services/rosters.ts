@@ -14,6 +14,7 @@ export class RosterService {
   async replaceTeammate(
     discordChannel: string,
     teamName: string,
+    user: User,
     oldPlayer: User,
     newPlayer: User,
   ) {
@@ -24,6 +25,10 @@ export class RosterService {
       );
     }
 
+    const convertedUser: PlayerInsert = {
+      discordId: newPlayer.id as string,
+      displayName: newPlayer.displayName,
+    };
     const convertedOldPlayer: PlayerInsert = {
       discordId: oldPlayer.id as string,
       displayName: oldPlayer.displayName,
@@ -33,6 +38,7 @@ export class RosterService {
       displayName: newPlayer.displayName,
     };
     const playerIds = await this.db.insertPlayers([
+      convertedUser,
       convertedOldPlayer,
       convertedNewPlayer,
     ]);
@@ -41,6 +47,7 @@ export class RosterService {
       teamName,
       playerIds[0],
       playerIds[1],
+      playerIds[2],
     );
   }
 }
