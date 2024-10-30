@@ -179,6 +179,80 @@ class NhostDb extends DB {
     return returnedData[updateName].returning[0];
   }
 
+  async changeTeamName(
+    scrimId: string,
+    userId: string, // the user making the change, this gets authorized by the db
+    teamName: string,
+    newTeamName: string,
+  ): Promise<{
+    team_name: string;
+    signup_player_id: string;
+    player_one_id: string;
+    player_two_id: string;
+    player_three_id: string;
+    scrim_id: string;
+  }> {
+    const updateName = "update_scrim_signups";
+    const searchString = `
+        where: {
+          scrim_id: { _eq: "${scrimId}" },
+          team_name: { _eq: "${teamName}" },
+          _or: [
+            { signup_player_id: { _eq: "${userId}" } },
+            { player_one_id: { _eq: "${userId}" } },
+            { player_two_id: { _eq: "${userId}" } },
+            { player_three_id: { _eq: "${userId}" } }
+          ]
+        }`;
+    const fieldsToReturn = [
+      "team_name",
+      "signup_player_id",
+      "player_one_id",
+      "player_two_id",
+      "player_three_id",
+      "scrim_id",
+    ];
+    const setString = `_set: { team_name: "${newTeamName}" }`;
+    const query = `
+      mutation {
+        ${updateName}( ${searchString}, ${setString} ) {
+          returning {
+            ${fieldsToReturn.join("\n")}
+          }
+        }
+      }
+    `;
+
+    const result: {
+      update_scrim_signups_one: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      };
+    } = (await this.customQuery(query)) as unknown as {
+      update_scrim_signups_one: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      };
+    };
+    const teamData = result.update_scrim_signups_one.returning[0];
+    if (!teamData) {
+      throw Error("Changes not made");
+    }
+    return teamData;
+  }
+
   async replaceTeammate(
     scrimId: string,
     teamName: string,
@@ -187,6 +261,7 @@ class NhostDb extends DB {
     newPlayerId: string,
   ): Promise<{
     team_name: string;
+    signup_player_id: string;
     player_one_id: string;
     player_two_id: string;
     player_three_id: string;
@@ -216,6 +291,7 @@ class NhostDb extends DB {
       update_scrim_signups_many: {
         returning: {
           team_name: string;
+          signup_player_id: string;
           player_one_id: string;
           player_two_id: string;
           player_three_id: string;
@@ -226,6 +302,7 @@ class NhostDb extends DB {
       update_scrim_signups_many: {
         returning: {
           team_name: string;
+          signup_player_id: string;
           player_one_id: string;
           player_two_id: string;
           player_three_id: string;

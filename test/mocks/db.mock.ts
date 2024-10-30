@@ -1,4 +1,4 @@
-import {DB, DbValue, JSONValue} from "../../src/db/db";
+import { DB, DbValue, JSONValue } from "../../src/db/db";
 import { PlayerInsert } from "../../src/models/Player";
 import { Scrims, ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
@@ -83,15 +83,37 @@ export class DbMock extends DB {
     return Promise.resolve([]);
   }
 
-  delete(tableName: string, fieldsToEqual: Record<string, DbValue>): Promise<string> {
+  delete(
+    tableName: string,
+    fieldsToEqual: Record<string, DbValue>,
+  ): Promise<string> {
     return Promise.resolve("");
   }
 
-  replaceTeammate(scrimId: string, teamName: string, oldPlayerId: string, newPlayerId: string): Promise<JSONValue> {
+  replaceTeammate(
+    scrimId: string,
+    teamName: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ): Promise<JSONValue> {
     return Promise.resolve({});
   }
 
-  update(tableName: string, fieldsToEquate: Record<string, DbValue>, fieldsToUpdate: Record<string, DbValue>, fieldsToReturn: string[]): Promise<JSONValue> {
+  update(
+    tableName: string,
+    fieldsToEquate: Record<string, DbValue>,
+    fieldsToUpdate: Record<string, DbValue>,
+    fieldsToReturn: string[],
+  ): Promise<JSONValue> {
+    return Promise.resolve({});
+  }
+
+  changeTeamName(
+    scrimId: string,
+    userId: string,
+    teamName: string,
+    newTeamName: string,
+  ): Promise<JSONValue> {
     return Promise.resolve({});
   }
 }

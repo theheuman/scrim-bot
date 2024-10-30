@@ -641,4 +641,70 @@ describe("DB connection", () => {
       expect.assertions(2);
     });
   });
+  describe("changeTeamName()", () => {
+    it("should change team name", async () => {
+      mockRequest = (query) => {
+        const expected = `
+      mutation {
+  update_scrim_signups(
+        where: {
+          scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" },
+          team_name: { _eq: "Dude Cube" },
+          _or: [
+            { signup_player_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_one_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_two_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } },
+            { player_three_id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }
+          ]
+        },
+        _set: { team_name: "Can't come up with good team name" }
+  ) {
+    returning {
+      team_name
+      signup_player_id
+      player_one_id
+      player_two_id
+      player_three_id
+      scrim_id
+    }
+  }
+}
+`;
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
+        return Promise.resolve({
+          data: {
+            update_scrim_signups_one: {
+              returning: [
+                {
+                  team_name: "Can't come up with good team name",
+                  signup_player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                  player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                  player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+                  player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                  scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                },
+              ],
+            },
+          },
+        });
+      };
+      const signup = await nhostDb.changeTeamName(
+        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        "f272a11e-5b30-4aea-b596-af2464de59ba",
+        "Dude Cube",
+        "Can't come up with good team name",
+      );
+      expect(signup).toEqual({
+        team_name: "Can't come up with good team name",
+        signup_player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+        player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+      });
+      expect.assertions(2);
+    });
+  });
 });

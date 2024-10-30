@@ -41,6 +41,12 @@ export abstract class DB {
     oldPlayerId: string,
     newPlayerId: string,
   ): Promise<JSONValue>;
+  abstract changeTeamName(
+    scrimId: string,
+    userId: string, // the user making the change, this gets authorized by the db
+    teamName: string,
+    newTeamName: string,
+  ): Promise<JSONValue>;
 
   createNewScrim(
     dateTime: Date,
@@ -197,7 +203,8 @@ export abstract class DB {
     return returnedData.get_scrim_signups_with_players;
   }
 
-  changeTeamName(
+  // to be called if user role is admin
+  changeTeamNameNoAuth(
     scrimId: string,
     oldTeamName: string,
     newTeamName: string,
