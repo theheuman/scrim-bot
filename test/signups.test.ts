@@ -30,7 +30,7 @@ describe("Signups", () => {
         signupId: "4685",
       };
 
-      signups.activeScrimSignups.set("32451", []);
+      cache.setSignups("32451", []);
       jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
         const expected: PlayerInsert[] = [
           { discordId: "123", displayName: "TheHeuman" },
@@ -80,7 +80,7 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because duplicate team name", async () => {
-      signups.activeScrimSignups.set("scrim 1", []);
+      cache.setSignups("scrim 1", []);
       const causeException = async () => {
         await signups.addTeam("scrim 1", "Fineapples", [zboy, supreme, mikey]);
       };
@@ -94,7 +94,7 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because duplicate player", async () => {
-      signups.activeScrimSignups.set("scrim 1", []);
+      cache.setSignups("scrim 1", []);
       const causeException = async () => {
         await signups.addTeam("scrim 1", "Dude Cube", [
           theheuman,
@@ -114,7 +114,7 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there aren't three players", async () => {
-      signups.activeScrimSignups.set("32451", []);
+      cache.setSignups("32451", []);
       const causeException = async () => {
         await signups.addTeam("32451", "", []);
       };
@@ -125,7 +125,7 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there are 2 of the same player on a team", async () => {
-      signups.activeScrimSignups.set("scrim 1", []);
+      cache.setSignups("scrim 1", []);
       const causeException = async () => {
         await signups.addTeam("scrim 1", "Fineapples", [
           supreme,
@@ -149,7 +149,7 @@ describe("Signups", () => {
         signupId: "4685",
       };
 
-      signups.activeScrimSignups.set("32451", []);
+      cache.setSignups("32451", []);
       jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
         const expected: PlayerInsert[] = [
           { discordId: "123", displayName: "TheHeuman" },
@@ -191,7 +191,7 @@ describe("Signups", () => {
 
   describe("updateActiveScrims()", () => {
     it("Should get active scrims", async () => {
-      signups.activeScrimSignups.clear();
+      cache.clear();
       jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
         return Promise.resolve({
           scrims: [
@@ -213,7 +213,6 @@ describe("Signups", () => {
   describe("createScrim()", () => {
     it("Should create scrim", async () => {
       const channelId = "a valid id";
-      signups.activeScrimSignups.clear();
       cache.clear();
       jest
         .spyOn(dbMock, "createNewScrim")
@@ -226,9 +225,8 @@ describe("Signups", () => {
         );
 
       await signups.createScrim(channelId, new Date());
-      expect(signups.activeScrimSignups.size).toEqual(1);
       expect(cache.getScrimId(channelId)).toEqual("a valid scrim id");
-      expect.assertions(4);
+      expect.assertions(3);
     });
   });
 });

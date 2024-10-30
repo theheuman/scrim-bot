@@ -13,12 +13,10 @@ export interface ScrimSignup {
 }
 
 export class ScrimSignups {
-  activeScrimSignups: Map<string, ScrimSignup[]>;
   db: DB;
   cache: Cache;
 
   constructor(db: DB, cache: Cache) {
-    this.activeScrimSignups = new Map();
     this.db = db;
     this.cache = cache;
     this.updateActiveScrims();
@@ -29,7 +27,7 @@ export class ScrimSignups {
       await this.db.getActiveScrims();
     for (const scrim of activeScrims.scrims) {
       if (scrim.id && scrim.discord_channel) {
-        this.cache.addScrimChannel(scrim.discord_channel, scrim.id);
+        this.cache.createScrim(scrim.discord_channel, scrim.id);
         if (log) {
           console.log("Added scrim channel", this.cache);
         }
@@ -40,8 +38,7 @@ export class ScrimSignups {
 
   async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
     const scrimId = await this.db.createNewScrim(dateTime, discordChannelID, 1);
-    this.cache.addScrimChannel(discordChannelID, scrimId);
-    this.activeScrimSignups.set(scrimId, []);
+    this.cache.createScrim(discordChannelID, scrimId);
     return scrimId;
   }
 
@@ -51,7 +48,7 @@ export class ScrimSignups {
     players: User[],
   ): Promise<string> {
     // potentially need to update active scrim signups here if we ever start creating scrims from something that is not the bot
-    const scrim = this.activeScrimSignups.get(scrimId);
+    const scrim = this.cache.getSignups(scrimId);
     if (!scrim) {
       throw Error("No active scrim with that scrim id");
     } else if (players.length !== 3) {
@@ -129,7 +126,7 @@ export class ScrimSignups {
       teams.push(teamData);
     }
     // TODO make call for all users who are low prio
-    this.activeScrimSignups.set(scrimId, teams);
+    this.cache.setSignups(scrimId, teams);
     return ScrimSignups.sortTeams(teams);
   }
 
