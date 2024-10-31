@@ -26,6 +26,7 @@ module.exports = {
   async execute(interaction: ChatInputCommandInteraction) {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname");
+    const signupPlayer = interaction.user;
     const player1 = interaction.options.getUser("player1");
     const player2 = interaction.options.getUser("player2");
     const player3 = interaction.options.getUser("player3");
@@ -43,11 +44,12 @@ module.exports = {
     const scrimId = signups.getScrimId(channelId as string);
     if (scrimId) {
       try {
-        const signupId = await signups.addTeam(scrimId, teamName, [
-          player1,
-          player2,
-          player3,
-        ]);
+        const signupId = await signups.addTeam(
+          scrimId,
+          teamName,
+          signupPlayer,
+          [player1, player2, player3],
+        );
         interaction.reply(
           `Team ${teamName} signed up with players: ${player1}, ${player2}, ${player3}, Signup id: ${signupId}`,
         );

@@ -12,7 +12,7 @@ export class Cache {
     this.activeScrimSignups = new Map();
   }
 
-  getScrimId(discordChannel: string) {
+  getScrimId(discordChannel: string): string | undefined {
     const result = this.scrimChannelMap.get(discordChannel);
     console.log(
       "Getting scrim id for discord channel",
@@ -32,7 +32,7 @@ export class Cache {
     this.scrimChannelMap.delete(discordChannel);
   }
 
-  getSignups(scrimId: string) {
+  getSignups(scrimId: string): ScrimSignup[] | undefined {
     return this.activeScrimSignups.get(scrimId);
   }
   setSignups(scrimId: string, teams: ScrimSignup[]) {

@@ -4,6 +4,9 @@ export interface ScrimSignupsWithPlayers {
   scrim_id: uuid;
   date_time: string;
   team_name: string;
+  signup_player_id: uuid;
+  signup_player_discord_id: string;
+  signup_player_display_name: string;
   player_one_id: uuid;
   player_one_discord_id: string;
   player_one_display_name: string;

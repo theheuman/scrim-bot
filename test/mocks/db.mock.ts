@@ -46,6 +46,7 @@ export class DbMock extends DB {
   override addScrimSignup(
     teamName: string,
     scrimId: string,
+    userId: string,
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,

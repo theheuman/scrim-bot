@@ -34,124 +34,6 @@ describe("Signups", () => {
       jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
         const expected: PlayerInsert[] = [
           { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "456", displayName: "Zboy" },
-          { discordId: "789", displayName: "Supreme" },
-        ];
-        expect(players).toEqual(expected);
-        return Promise.resolve(["111", "444", "777"]);
-      });
-
-      jest
-        .spyOn(dbMock, "addScrimSignup")
-        .mockImplementation(
-          (
-            teamName: string,
-            scrimId: string,
-            playerId: string,
-            playerIdTwo: string,
-            playerIdThree: string,
-          ) => {
-            expect(teamName).toEqual(expectedSignup.teamName);
-            expect(scrimId).toEqual(expectedSignup.scrimId);
-            expect(playerId).toEqual("111");
-            expect(playerIdTwo).toEqual("444");
-            expect(playerIdThree).toEqual("777");
-            return Promise.resolve(expectedSignup.signupId);
-          },
-        );
-
-      const signupId = await signups.addTeam(
-        expectedSignup.scrimId,
-        expectedSignup.teamName,
-        [theheuman, zboy, supreme],
-      );
-      expect(signupId).toEqual(expectedSignup.signupId);
-      expect.assertions(7);
-    });
-
-    it("Should not add a team because there is no scrim with that id", async () => {
-      const causeException = async () => {
-        await signups.addTeam("", "", []);
-      };
-
-      await expect(causeException).rejects.toThrow(
-        "No active scrim with that scrim id",
-      );
-    });
-
-    it("Should not add a team because duplicate team name", async () => {
-      cache.setSignups("scrim 1", []);
-      const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", [zboy, supreme, mikey]);
-      };
-      await signups.addTeam("scrim 1", "Fineapples", [
-        theheuman,
-        revy,
-        cTreazy,
-      ]);
-
-      await expect(causeException).rejects.toThrow("Duplicate team name");
-    });
-
-    it("Should not add a team because duplicate player", async () => {
-      cache.setSignups("scrim 1", []);
-      const causeException = async () => {
-        await signups.addTeam("scrim 1", "Dude Cube", [
-          theheuman,
-          supreme,
-          mikey,
-        ]);
-      };
-      await signups.addTeam("scrim 1", "Fineapples", [
-        theheuman,
-        revy,
-        cTreazy,
-      ]);
-
-      await expect(causeException).rejects.toThrow(
-        "Player already signed up on different team: TheHeuman <@123> on team Fineapples",
-      );
-    });
-
-    it("Should not add a team because there aren't three players", async () => {
-      cache.setSignups("32451", []);
-      const causeException = async () => {
-        await signups.addTeam("32451", "", []);
-      };
-
-      await expect(causeException).rejects.toThrow(
-        "Exactly three players must be provided",
-      );
-    });
-
-    it("Should not add a team because there are 2 of the same player on a team", async () => {
-      cache.setSignups("scrim 1", []);
-      const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", [
-          supreme,
-          supreme,
-          mikey,
-        ]);
-      };
-
-      await expect(causeException).rejects.toThrow("");
-    });
-  });
-
-  describe("getSignups()", () => {
-    it("Should get all teams", async () => {
-      const theheuman = { id: "123", displayName: "TheHeuman" } as User;
-      const zboy = { id: "456", displayName: "Zboy" } as User;
-      const supreme = { id: "789", displayName: "Supreme" } as User;
-      const expectedSignup = {
-        teamName: "Fineapples",
-        scrimId: "32451",
-        signupId: "4685",
-      };
-
-      cache.setSignups("32451", []);
-      jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
-        const expected: PlayerInsert[] = [
           { discordId: "123", displayName: "TheHeuman" },
           { discordId: "456", displayName: "Zboy" },
           { discordId: "789", displayName: "Supreme" },
@@ -182,6 +64,132 @@ describe("Signups", () => {
       const signupId = await signups.addTeam(
         expectedSignup.scrimId,
         expectedSignup.teamName,
+        theheuman,
+        [theheuman, zboy, supreme],
+      );
+      expect(signupId).toEqual(expectedSignup.signupId);
+      expect.assertions(7);
+    });
+
+    it("Should not add a team because there is no scrim with that id", async () => {
+      const causeException = async () => {
+        await signups.addTeam("", "", theheuman, []);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "No active scrim with that scrim id",
+      );
+    });
+
+    it("Should not add a team because duplicate team name", async () => {
+      cache.setSignups("scrim 1", []);
+      const causeException = async () => {
+        await signups.addTeam("scrim 1", "Fineapples", theheuman, [
+          zboy,
+          supreme,
+          mikey,
+        ]);
+      };
+      await signups.addTeam("scrim 1", "Fineapples", theheuman, [
+        theheuman,
+        revy,
+        cTreazy,
+      ]);
+
+      await expect(causeException).rejects.toThrow("Duplicate team name");
+    });
+
+    it("Should not add a team because duplicate player", async () => {
+      cache.setSignups("scrim 1", []);
+      const causeException = async () => {
+        await signups.addTeam("scrim 1", "Dude Cube", theheuman, [
+          theheuman,
+          supreme,
+          mikey,
+        ]);
+      };
+      await signups.addTeam("scrim 1", "Fineapples", theheuman, [
+        theheuman,
+        revy,
+        cTreazy,
+      ]);
+
+      await expect(causeException).rejects.toThrow(
+        "Player already signed up on different team: TheHeuman <@123> on team Fineapples",
+      );
+    });
+
+    it("Should not add a team because there aren't three players", async () => {
+      cache.setSignups("32451", []);
+      const causeException = async () => {
+        await signups.addTeam("32451", "", theheuman, []);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "Exactly three players must be provided",
+      );
+    });
+
+    it("Should not add a team because there are 2 of the same player on a team", async () => {
+      cache.setSignups("scrim 1", []);
+      const causeException = async () => {
+        await signups.addTeam("scrim 1", "Fineapples", supreme, [
+          supreme,
+          supreme,
+          mikey,
+        ]);
+      };
+
+      await expect(causeException).rejects.toThrow("");
+    });
+  });
+
+  describe("getSignups()", () => {
+    it("Should get all teams", async () => {
+      const theheuman = { id: "123", displayName: "TheHeuman" } as User;
+      const zboy = { id: "456", displayName: "Zboy" } as User;
+      const supreme = { id: "789", displayName: "Supreme" } as User;
+      const expectedSignup = {
+        teamName: "Fineapples",
+        scrimId: "32451",
+        signupId: "4685",
+      };
+
+      cache.setSignups("32451", []);
+      jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
+        const expected: PlayerInsert[] = [
+          { discordId: "123", displayName: "TheHeuman" },
+          { discordId: "123", displayName: "TheHeuman" },
+          { discordId: "456", displayName: "Zboy" },
+          { discordId: "789", displayName: "Supreme" },
+        ];
+        expect(players).toEqual(expected);
+        return Promise.resolve(["111", "444", "777"]);
+      });
+
+      jest
+        .spyOn(dbMock, "addScrimSignup")
+        .mockImplementation(
+          (
+            teamName: string,
+            scrimId: string,
+            playerId: string,
+            playerIdTwo: string,
+            playerIdThree: string,
+          ) => {
+            expect(teamName).toEqual(expectedSignup.teamName);
+            expect(scrimId).toEqual(expectedSignup.scrimId);
+            expect(playerId).toEqual("111");
+            expect(playerIdTwo).toEqual("444");
+            expect(playerIdThree).toEqual("777");
+            return Promise.resolve(expectedSignup.signupId);
+          },
+        );
+
+      const signupId = await signups.addTeam(
+        expectedSignup.scrimId,
+        expectedSignup.teamName,
+        theheuman,
         [theheuman, zboy, supreme],
       );
       expect(signupId).toEqual(expectedSignup.signupId);

@@ -65,6 +65,7 @@ export abstract class DB {
   addScrimSignup(
     teamName: string,
     scrimId: string,
+    userId: string,
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,
@@ -73,6 +74,7 @@ export abstract class DB {
     return this.post("scrim_signups", {
       team_name: teamName,
       scrim_id: scrimId,
+      signup_player_id: playerId,
       player_one_id: playerId,
       player_two_id: playerTwoId,
       player_three_id: playerThreeId,
@@ -175,6 +177,9 @@ export abstract class DB {
           scrim_id
           date_time
           team_name
+          signup_player_id
+          signup_player_discord_id
+          signup_player_display_name
           player_one_id
           player_one_discord_id
           player_one_display_name

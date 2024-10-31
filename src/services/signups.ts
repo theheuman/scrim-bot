@@ -9,6 +9,7 @@ export interface ScrimSignup {
   teamName: string;
   players: Player[];
   signupId: string;
+  signupPlayer: Player;
   prio?: number;
 }
 
@@ -45,9 +46,9 @@ export class ScrimSignups {
   async addTeam(
     scrimId: string,
     teamName: string,
+    user: User,
     players: User[],
   ): Promise<string> {
-    // potentially need to update active scrim signups here if we ever start creating scrims from something that is not the bot
     const scrim = this.cache.getSignups(scrimId);
     if (!scrim) {
       throw Error("No active scrim with that scrim id");
@@ -75,7 +76,8 @@ export class ScrimSignups {
         }
       }
     }
-    const convertedPlayers: PlayerInsert[] = players.map(
+    const playersToInsert = [user, ...players];
+    const convertedPlayers: PlayerInsert[] = playersToInsert.map(
       (discordUser: User) => ({
         discordId: discordUser.id as string,
         displayName: discordUser.displayName,
@@ -88,6 +90,7 @@ export class ScrimSignups {
       playerIds[0],
       playerIds[1],
       playerIds[2],
+      playerIds[3],
     );
     const mappedPlayers: Player[] = convertedPlayers.map((player, index) => ({
       id: playerIds[index],
@@ -98,7 +101,8 @@ export class ScrimSignups {
     }));
     scrim.push({
       teamName: teamName,
-      players: mappedPlayers,
+      players: mappedPlayers.slice(1),
+      signupPlayer: mappedPlayers[0],
       signupId,
     });
     return signupId;
@@ -156,37 +160,51 @@ export class ScrimSignups {
   static convertDbToScrimSignup(
     dbTeamData: ScrimSignupsWithPlayers,
   ): ScrimSignup {
+    const convertedTeamData = this.convertToPlayers(dbTeamData);
     return {
       signupId: "for now we dont get the id",
       teamName: dbTeamData.team_name,
-      players: this.convertToPlayers(dbTeamData),
+      players: convertedTeamData.players,
+      signupPlayer: convertedTeamData.signupPlayer,
     };
   }
 
-  static convertToPlayers(dbTeamData: ScrimSignupsWithPlayers): Player[] {
-    return [
-      {
-        id: dbTeamData.player_one_id,
-        displayName: dbTeamData.player_one_display_name,
-        discordId: dbTeamData.player_one_discord_id,
-        overstatLink: dbTeamData.player_one_overstat_link,
-        elo: dbTeamData.player_one_elo,
+  static convertToPlayers(dbTeamData: ScrimSignupsWithPlayers): {
+    signupPlayer: Player;
+    players: Player[];
+  } {
+    return {
+      signupPlayer: {
+        id: dbTeamData.signup_player_id,
+        displayName: dbTeamData.signup_player_display_name,
+        discordId: dbTeamData.signup_player_discord_id,
+        overstatLink: undefined,
+        elo: undefined,
       },
-      {
-        id: dbTeamData.player_two_id,
-        displayName: dbTeamData.player_two_display_name,
-        discordId: dbTeamData.player_two_discord_id,
-        overstatLink: dbTeamData.player_two_overstat_link,
-        elo: dbTeamData.player_two_elo,
-      },
-      {
-        id: dbTeamData.player_three_id,
-        displayName: dbTeamData.player_three_display_name,
-        discordId: dbTeamData.player_three_discord_id,
-        overstatLink: dbTeamData.player_three_overstat_link,
-        elo: dbTeamData.player_three_elo,
-      },
-    ];
+      players: [
+        {
+          id: dbTeamData.player_one_id,
+          displayName: dbTeamData.player_one_display_name,
+          discordId: dbTeamData.player_one_discord_id,
+          overstatLink: dbTeamData.player_one_overstat_link,
+          elo: dbTeamData.player_one_elo,
+        },
+        {
+          id: dbTeamData.player_two_id,
+          displayName: dbTeamData.player_two_display_name,
+          discordId: dbTeamData.player_two_discord_id,
+          overstatLink: dbTeamData.player_two_overstat_link,
+          elo: dbTeamData.player_two_elo,
+        },
+        {
+          id: dbTeamData.player_three_id,
+          displayName: dbTeamData.player_three_display_name,
+          discordId: dbTeamData.player_three_discord_id,
+          overstatLink: dbTeamData.player_three_overstat_link,
+          elo: dbTeamData.player_three_elo,
+        },
+      ],
+    };
   }
 }
 
