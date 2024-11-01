@@ -41,6 +41,12 @@ export abstract class DB {
     oldPlayerId: string,
     newPlayerId: string,
   ): Promise<JSONValue>;
+  abstract replaceTeammateNoAuth(
+    scrimId: string,
+    teamName: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ): Promise<JSONValue>;
   abstract changeTeamName(
     scrimId: string,
     userId: string, // the user making the change, this gets authorized by the db

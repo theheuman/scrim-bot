@@ -20,7 +20,11 @@ module.exports = {
 
     // TODO user needs to be on team, or have signed team up to be allowed to remove team
     try {
-      await rosters.removeTeam(channelId as string, teamName as string);
+      await rosters.removeTeam(
+        interaction.user,
+        channelId as string,
+        teamName as string,
+      );
       interaction.reply(`Team ${teamName} has been dropped from the signups.`);
     } catch (e) {
       const error = e as Error;

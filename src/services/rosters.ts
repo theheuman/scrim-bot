@@ -1,8 +1,8 @@
 import { User } from "discord.js";
-import { PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { nhostDb } from "../db/nhost.db";
 import { cache, Cache } from "./cache";
+import { ScrimSignup } from "./signups";
 
 export class RosterService {
   db: DB;
@@ -16,9 +16,9 @@ export class RosterService {
   async replaceTeammate(
     discordChannel: string,
     teamName: string,
-    user: User,
-    oldPlayer: User,
-    newPlayer: User,
+    commandUser: User,
+    oldUser: User,
+    newUser: User,
   ) {
     const scrimId = this.cache.getScrimId(discordChannel);
     if (!scrimId) {
@@ -26,41 +26,70 @@ export class RosterService {
         "No scrim id matching that scrim channel present, contact admin",
       );
     }
-
-    const convertedUser: PlayerInsert = {
-      discordId: newPlayer.id as string,
-      displayName: newPlayer.displayName,
-    };
-    const convertedOldPlayer: PlayerInsert = {
-      discordId: oldPlayer.id as string,
-      displayName: oldPlayer.displayName,
-    };
-    const convertedNewPlayer: PlayerInsert = {
-      discordId: newPlayer.id as string,
-      displayName: newPlayer.displayName,
-    };
-    const playerIds = await this.db.insertPlayers([
-      convertedUser,
-      convertedOldPlayer,
-      convertedNewPlayer,
-    ]);
-    return this.db.replaceTeammate(
+    const teamBeingChanged = this.getTeamIfAuthorized(
+      commandUser,
       scrimId,
       teamName,
-      playerIds[0],
-      playerIds[1],
-      playerIds[2],
+    );
+    const oldPlayer = teamBeingChanged.players.find(
+      (player) => player.discordId === newUser.id,
+    );
+    if (!oldPlayer) {
+      throw Error("Player being replaced is not on this team");
+    }
+    const newPlayerId = await this.db.insertPlayerIfNotExists(
+      newUser.id as string,
+      newUser.displayName,
+    );
+    return this.db.replaceTeammateNoAuth(
+      scrimId,
+      teamName,
+      oldPlayer.id,
+      newPlayerId,
     );
   }
 
-  removeTeam(discordChannel: string, teamName: string): Promise<string> {
+  removeTeam(
+    user: User,
+    discordChannel: string,
+    teamName: string,
+  ): Promise<string> {
     const scrimId = this.cache.getScrimId(discordChannel);
     if (!scrimId) {
       throw Error(
         "No scrim id matching that scrim channel present, contact admin",
       );
     }
-    return this.db.removeScrimSignup(teamName, scrimId);
+    const teamToBeChanged = this.getTeamIfAuthorized(user, scrimId, teamName);
+    return this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
+  }
+
+  private getTeamIfAuthorized(
+    commandUser: User,
+    scrimId: string,
+    teamName: string,
+  ) {
+    const signups = this.cache.getSignups(scrimId);
+    if (!signups) {
+      throw Error("No teams signed up for this scrim");
+    }
+    const teamBeingChanged = signups.find((team) => team.teamName === teamName);
+    if (!teamBeingChanged) {
+      throw Error("No team with that name");
+    }
+    if (!this.userIsAuthorized(commandUser, teamBeingChanged)) {
+      throw Error("User issuing command not authorized to make changes");
+    }
+    return teamBeingChanged;
+  }
+
+  private userIsAuthorized(user: User, team: ScrimSignup) {
+    const authorizedPlayers = [team.signupPlayer, ...team.players];
+    const foundPlayer = authorizedPlayers.find(
+      (player) => player.discordId === user.id,
+    );
+    // TODO check for discord admin roles here?
+    return !!foundPlayer;
   }
 }
 

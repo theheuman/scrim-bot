@@ -117,4 +117,13 @@ export class DbMock extends DB {
   ): Promise<JSONValue> {
     return Promise.resolve({});
   }
+
+  replaceTeammateNoAuth(
+    scrimId: string,
+    teamName: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ): Promise<JSONValue> {
+    return Promise.resolve({});
+  }
 }

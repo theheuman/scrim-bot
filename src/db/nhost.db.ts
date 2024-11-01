@@ -319,6 +319,72 @@ class NhostDb extends DB {
     return teamData.returning[0];
   }
 
+  // TODO smartly compartmentalize these two methods to avoid duplicated code
+  async replaceTeammateNoAuth(
+    scrimId: string,
+    teamName: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ): Promise<{
+    team_name: string;
+    signup_player_id: string;
+    player_one_id: string;
+    player_two_id: string;
+    player_three_id: string;
+    scrim_id: string;
+  }> {
+    const query = `
+      mutation {
+  update_scrim_signups_many(
+    updates: [
+      {${this.getReplaceTeammateMutationBlockNoAuth("one", scrimId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlockNoAuth("two", scrimId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlockNoAuth("three", scrimId, oldPlayerId, newPlayerId)}}
+    ]
+  ) {
+    returning {
+      team_name
+      signup_player_id
+      player_one_id
+      player_two_id
+      player_three_id
+      scrim_id
+    }
+  }
+}
+`;
+    const result: {
+      update_scrim_signups_many: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      }[];
+    } = (await this.customQuery(query)) as unknown as {
+      update_scrim_signups_many: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      }[];
+    };
+    const teamData = result.update_scrim_signups_many.find(
+      (returned) => !!returned.returning[0]?.team_name,
+    );
+    if (!teamData?.returning[0]) {
+      throw Error("Changes not made");
+    }
+    return teamData.returning[0];
+  }
+
   private getReplaceTeammateMutationBlock(
     playerNumber: "one" | "two" | "three",
     scrimId: string,
@@ -336,6 +402,21 @@ class NhostDb extends DB {
             { player_two_id: { _eq: "${userId}" } },
             { player_three_id: { _eq: "${userId}" } }
           ]
+        },
+        _set: { player_${playerNumber}_id: "${newPlayerId}" }
+      `;
+  }
+
+  private getReplaceTeammateMutationBlockNoAuth(
+    playerNumber: "one" | "two" | "three",
+    scrimId: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ) {
+    return `
+        where: {
+          scrim_id: { _eq: "${scrimId}" },
+          player_${playerNumber}_id: { _eq: "${oldPlayerId}" }
         },
         _set: { player_${playerNumber}_id: "${newPlayerId}" }
       `;
