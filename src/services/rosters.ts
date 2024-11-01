@@ -64,6 +64,30 @@ export class RosterService {
     return this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
   }
 
+  async changeTeamName(
+    user: User,
+    discordChannel: string,
+    oldTeamName: string,
+    newTeamName: string,
+  ): Promise<void> {
+    const scrimId = this.cache.getScrimId(discordChannel);
+    if (!scrimId) {
+      throw Error(
+        "No scrim id matching that scrim channel present, contact admin",
+      );
+    }
+    const teamToBeChanged = this.getTeamIfAuthorized(
+      user,
+      scrimId,
+      oldTeamName,
+    );
+    await this.db.changeTeamNameNoAuth(
+      scrimId,
+      teamToBeChanged.teamName,
+      newTeamName,
+    );
+  }
+
   private getTeamIfAuthorized(
     commandUser: User,
     scrimId: string,
