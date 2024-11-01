@@ -20,11 +20,18 @@ export class RosterService {
     oldUser: User,
     newUser: User,
   ): Promise<void> {
-    const { teamToBeChanged, scrimId } = this.getDataIfAuthorized(
+    const { teamToBeChanged, scrimId, signups } = this.getDataIfAuthorized(
       commandUser,
       discordChannel,
       teamName,
     );
+    for (const team of signups) {
+      for (const player of team.players) {
+        if (player.discordId === newUser.id) {
+          throw Error("New player is already on a team in this scrim");
+        }
+      }
+    }
     let oldPlayerId: string | undefined;
     let oldPlayerIndex = 0;
     for (const player of teamToBeChanged.players) {
@@ -74,11 +81,16 @@ export class RosterService {
     oldTeamName: string,
     newTeamName: string,
   ): Promise<void> {
-    const { teamToBeChanged, scrimId } = this.getDataIfAuthorized(
+    const { teamToBeChanged, scrimId, signups } = this.getDataIfAuthorized(
       user,
       discordChannel,
       oldTeamName,
     );
+    for (const team of signups) {
+      if (team.teamName === newTeamName) {
+        throw Error("Team name already taken in this scrim set");
+      }
+    }
     await this.db.changeTeamNameNoAuth(
       scrimId,
       teamToBeChanged.teamName,
