@@ -19,49 +19,53 @@ export class RosterService {
     commandUser: User,
     oldUser: User,
     newUser: User,
-  ) {
-    const scrimId = this.cache.getScrimId(discordChannel);
-    if (!scrimId) {
-      throw Error(
-        "No scrim id matching that scrim channel present, contact admin",
-      );
-    }
-    const teamBeingChanged = this.getTeamIfAuthorized(
+  ): Promise<void> {
+    const { teamToBeChanged, scrimId } = this.getDataIfAuthorized(
       commandUser,
-      scrimId,
+      discordChannel,
       teamName,
     );
-    const oldPlayer = teamBeingChanged.players.find(
-      (player) => player.discordId === newUser.id,
-    );
-    if (!oldPlayer) {
+    let oldPlayerId: string | undefined;
+    let oldPlayerIndex = 0;
+    for (const player of teamToBeChanged.players) {
+      if (player.discordId === newUser.id) {
+        oldPlayerId = player.id;
+        break;
+      }
+      oldPlayerIndex++;
+    }
+    if (!oldPlayerId) {
       throw Error("Player being replaced is not on this team");
     }
     const newPlayerId = await this.db.insertPlayerIfNotExists(
       newUser.id as string,
       newUser.displayName,
     );
-    return this.db.replaceTeammateNoAuth(
+    await this.db.replaceTeammateNoAuth(
       scrimId,
       teamName,
-      oldPlayer.id,
+      oldPlayerId,
       newPlayerId,
     );
+    teamToBeChanged.players[oldPlayerIndex] = {
+      id: newPlayerId,
+      discordId: newUser.id as string,
+      displayName: newUser.displayName,
+    };
   }
 
-  removeTeam(
+  async removeTeam(
     user: User,
     discordChannel: string,
     teamName: string,
-  ): Promise<string> {
-    const scrimId = this.cache.getScrimId(discordChannel);
-    if (!scrimId) {
-      throw Error(
-        "No scrim id matching that scrim channel present, contact admin",
-      );
-    }
-    const teamToBeChanged = this.getTeamIfAuthorized(user, scrimId, teamName);
-    return this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
+  ): Promise<void> {
+    const { teamToBeChanged, signups, scrimId } = this.getDataIfAuthorized(
+      user,
+      discordChannel,
+      teamName,
+    );
+    await this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
+    signups.splice(signups.indexOf(teamToBeChanged), 1);
   }
 
   async changeTeamName(
@@ -70,15 +74,9 @@ export class RosterService {
     oldTeamName: string,
     newTeamName: string,
   ): Promise<void> {
-    const scrimId = this.cache.getScrimId(discordChannel);
-    if (!scrimId) {
-      throw Error(
-        "No scrim id matching that scrim channel present, contact admin",
-      );
-    }
-    const teamToBeChanged = this.getTeamIfAuthorized(
+    const { teamToBeChanged, scrimId } = this.getDataIfAuthorized(
       user,
-      scrimId,
+      discordChannel,
       oldTeamName,
     );
     await this.db.changeTeamNameNoAuth(
@@ -86,25 +84,32 @@ export class RosterService {
       teamToBeChanged.teamName,
       newTeamName,
     );
+    teamToBeChanged.teamName = newTeamName;
   }
 
-  private getTeamIfAuthorized(
+  private getDataIfAuthorized(
     commandUser: User,
-    scrimId: string,
+    discordChannel: string,
     teamName: string,
-  ) {
+  ): { scrimId: string; signups: ScrimSignup[]; teamToBeChanged: ScrimSignup } {
+    const scrimId = this.cache.getScrimId(discordChannel);
+    if (!scrimId) {
+      throw Error(
+        "No scrim id matching that scrim channel present, contact admin",
+      );
+    }
     const signups = this.cache.getSignups(scrimId);
     if (!signups) {
       throw Error("No teams signed up for this scrim");
     }
-    const teamBeingChanged = signups.find((team) => team.teamName === teamName);
-    if (!teamBeingChanged) {
+    const teamToBeChanged = signups.find((team) => team.teamName === teamName);
+    if (!teamToBeChanged) {
       throw Error("No team with that name");
     }
-    if (!this.userIsAuthorized(commandUser, teamBeingChanged)) {
+    if (!this.userIsAuthorized(commandUser, teamToBeChanged)) {
       throw Error("User issuing command not authorized to make changes");
     }
-    return teamBeingChanged;
+    return { scrimId, signups, teamToBeChanged };
   }
 
   private userIsAuthorized(user: User, team: ScrimSignup) {
