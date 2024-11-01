@@ -2,13 +2,15 @@ import { User } from "discord.js";
 import { PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { nhostDb } from "../db/nhost.db";
-import { cache } from "./cache";
+import { cache, Cache } from "./cache";
 
 export class RosterService {
   db: DB;
+  cache: Cache;
 
-  constructor(db: DB) {
+  constructor(db: DB, cache: Cache) {
     this.db = db;
+    this.cache = cache;
   }
 
   async replaceTeammate(
@@ -18,7 +20,7 @@ export class RosterService {
     oldPlayer: User,
     newPlayer: User,
   ) {
-    const scrimId = cache.getScrimId(discordChannel);
+    const scrimId = this.cache.getScrimId(discordChannel);
     if (!scrimId) {
       throw Error(
         "No scrim id matching that scrim channel present, contact admin",
@@ -50,7 +52,17 @@ export class RosterService {
       playerIds[2],
     );
   }
+
+  removeTeam(discordChannel: string, teamName: string): Promise<string> {
+    const scrimId = this.cache.getScrimId(discordChannel);
+    if (!scrimId) {
+      throw Error(
+        "No scrim id matching that scrim channel present, contact admin",
+      );
+    }
+    return this.db.removeScrimSignup(teamName, scrimId);
+  }
 }
 
-export const rosters = new RosterService(nhostDb);
+export const rosters = new RosterService(nhostDb, cache);
 export default rosters;

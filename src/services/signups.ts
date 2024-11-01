@@ -108,16 +108,6 @@ export class ScrimSignups {
     return signupId;
   }
 
-  removeTeam(discordChannel: string, teamName: string): Promise<string> {
-    const scrimId = this.cache.getScrimId(discordChannel);
-    if (!scrimId) {
-      throw Error(
-        "No scrim id matching that scrim channel present, contact admin",
-      );
-    }
-    return this.db.removeScrimSignup(teamName, scrimId);
-  }
-
   // TODO cacheing here?
   async getSignups(
     scrimId: string,
