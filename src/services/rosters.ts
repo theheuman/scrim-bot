@@ -61,7 +61,7 @@ export class RosterService {
     };
   }
 
-  async removeTeam(
+  async removeSignup(
     user: User,
     discordChannel: string,
     teamName: string,

@@ -20,7 +20,7 @@ module.exports = {
 
     // TODO user needs to be on team, or have signed team up to be allowed to remove team
     try {
-      await rosters.removeTeam(
+      await rosters.removeSignup(
         interaction.user,
         channelId as string,
         teamName as string,
