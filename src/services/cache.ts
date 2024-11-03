@@ -13,14 +13,7 @@ export class Cache {
   }
 
   getScrimId(discordChannel: string): string | undefined {
-    const result = this.scrimChannelMap.get(discordChannel);
-    console.log(
-      "Getting scrim id for discord channel",
-      this.scrimChannelMap,
-      discordChannel,
-      result,
-    );
-    return result;
+    return this.scrimChannelMap.get(discordChannel);
   }
 
   createScrim(discordChannel: string, scrimId: string) {

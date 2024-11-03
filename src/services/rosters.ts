@@ -14,9 +14,9 @@ export class RosterService {
   }
 
   async replaceTeammate(
+    commandUser: User,
     discordChannel: string,
     teamName: string,
-    commandUser: User,
     oldUser: User,
     newUser: User,
   ): Promise<void> {
@@ -35,7 +35,7 @@ export class RosterService {
     let oldPlayerId: string | undefined;
     let oldPlayerIndex = 0;
     for (const player of teamToBeChanged.players) {
-      if (player.discordId === newUser.id) {
+      if (player.discordId === oldUser.id) {
         oldPlayerId = player.id;
         break;
       }
