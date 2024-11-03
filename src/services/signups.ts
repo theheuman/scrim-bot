@@ -42,6 +42,18 @@ export class ScrimSignups {
     return scrimId;
   }
 
+  async closeScrim(
+    discordChannelID: string,
+    overstatLink: string,
+  ): Promise<string> {
+    // mark scrim as not active in scrims table
+    // insert new entries in scrim player stats table
+    // api call to overstat
+    // add relevant stats
+    // delete all the scrim signups for this scrim
+    return overstatLink;
+  }
+
   async addTeam(
     scrimId: string,
     teamName: string,
