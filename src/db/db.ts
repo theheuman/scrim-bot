@@ -37,8 +37,21 @@ export abstract class DB {
   abstract replaceTeammate(
     scrimId: string,
     teamName: string,
+    userId: string, // the user making the change, this gets authorized by the db
     oldPlayerId: string,
     newPlayerId: string,
+  ): Promise<JSONValue>;
+  abstract replaceTeammateNoAuth(
+    scrimId: string,
+    teamName: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ): Promise<JSONValue>;
+  abstract changeTeamName(
+    scrimId: string,
+    userId: string, // the user making the change, this gets authorized by the db
+    teamName: string,
+    newTeamName: string,
   ): Promise<JSONValue>;
 
   createNewScrim(
@@ -58,6 +71,7 @@ export abstract class DB {
   addScrimSignup(
     teamName: string,
     scrimId: string,
+    userId: string,
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,
@@ -66,6 +80,7 @@ export abstract class DB {
     return this.post("scrim_signups", {
       team_name: teamName,
       scrim_id: scrimId,
+      signup_player_id: playerId,
       player_one_id: playerId,
       player_two_id: playerTwoId,
       player_three_id: playerThreeId,
@@ -168,6 +183,9 @@ export abstract class DB {
           scrim_id
           date_time
           team_name
+          signup_player_id
+          signup_player_discord_id
+          signup_player_display_name
           player_one_id
           player_one_discord_id
           player_one_display_name
@@ -196,7 +214,8 @@ export abstract class DB {
     return returnedData.get_scrim_signups_with_players;
   }
 
-  changeTeamName(
+  // to be called if user role is admin
+  changeTeamNameNoAuth(
     scrimId: string,
     oldTeamName: string,
     newTeamName: string,

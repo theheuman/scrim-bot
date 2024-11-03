@@ -1,15 +1,18 @@
-import { ScrimSignups } from "../src/models/signups";
+import { ScrimSignups } from "../src/services/signups";
 import { DbMock } from "./mocks/db.mock";
 import { PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
+import { Cache } from "../src/services/cache";
 
 describe("Signups", () => {
   let dbMock: DbMock;
+  let cache: Cache;
   let signups: ScrimSignups;
 
   beforeEach(() => {
     dbMock = new DbMock();
-    signups = new ScrimSignups(dbMock);
+    cache = new Cache();
+    signups = new ScrimSignups(dbMock, cache);
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -27,9 +30,10 @@ describe("Signups", () => {
         signupId: "4685",
       };
 
-      signups.activeScrimSignups.set("32451", []);
+      cache.setSignups("32451", []);
       jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
         const expected: PlayerInsert[] = [
+          { discordId: "123", displayName: "TheHeuman" },
           { discordId: "123", displayName: "TheHeuman" },
           { discordId: "456", displayName: "Zboy" },
           { discordId: "789", displayName: "Supreme" },
@@ -60,6 +64,7 @@ describe("Signups", () => {
       const signupId = await signups.addTeam(
         expectedSignup.scrimId,
         expectedSignup.teamName,
+        theheuman,
         [theheuman, zboy, supreme],
       );
       expect(signupId).toEqual(expectedSignup.signupId);
@@ -68,7 +73,7 @@ describe("Signups", () => {
 
     it("Should not add a team because there is no scrim with that id", async () => {
       const causeException = async () => {
-        await signups.addTeam("", "", []);
+        await signups.addTeam("", "", theheuman, []);
       };
 
       await expect(causeException).rejects.toThrow(
@@ -77,11 +82,15 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because duplicate team name", async () => {
-      signups.activeScrimSignups.set("scrim 1", []);
+      cache.setSignups("scrim 1", []);
       const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", [zboy, supreme, mikey]);
+        await signups.addTeam("scrim 1", "Fineapples", theheuman, [
+          zboy,
+          supreme,
+          mikey,
+        ]);
       };
-      await signups.addTeam("scrim 1", "Fineapples", [
+      await signups.addTeam("scrim 1", "Fineapples", theheuman, [
         theheuman,
         revy,
         cTreazy,
@@ -91,15 +100,15 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because duplicate player", async () => {
-      signups.activeScrimSignups.set("scrim 1", []);
+      cache.setSignups("scrim 1", []);
       const causeException = async () => {
-        await signups.addTeam("scrim 1", "Dude Cube", [
+        await signups.addTeam("scrim 1", "Dude Cube", theheuman, [
           theheuman,
           supreme,
           mikey,
         ]);
       };
-      await signups.addTeam("scrim 1", "Fineapples", [
+      await signups.addTeam("scrim 1", "Fineapples", theheuman, [
         theheuman,
         revy,
         cTreazy,
@@ -111,9 +120,9 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there aren't three players", async () => {
-      signups.activeScrimSignups.set("32451", []);
+      cache.setSignups("32451", []);
       const causeException = async () => {
-        await signups.addTeam("32451", "", []);
+        await signups.addTeam("32451", "", theheuman, []);
       };
 
       await expect(causeException).rejects.toThrow(
@@ -122,9 +131,9 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there are 2 of the same player on a team", async () => {
-      signups.activeScrimSignups.set("scrim 1", []);
+      cache.setSignups("scrim 1", []);
       const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", [
+        await signups.addTeam("scrim 1", "Fineapples", supreme, [
           supreme,
           supreme,
           mikey,
@@ -146,9 +155,10 @@ describe("Signups", () => {
         signupId: "4685",
       };
 
-      signups.activeScrimSignups.set("32451", []);
+      cache.setSignups("32451", []);
       jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
         const expected: PlayerInsert[] = [
+          { discordId: "123", displayName: "TheHeuman" },
           { discordId: "123", displayName: "TheHeuman" },
           { discordId: "456", displayName: "Zboy" },
           { discordId: "789", displayName: "Supreme" },
@@ -179,6 +189,7 @@ describe("Signups", () => {
       const signupId = await signups.addTeam(
         expectedSignup.scrimId,
         expectedSignup.teamName,
+        theheuman,
         [theheuman, zboy, supreme],
       );
       expect(signupId).toEqual(expectedSignup.signupId);
@@ -188,7 +199,7 @@ describe("Signups", () => {
 
   describe("updateActiveScrims()", () => {
     it("Should get active scrims", async () => {
-      signups.activeScrimSignups.clear();
+      cache.clear();
       jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
         return Promise.resolve({
           scrims: [
@@ -200,9 +211,8 @@ describe("Signups", () => {
         });
       });
 
-      await signups.updateActiveScrims();
-      expect(signups.scrimChannelMap.size).toEqual(1);
-      expect(signups.scrimChannelMap.get("something")).toEqual(
+      await signups.updateActiveScrims(true);
+      expect(cache.getScrimId("something")).toEqual(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
       );
     });
@@ -211,8 +221,7 @@ describe("Signups", () => {
   describe("createScrim()", () => {
     it("Should create scrim", async () => {
       const channelId = "a valid id";
-      signups.activeScrimSignups.clear();
-      signups.scrimChannelMap.clear();
+      cache.clear();
       jest
         .spyOn(dbMock, "createNewScrim")
         .mockImplementation(
@@ -224,11 +233,8 @@ describe("Signups", () => {
         );
 
       await signups.createScrim(channelId, new Date());
-      expect(signups.activeScrimSignups.size).toEqual(1);
-      expect(signups.scrimChannelMap.get(channelId)).toEqual(
-        "a valid scrim id",
-      );
-      expect.assertions(4);
+      expect(cache.getScrimId(channelId)).toEqual("a valid scrim id");
+      expect.assertions(3);
     });
   });
 });

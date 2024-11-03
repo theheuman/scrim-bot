@@ -179,13 +179,89 @@ class NhostDb extends DB {
     return returnedData[updateName].returning[0];
   }
 
+  async changeTeamName(
+    scrimId: string,
+    userId: string, // the user making the change, this gets authorized by the db
+    teamName: string,
+    newTeamName: string,
+  ): Promise<{
+    team_name: string;
+    signup_player_id: string;
+    player_one_id: string;
+    player_two_id: string;
+    player_three_id: string;
+    scrim_id: string;
+  }> {
+    const updateName = "update_scrim_signups";
+    const searchString = `
+        where: {
+          scrim_id: { _eq: "${scrimId}" },
+          team_name: { _eq: "${teamName}" },
+          _or: [
+            { signup_player_id: { _eq: "${userId}" } },
+            { player_one_id: { _eq: "${userId}" } },
+            { player_two_id: { _eq: "${userId}" } },
+            { player_three_id: { _eq: "${userId}" } }
+          ]
+        }`;
+    const fieldsToReturn = [
+      "team_name",
+      "signup_player_id",
+      "player_one_id",
+      "player_two_id",
+      "player_three_id",
+      "scrim_id",
+    ];
+    const setString = `_set: { team_name: "${newTeamName}" }`;
+    const query = `
+      mutation {
+        ${updateName}( ${searchString}, ${setString} ) {
+          returning {
+            ${fieldsToReturn.join("\n")}
+          }
+        }
+      }
+    `;
+
+    const result: {
+      update_scrim_signups_one: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      };
+    } = (await this.customQuery(query)) as unknown as {
+      update_scrim_signups_one: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      };
+    };
+    const teamData = result.update_scrim_signups_one.returning[0];
+    if (!teamData) {
+      throw Error("Changes not made");
+    }
+    return teamData;
+  }
+
   async replaceTeammate(
     scrimId: string,
     teamName: string,
+    userId: string,
     oldPlayerId: string,
     newPlayerId: string,
   ): Promise<{
     team_name: string;
+    signup_player_id: string;
     player_one_id: string;
     player_two_id: string;
     player_three_id: string;
@@ -195,31 +271,14 @@ class NhostDb extends DB {
       mutation {
   update_scrim_signups_many(
     updates: [
-      {
-        where: {
-          scrim_id: { _eq: "${scrimId}" },
-          player_one_id: { _eq: "${oldPlayerId}" }
-        },
-        _set: { player_one_id: "${newPlayerId}" }
-      },
-      {
-        where: {
-          scrim_id: { _eq: "${scrimId}" },
-          player_two_id: { _eq: "${oldPlayerId}" }
-        },
-        _set: { player_two_id: "${newPlayerId}" }
-      },
-      {
-        where: {
-          scrim_id: { _eq: "${scrimId}" },
-          player_three_id: { _eq: "${oldPlayerId}" }
-        },
-        _set: { player_three_id: "${newPlayerId}" }
-      }
+      {${this.getReplaceTeammateMutationBlock("one", scrimId, userId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlock("two", scrimId, userId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlock("three", scrimId, userId, oldPlayerId, newPlayerId)}}
     ]
   ) {
     returning {
       team_name
+      signup_player_id
       player_one_id
       player_two_id
       player_three_id
@@ -232,6 +291,7 @@ class NhostDb extends DB {
       update_scrim_signups_many: {
         returning: {
           team_name: string;
+          signup_player_id: string;
           player_one_id: string;
           player_two_id: string;
           player_three_id: string;
@@ -242,6 +302,7 @@ class NhostDb extends DB {
       update_scrim_signups_many: {
         returning: {
           team_name: string;
+          signup_player_id: string;
           player_one_id: string;
           player_two_id: string;
           player_three_id: string;
@@ -256,6 +317,109 @@ class NhostDb extends DB {
       throw Error("Changes not made");
     }
     return teamData.returning[0];
+  }
+
+  // TODO smartly compartmentalize these two methods to avoid duplicated code
+  async replaceTeammateNoAuth(
+    scrimId: string,
+    teamName: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ): Promise<{
+    team_name: string;
+    signup_player_id: string;
+    player_one_id: string;
+    player_two_id: string;
+    player_three_id: string;
+    scrim_id: string;
+  }> {
+    const query = `
+      mutation {
+  update_scrim_signups_many(
+    updates: [
+      {${this.getReplaceTeammateMutationBlockNoAuth("one", scrimId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlockNoAuth("two", scrimId, oldPlayerId, newPlayerId)}},
+      {${this.getReplaceTeammateMutationBlockNoAuth("three", scrimId, oldPlayerId, newPlayerId)}}
+    ]
+  ) {
+    returning {
+      team_name
+      signup_player_id
+      player_one_id
+      player_two_id
+      player_three_id
+      scrim_id
+    }
+  }
+}
+`;
+    const result: {
+      update_scrim_signups_many: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      }[];
+    } = (await this.customQuery(query)) as unknown as {
+      update_scrim_signups_many: {
+        returning: {
+          team_name: string;
+          signup_player_id: string;
+          player_one_id: string;
+          player_two_id: string;
+          player_three_id: string;
+          scrim_id: string;
+        }[];
+      }[];
+    };
+    const teamData = result.update_scrim_signups_many.find(
+      (returned) => !!returned.returning[0]?.team_name,
+    );
+    if (!teamData?.returning[0]) {
+      throw Error("Changes not made");
+    }
+    return teamData.returning[0];
+  }
+
+  private getReplaceTeammateMutationBlock(
+    playerNumber: "one" | "two" | "three",
+    scrimId: string,
+    userId: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ) {
+    return `
+        where: {
+          scrim_id: { _eq: "${scrimId}" },
+          player_${playerNumber}_id: { _eq: "${oldPlayerId}" },
+          _or: [
+            { signup_player_id: { _eq: "${userId}" } },
+            { player_one_id: { _eq: "${userId}" } },
+            { player_two_id: { _eq: "${userId}" } },
+            { player_three_id: { _eq: "${userId}" } }
+          ]
+        },
+        _set: { player_${playerNumber}_id: "${newPlayerId}" }
+      `;
+  }
+
+  private getReplaceTeammateMutationBlockNoAuth(
+    playerNumber: "one" | "two" | "three",
+    scrimId: string,
+    oldPlayerId: string,
+    newPlayerId: string,
+  ) {
+    return `
+        where: {
+          scrim_id: { _eq: "${scrimId}" },
+          player_${playerNumber}_id: { _eq: "${oldPlayerId}" }
+        },
+        _set: { player_${playerNumber}_id: "${newPlayerId}" }
+      `;
   }
 
   async customQuery(query: string): Promise<JSONValue> {

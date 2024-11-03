@@ -1,13 +1,12 @@
-import { signups, ScrimSignups } from "../src/models/signups";
+import { ScrimSignups } from "../src/services/signups";
 import { DbMock } from "./mocks/db.mock";
 import { PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
 
 describe("Integration", () => {
-
   it("Should use this fake test case to run integration tests when they are commented out", async () => {
-    expect("orange").toBeDefined()
-  })
+    expect("orange").toBeDefined();
+  });
   /*
   describe("addTeam()", () => {
     it("Should add a team", async () => {
