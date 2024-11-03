@@ -35,6 +35,16 @@ export class RosterService {
     let oldPlayerId: string | undefined;
     let oldPlayerIndex = 0;
     for (const player of teamToBeChanged.players) {
+      console.log(
+        "Player on team: " +
+          player.displayName +
+          " " +
+          player.discordId +
+          " Player to be replaced: " +
+          oldUser.displayName +
+          " " +
+          oldUser.id,
+      );
       if (player.discordId === oldUser.id) {
         oldPlayerId = player.id;
         break;
