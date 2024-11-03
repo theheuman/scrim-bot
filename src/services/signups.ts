@@ -1,9 +1,8 @@
 import { User } from "discord.js";
 import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
-import { nhostDb } from "../db/nhost.db";
 import { Scrims, ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { cache, Cache } from "./cache";
+import { Cache } from "./cache";
 
 export interface ScrimSignup {
   teamName: string;
@@ -197,6 +196,3 @@ export class ScrimSignups {
     };
   }
 }
-
-export const signups = new ScrimSignups(nhostDb, cache);
-export default signups;

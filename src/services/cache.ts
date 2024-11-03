@@ -37,5 +37,3 @@ export class Cache {
     this.activeScrimSignups.clear();
   }
 }
-
-export const cache = new Cache();

@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, CommandInteraction } from "discord.js";
-import signups, { ScrimSignup } from "../../services/signups";
+import { ScrimSignup } from "../../services/signups";
+import { signups } from "../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()

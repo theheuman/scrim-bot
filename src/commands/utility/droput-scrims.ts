@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import rosters from "../../services/rosters";
+import { rosters } from "../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()

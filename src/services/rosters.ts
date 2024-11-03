@@ -1,7 +1,6 @@
 import { User } from "discord.js";
 import { DB } from "../db/db";
-import { nhostDb } from "../db/nhost.db";
-import { cache, Cache } from "./cache";
+import { Cache } from "./cache";
 import { ScrimSignup } from "./signups";
 
 export class RosterService {
@@ -143,6 +142,3 @@ export class RosterService {
     return !!foundPlayer;
   }
 }
-
-export const rosters = new RosterService(nhostDb, cache);
-export default rosters;
