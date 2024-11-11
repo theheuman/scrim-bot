@@ -46,18 +46,22 @@ export class ScrimSignups {
     discordChannelID: string,
     overstatLink: string,
   ): Promise<string> {
-    // mark scrim as not active in scrims table
+    const scrimId = this.cache.getScrimId(discordChannelID);
+    if (!scrimId) {
+      throw Error("No scrim found for that channel");
+    }
     // insert new entries in scrim player stats table
-    // api call to overstat
-    // add relevant stats
-    // delete all the scrim signups for this scrim
+    //   api call to overstat
+    //   add relevant stats to players that have overstat id's, do not try to match discord id's and overstat id's
+    // closing the scrim deletes all the signups, do this last
+    await this.db.closeScrim(scrimId, overstatLink, 1);
     return overstatLink;
   }
 
   async addTeam(
     scrimId: string,
     teamName: string,
-    user: User,
+    commandUser: User,
     players: User[],
   ): Promise<string> {
     const scrim = this.cache.getSignups(scrimId);
@@ -87,7 +91,7 @@ export class ScrimSignups {
         }
       }
     }
-    const playersToInsert = [user, ...players];
+    const playersToInsert = [commandUser, ...players];
     const convertedPlayers: PlayerInsert[] = playersToInsert.map(
       (discordUser: User) => ({
         discordId: discordUser.id as string,

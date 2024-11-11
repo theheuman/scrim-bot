@@ -119,6 +119,7 @@ class NhostDb extends DB {
     return returnedData[deleteName].returning[0].id;
   }
 
+  // TODO modify to return records affected and all id's deleted
   async delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,

@@ -68,6 +68,19 @@ export abstract class DB {
     });
   }
 
+  async closeScrim(scrimId: string, overstatLink: string, skill: number) {
+    const dbId: string = (await this.update(
+      "scrims",
+      { id: scrimId },
+      { active: false, overstat_link: overstatLink, skill },
+      ["id"],
+    )) as string;
+    if (!dbId) {
+      throw Error("Did not update");
+    }
+    return this.delete("scrim_signups", { scrim_id: dbId });
+  }
+
   addScrimSignup(
     teamName: string,
     scrimId: string,
