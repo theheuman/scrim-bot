@@ -312,11 +312,11 @@ describe("DB connection", () => {
         });
       };
 
-      const deletedID = await nhostDb.delete("scrim_signups", {
+      const deletedIDs = await nhostDb.delete("scrim_signups", {
         scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
         team_name: "Fineapples",
       });
-      expect(deletedID).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
+      expect(deletedIDs[0]).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
       expect.assertions(2);
     });
 
@@ -356,22 +356,14 @@ describe("DB connection", () => {
   const createPlayer = (
     discordId: string,
     displayName: string,
-    overstatLink?: string,
+    overstatId?: string,
     elo?: number,
   ): PlayerInsert => {
-    return { discordId, displayName, overstatLink, elo };
+    return { discordId, displayName, overstatId: overstatId, elo };
   };
-  const zboy = createPlayer(
-    "316280734115430403",
-    "zboy",
-    "https://overstat.gg/player/749174.Zboy5z5/overview",
-  );
+  const zboy = createPlayer("316280734115430403", "zboy", "749174");
   const supreme = createPlayer("244307424838811648", "Supreme", undefined, 1);
-  const theheuman = createPlayer(
-    "315310843317321732",
-    "TheHeuman",
-    "https://overstat.gg/player/357606.TheHeuman/overview",
-  );
+  const theheuman = createPlayer("315310843317321732", "TheHeuman", "357606");
 
   describe("insert player()", () => {
     it("Should have correct mutation query with no overstat link", async () => {
@@ -471,7 +463,7 @@ describe("DB connection", () => {
               where: {discord_id: {_eq: "316280734115430403"}},
               _set: {
                 display_name: "zboy",
-                overstat_link: "https://overstat.gg/player/749174.Zboy5z5/overview"
+                overstat_id: "749174"
               }
             ) {
               affected_rows
@@ -491,7 +483,7 @@ describe("DB connection", () => {
               where: {discord_id: {_eq: "315310843317321732"}},
               _set: {
                 display_name: "TheHeuman",
-                overstat_link: "https://overstat.gg/player/357606.TheHeuman/overview"
+                overstat_id: "357606"
               }
             ) {
               affected_rows
@@ -705,6 +697,114 @@ describe("DB connection", () => {
         scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
       });
       expect.assertions(2);
+    });
+  });
+
+  describe("closeScrim()", () => {
+    const expectedUpdateQuery = `
+        mutation {
+         update_scrims(
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+          _set:
+          {
+            active: false,
+            overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
+            skill: 1
+          }
+         )
+         {
+           returning {
+             id
+           }
+         }
+       }
+    `;
+    const expectedDeleteQuery = `
+      mutation {
+        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]}) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+    const expectedPostQuery = `
+      mutation upsertPlayer {
+        insert_players_one(
+          object: {discord_id: "316280734115430403", display_name: "zboy"}
+          on_conflict: {
+            constraint: players_discord_id_key,  # Unique constraint on discord_id
+            update_columns: [
+              display_name
+            ]
+          }
+        ) {
+          id  # Return the ID of the player, whether newly inserted or found
+        }
+      }
+    `;
+    it("Should correctly post player stats and delete scrim signups", async () => {
+      mockRequest = (query) => {
+        let expected = expectedUpdateQuery;
+        let returnData: { data: any } = {
+          data: {
+            update_scrims: {
+              returning: [
+                {
+                  id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                },
+              ],
+            },
+          },
+        };
+        if (query.includes("delete_")) {
+          expected = expectedDeleteQuery;
+          returnData = {
+            data: {
+              delete_scrim_signups: {
+                returning: [
+                  {
+                    id: "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
+                  },
+                  {
+                    id: "9766e780-3c13-4298-8eed-a3cf9a206db4",
+                  },
+                ],
+              },
+            },
+          };
+        } else if (query.includes("insert_")) {
+          expected = expectedPostQuery;
+          returnData = {
+            data: {
+              insert_players: {
+                returning: [
+                  {
+                    id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                  },
+                ],
+              },
+            },
+          };
+        }
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
+        return Promise.resolve(returnData);
+      };
+      const returnedData = await nhostDb.closeScrim(
+        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
+        1,
+        [],
+      );
+      expect(returnedData).toEqual({
+        deleted_info: [
+          "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
+          "9766e780-3c13-4298-8eed-a3cf9a206db4",
+        ],
+      });
+      expect.assertions(3);
     });
   });
 });

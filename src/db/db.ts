@@ -1,5 +1,6 @@
 import { PlayerInsert } from "../models/Player";
 import { Scrims, ScrimSignupsWithPlayers } from "./table.interfaces";
+import { PlayerTournamentStats } from "../models/overstatModels";
 
 export type JSONValue =
   | string
@@ -32,7 +33,7 @@ export abstract class DB {
   abstract delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
-  ): Promise<string>;
+  ): Promise<string[]>;
   abstract customQuery(query: string): Promise<JSONValue>;
   abstract replaceTeammate(
     scrimId: string,
@@ -68,17 +69,28 @@ export abstract class DB {
     });
   }
 
-  async closeScrim(scrimId: string, overstatLink: string, skill: number) {
-    const dbId: string = (await this.update(
+  async closeScrim(
+    scrimId: string,
+    overstatLink: string,
+    skill: number,
+    playerStats: PlayerTournamentStats[],
+  ) {
+    const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
       { id: scrimId },
       { active: false, overstat_link: overstatLink, skill },
       ["id"],
-    )) as string;
-    if (!dbId) {
+    )) as { id: string };
+    if (!updatedScrimInfo?.id) {
       throw Error("Did not update");
     }
-    return this.delete("scrim_signups", { scrim_id: dbId });
+    console.log(playerStats);
+    // TODO undelete this next line when post method can handle an array
+    // await this.post('scrim_player_stats', playerStats)
+    const deleted_info = await this.delete("scrim_signups", {
+      scrim_id: updatedScrimInfo.id,
+    });
+    return { deleted_info };
   }
 
   addScrimSignup(
@@ -202,17 +214,17 @@ export abstract class DB {
           player_one_id
           player_one_discord_id
           player_one_display_name
-          player_one_overstat_link
+          player_one_overstat_id
           player_one_elo
           player_two_id
           player_two_discord_id
           player_two_display_name
-          player_two_overstat_link
+          player_two_overstat_id
           player_two_elo
           player_three_id
           player_three_discord_id
           player_three_display_name
-          player_three_overstat_link
+          player_three_overstat_id
           player_three_elo
         }
       }
@@ -254,8 +266,8 @@ export abstract class DB {
     player: PlayerInsert,
     uniqueQueryName: string,
   ) {
-    const overstatSet = player.overstatLink
-      ? `overstat_link: "${player.overstatLink}"`
+    const overstatSet = player.overstatId
+      ? `overstat_id: "${player.overstatId}"`
       : "";
     const eloSet = player.elo ? `elo: ${player.elo}` : "";
     return `

@@ -123,7 +123,7 @@ class NhostDb extends DB {
   async delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
-  ): Promise<string> {
+  ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
     const searchString = `(${NhostDb.generateSearchStringFromFields(fieldsToEqual)})`;
     const query = `
@@ -144,7 +144,7 @@ class NhostDb extends DB {
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[deleteName].returning[0].id;
+    return returnedData[deleteName].returning.map((data) => data.id);
   }
 
   async update(

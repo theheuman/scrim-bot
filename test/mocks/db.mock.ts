@@ -87,8 +87,8 @@ export class DbMock extends DB {
   delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
-  ): Promise<string> {
-    return Promise.resolve("");
+  ): Promise<string[]> {
+    return Promise.resolve([""]);
   }
 
   replaceTeammate(

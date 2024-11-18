@@ -3,16 +3,19 @@ import { DbMock } from "./mocks/db.mock";
 import { PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
 import { Cache } from "../src/services/cache";
+import { OverstatService } from "../src/services/overstat";
 
 describe("Signups", () => {
   let dbMock: DbMock;
   let cache: Cache;
   let signups: ScrimSignups;
+  let overstatService: OverstatService;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new Cache();
-    signups = new ScrimSignups(dbMock, cache);
+    overstatService = new OverstatService();
+    signups = new ScrimSignups(dbMock, cache, overstatService);
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;

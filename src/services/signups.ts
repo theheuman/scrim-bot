@@ -3,6 +3,8 @@ import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { Scrims, ScrimSignupsWithPlayers } from "../db/table.interfaces";
 import { Cache } from "./cache";
+import { OverstatService } from "./overstat";
+import { PlayerTournamentStats } from "../models/overstatModels";
 
 export interface ScrimSignup {
   teamName: string;
@@ -13,12 +15,11 @@ export interface ScrimSignup {
 }
 
 export class ScrimSignups {
-  db: DB;
-  cache: Cache;
-
-  constructor(db: DB, cache: Cache) {
-    this.db = db;
-    this.cache = cache;
+  constructor(
+    private db: DB,
+    private cache: Cache,
+    private overstatService: OverstatService,
+  ) {
     this.updateActiveScrims();
   }
 
@@ -50,11 +51,14 @@ export class ScrimSignups {
     if (!scrimId) {
       throw Error("No scrim found for that channel");
     }
-    // insert new entries in scrim player stats table
-    //   api call to overstat
-    //   add relevant stats to players that have overstat id's, do not try to match discord id's and overstat id's
-    // closing the scrim deletes all the signups, do this last
-    await this.db.closeScrim(scrimId, overstatLink, 1);
+    const signups = this.cache.getSignups(scrimId);
+    if (!signups) {
+      throw Error("No signups for that scrim");
+    }
+    const stats = await this.overstatService.getOverallStats(overstatLink);
+    const playerStats: PlayerTournamentStats[] =
+      this.overstatService.matchPlayers(signups, stats);
+    await this.db.closeScrim(scrimId, overstatLink, 1, playerStats);
     return overstatLink;
   }
 
@@ -111,7 +115,7 @@ export class ScrimSignups {
       id: playerIds[index],
       displayName: player.displayName,
       discordId: player.discordId,
-      overstatLink: player.overstatLink,
+      overstatLink: player.overstatId,
       elo: player.elo,
     }));
     scrim.push({
@@ -183,7 +187,7 @@ export class ScrimSignups {
         id: dbTeamData.signup_player_id,
         displayName: dbTeamData.signup_player_display_name,
         discordId: dbTeamData.signup_player_discord_id,
-        overstatLink: undefined,
+        overstatId: undefined,
         elo: undefined,
       },
       players: [
@@ -191,21 +195,21 @@ export class ScrimSignups {
           id: dbTeamData.player_one_id,
           displayName: dbTeamData.player_one_display_name,
           discordId: dbTeamData.player_one_discord_id,
-          overstatLink: dbTeamData.player_one_overstat_link,
+          overstatId: dbTeamData.player_one_overstat_id,
           elo: dbTeamData.player_one_elo,
         },
         {
           id: dbTeamData.player_two_id,
           displayName: dbTeamData.player_two_display_name,
           discordId: dbTeamData.player_two_discord_id,
-          overstatLink: dbTeamData.player_two_overstat_link,
+          overstatId: dbTeamData.player_two_overstat_id,
           elo: dbTeamData.player_two_elo,
         },
         {
           id: dbTeamData.player_three_id,
           displayName: dbTeamData.player_three_display_name,
           discordId: dbTeamData.player_three_discord_id,
-          overstatLink: dbTeamData.player_three_overstat_link,
+          overstatId: dbTeamData.player_three_overstat_id,
           elo: dbTeamData.player_three_elo,
         },
       ],
