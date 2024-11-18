@@ -63,13 +63,19 @@ class NhostDb extends DB {
 
   async post(
     tableName: string,
-    data: Record<string, DbValue>,
-  ): Promise<string> {
+    data: Record<string, DbValue>[],
+  ): Promise<string[]> {
     const insertName = "insert_" + tableName;
-    const objects = Object.keys(data)
-      .map((key) => `${key}: ${NhostDb.createValueString(data[key])}`)
-      .join(", ");
-    const objectsString = `(objects: [{ ${objects} }])`;
+    const objects: string[] = [];
+    for (const object of data) {
+      const objectToInsert = Object.keys(object)
+        .map(
+          (key: string) => `${key}: ${NhostDb.createValueString(object[key])}`,
+        )
+        .join(", ");
+      objects.push(`{ ${objectToInsert} }`);
+    }
+    const objectsString = `(objects: [${objects.join(", ")}])`;
     const query = `
       mutation {
         ${insertName}${objectsString} {
@@ -91,7 +97,7 @@ class NhostDb extends DB {
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[insertName].returning[0].id;
+    return returnedData[insertName].returning.map((data) => data.id);
   }
 
   // TODO use delete_by_pk field here? Probably more efficient
@@ -314,10 +320,11 @@ class NhostDb extends DB {
     const teamData = result.update_scrim_signups_many.find(
       (returned) => !!returned.returning[0]?.team_name,
     );
-    if (!teamData?.returning[0]) {
+    const returnData = teamData?.returning[0];
+    if (!returnData) {
       throw Error("Changes not made");
     }
-    return teamData.returning[0];
+    return returnData;
   }
 
   // TODO smartly compartmentalize these two methods to avoid duplicated code
@@ -380,10 +387,11 @@ class NhostDb extends DB {
     const teamData = result.update_scrim_signups_many.find(
       (returned) => !!returned.returning[0]?.team_name,
     );
-    if (!teamData?.returning[0]) {
+    const returnData = teamData?.returning[0];
+    if (!returnData) {
       throw Error("Changes not made");
     }
-    return teamData.returning[0];
+    return returnData;
   }
 
   private getReplaceTeammateMutationBlock(

@@ -6,7 +6,7 @@ export class DbMock extends DB {
   customQueryResponse: JSONValue;
   deleteResponse: string;
   getResponse: JSONValue;
-  postResponse: string;
+  postResponse: string[];
   addScrimSignupResponse: string;
   insertPlayersResponse: string[];
   insertPlayerIfNotExistsResponse: string;
@@ -17,7 +17,7 @@ export class DbMock extends DB {
     this.customQueryResponse = {};
     this.deleteResponse = "";
     this.getResponse = {};
-    this.postResponse = "";
+    this.postResponse = [""];
     this.addScrimSignupResponse = "";
     this.insertPlayersResponse = [""];
     this.insertPlayerIfNotExistsResponse = "";
@@ -39,7 +39,7 @@ export class DbMock extends DB {
     return Promise.resolve(this.getResponse);
   }
 
-  post(tableName: string, data: Record<string, any>): Promise<string> {
+  post(tableName: string, data: Record<string, any>): Promise<string[]> {
     return Promise.resolve(this.postResponse);
   }
 

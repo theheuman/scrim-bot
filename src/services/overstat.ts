@@ -1,9 +1,6 @@
-import {
-  OverstatTournamentResponse,
-  PlayerTournamentStats,
-} from "../models/overstatModels";
+import { OverstatTournamentResponse } from "../models/overstatModels";
 import { ScrimSignup } from "./signups";
-import { Player } from "../models/Player";
+import { Player, PlayerStatInsert } from "../models/Player";
 
 export class OverstatService {
   private getUrl(tournamentId: string) {
@@ -40,9 +37,10 @@ export class OverstatService {
   }
 
   matchPlayers(
+    scrimId: string,
     signups: ScrimSignup[],
     stats: OverstatTournamentResponse,
-  ): PlayerTournamentStats[] {
+  ): PlayerStatInsert[] {
     // Step 1: Create a map of signed-up players by their Overstat ID (from their overstatLink)
     const playersMap = new Map<string, Player>(); // Map from Overstat ID to player details
     signups.forEach((signup) => {
@@ -62,25 +60,22 @@ export class OverstatService {
           );
           if (playerFromSignups) {
             return {
-              accuracy: playerStat.accuracy,
+              player_id: playerFromSignups.id,
+              scrim_id: scrimId,
               assists: playerStat.assists,
-              characters: playerStat.characters,
-              damageDealt: playerStat.damageDealt,
-              damageTaken: playerStat.damageTaken,
-              grenadesThrown: playerStat.grenadesThrown,
-              headshots: playerStat.headshots,
-              hits: playerStat.hits,
+              characters: playerStat.characters.join(","),
+              damage_dealt: playerStat.damageDealt,
+              damage_taken: playerStat.damageTaken,
+              grenades_thrown: playerStat.grenadesThrown,
               kills: playerStat.kills,
               knockdowns: playerStat.knockdowns,
               name: playerStat.name,
-              playerId: playerStat.playerId,
-              respawnsGiven: playerStat.respawnsGiven,
-              revivesGiven: playerStat.revivesGiven,
+              respawns_given: playerStat.respawnsGiven,
+              revives_given: playerStat.revivesGiven,
               score: playerStat.score,
-              shots: playerStat.shots,
-              survivalTime: playerStat.survivalTime,
-              tacticalsUsed: playerStat.tacticalsUsed,
-              ultimatesUsed: playerStat.ultimatesUsed,
+              survival_time: playerStat.survivalTime,
+              tacticals_used: playerStat.tacticalsUsed,
+              ultimates_used: playerStat.ultimatesUsed,
             };
           }
           return null; // If no match is found, return null

@@ -1,6 +1,5 @@
-import { PlayerInsert } from "../models/Player";
+import { PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { Scrims, ScrimSignupsWithPlayers } from "./table.interfaces";
-import { PlayerTournamentStats } from "../models/overstatModels";
 
 export type JSONValue =
   | string
@@ -26,8 +25,8 @@ export abstract class DB {
   // returns id of new object as a string
   abstract post(
     tableName: string,
-    data: Record<string, DbValue>,
-  ): Promise<string>;
+    data: Record<string, DbValue>[],
+  ): Promise<string[]>;
   // returns id of the deleted object as a string
   abstract deleteById(tableName: string, id: string): Promise<string>;
   abstract delete(
@@ -55,26 +54,29 @@ export abstract class DB {
     newTeamName: string,
   ): Promise<JSONValue>;
 
-  createNewScrim(
+  async createNewScrim(
     dateTime: Date,
     discordChannelID: string,
     skill: number,
     overstatLink: string | null = null,
   ): Promise<string> {
-    return this.post("scrims", {
-      date_time_field: dateTime.toISOString(),
-      skill,
-      overstat_link: overstatLink,
-      discord_channel: discordChannelID,
-    });
+    const ids = await this.post("scrims", [
+      {
+        date_time_field: dateTime.toISOString(),
+        skill,
+        overstat_link: overstatLink,
+        discord_channel: discordChannelID,
+      },
+    ]);
+    return ids[0];
   }
 
   async closeScrim(
     scrimId: string,
     overstatLink: string,
     skill: number,
-    playerStats: PlayerTournamentStats[],
-  ) {
+    playerStats: PlayerStatInsert[],
+  ): Promise<{ deletedSignups: string[]; insertedStats: string[] }> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
       { id: scrimId },
@@ -84,16 +86,17 @@ export abstract class DB {
     if (!updatedScrimInfo?.id) {
       throw Error("Did not update");
     }
-    console.log(playerStats);
-    // TODO undelete this next line when post method can handle an array
-    // await this.post('scrim_player_stats', playerStats)
-    const deleted_info = await this.delete("scrim_signups", {
+    const insertedStats = await this.post(
+      "scrim_player_stats",
+      playerStats as unknown as Record<string, DbValue>[],
+    );
+    const deletedSignups = await this.delete("scrim_signups", {
       scrim_id: updatedScrimInfo.id,
     });
-    return { deleted_info };
+    return { deletedSignups, insertedStats };
   }
 
-  addScrimSignup(
+  async addScrimSignup(
     teamName: string,
     scrimId: string,
     userId: string,
@@ -102,15 +105,18 @@ export abstract class DB {
     playerThreeId: string,
     combinedElo: number | null = null,
   ): Promise<string> {
-    return this.post("scrim_signups", {
-      team_name: teamName,
-      scrim_id: scrimId,
-      signup_player_id: playerId,
-      player_one_id: playerId,
-      player_two_id: playerTwoId,
-      player_three_id: playerThreeId,
-      combined_elo: combinedElo,
-    });
+    const ids = await this.post("scrim_signups", [
+      {
+        team_name: teamName,
+        scrim_id: scrimId,
+        signup_player_id: playerId,
+        player_one_id: playerId,
+        player_two_id: playerTwoId,
+        player_three_id: playerThreeId,
+        combined_elo: combinedElo,
+      },
+    ]);
+    return ids[0];
   }
 
   removeScrimSignup(teamName: string, scrimId: string) {

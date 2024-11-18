@@ -1,10 +1,9 @@
 import { User } from "discord.js";
-import { Player, PlayerInsert } from "../models/Player";
+import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { Scrims, ScrimSignupsWithPlayers } from "../db/table.interfaces";
 import { Cache } from "./cache";
 import { OverstatService } from "./overstat";
-import { PlayerTournamentStats } from "../models/overstatModels";
 
 export interface ScrimSignup {
   teamName: string;
@@ -56,8 +55,12 @@ export class ScrimSignups {
       throw Error("No signups for that scrim");
     }
     const stats = await this.overstatService.getOverallStats(overstatLink);
-    const playerStats: PlayerTournamentStats[] =
-      this.overstatService.matchPlayers(signups, stats);
+    const playerStats: PlayerStatInsert[] = this.overstatService.matchPlayers(
+      scrimId,
+      signups,
+      stats,
+    );
+
     await this.db.closeScrim(scrimId, overstatLink, 1, playerStats);
     return overstatLink;
   }
