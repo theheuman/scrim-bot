@@ -50,41 +50,55 @@ export class OverstatService {
         }
       });
     });
-
-    // Step 2: Iterate over each player in the overall stats and match with signup data
-    return stats.teams.flatMap((team) => {
-      return team.player_stats
-        .map((playerStat) => {
+    const players: Map<string, PlayerStatInsert> = new Map();
+    for (const game of stats.games) {
+      for (const team of game.teams) {
+        for (const playerStat of team.player_stats) {
           const playerFromSignups = playersMap.get(
             playerStat.playerId.toString(),
           );
           if (playerFromSignups) {
-            return {
-              player_id: playerFromSignups.id,
-              scrim_id: scrimId,
-              assists: playerStat.assists,
-              characters: playerStat.characters.join(","),
-              damage_dealt: playerStat.damageDealt,
-              damage_taken: playerStat.damageTaken,
-              grenades_thrown: playerStat.grenadesThrown,
-              kills: playerStat.kills,
-              knockdowns: playerStat.knockdowns,
-              name: playerStat.name,
-              respawns_given: playerStat.respawnsGiven,
-              revives_given: playerStat.revivesGiven,
-              score: playerStat.score,
-              survival_time: playerStat.survivalTime,
-              tacticals_used: playerStat.tacticalsUsed,
-              ultimates_used: playerStat.ultimatesUsed,
-            };
+            const player = players.get(playerStat.playerId.toString());
+            if (player) {
+              player.assists += playerStat.assists;
+              player.characters += "," + playerStat.characterName;
+              player.damage_dealt += playerStat.damageDealt;
+              player.damage_taken += playerStat.damageTaken ?? 0;
+              player.grenades_thrown += playerStat.grenadesThrown ?? 0;
+              player.kills += playerStat.kills;
+              player.knockdowns += playerStat.knockdowns;
+              player.respawns_given += playerStat.respawnsGiven;
+              player.revives_given += playerStat.revivesGiven;
+              player.score += playerStat.score;
+              player.survival_time += playerStat.survivalTime;
+              player.tacticals_used += playerStat.tacticalsUsed ?? 0;
+              player.ultimates_used += playerStat.ultimatesUsed ?? 0;
+              player.games_played++;
+            } else {
+              players.set(playerStat.playerId.toString(), {
+                player_id: playerFromSignups.id,
+                scrim_id: scrimId,
+                assists: playerStat.assists,
+                characters: playerStat.characterName,
+                damage_dealt: playerStat.damageDealt,
+                damage_taken: playerStat.damageTaken ?? 0,
+                grenades_thrown: playerStat.grenadesThrown ?? 0,
+                kills: playerStat.kills,
+                knockdowns: playerStat.knockdowns,
+                name: playerStat.name,
+                respawns_given: playerStat.respawnsGiven,
+                revives_given: playerStat.revivesGiven,
+                score: playerStat.score,
+                survival_time: playerStat.survivalTime,
+                tacticals_used: playerStat.tacticalsUsed ?? 0,
+                ultimates_used: playerStat.ultimatesUsed ?? 0,
+                games_played: 1,
+              });
+            }
           }
-          return null; // If no match is found, return null
-        })
-        .filter((player) => this.notEmpty(player));
-    });
-  }
-
-  notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
-    return value !== null && value !== undefined;
+        }
+      }
+    }
+    return Array.from(players.values());
   }
 }

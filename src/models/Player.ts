@@ -32,4 +32,5 @@ export interface PlayerStatInsert {
   damage_taken: number;
   score: number;
   characters: string;
+  games_played: number;
 }

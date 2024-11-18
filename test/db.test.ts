@@ -747,7 +747,8 @@ describe("DB connection", () => {
   score: 28,
   survival_time: 4222,
   tacticals_used: 0,
-  ultimates_used: 0
+  ultimates_used: 0,
+  games_played: 6
   }]) {
         returning {
           id
@@ -821,6 +822,7 @@ describe("DB connection", () => {
         survival_time: 4222,
         tacticals_used: 0,
         ultimates_used: 0,
+        games_played: 6,
       };
       const returnedData = await nhostDb.closeScrim(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
