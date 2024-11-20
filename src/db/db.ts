@@ -71,29 +71,42 @@ export abstract class DB {
     return ids[0];
   }
 
-  async closeScrim(
+  async computeScrim(
     scrimId: string,
     overstatLink: string,
     skill: number,
     playerStats: PlayerStatInsert[],
-  ): Promise<{ deletedSignups: string[]; insertedStats: string[] }> {
+  ): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
       { id: scrimId },
-      { active: false, overstat_link: overstatLink, skill },
+      { skill, overstat_link: overstatLink },
       ["id"],
     )) as { id: string };
     if (!updatedScrimInfo?.id) {
-      throw Error("Did not update");
+      throw Error(
+        "Could not set skill level or overstat link on scrim, no updates made",
+      );
     }
-    const insertedStats = await this.post(
+    return this.post(
       "scrim_player_stats",
       playerStats as unknown as Record<string, DbValue>[],
     );
-    const deletedSignups = await this.delete("scrim_signups", {
+  }
+
+  async closeScrim(scrimId: string): Promise<string[]> {
+    const updatedScrimInfo: { id: string } = (await this.update(
+      "scrims",
+      { id: scrimId },
+      { active: false },
+      ["id"],
+    )) as { id: string };
+    if (!updatedScrimInfo?.id) {
+      throw Error("Could not set scrim to inactive, no updates made");
+    }
+    return this.delete("scrim_signups", {
       scrim_id: updatedScrimInfo.id,
     });
-    return { deletedSignups, insertedStats };
   }
 
   async addScrimSignup(

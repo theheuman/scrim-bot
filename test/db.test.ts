@@ -701,25 +701,7 @@ describe("DB connection", () => {
     });
   });
 
-  describe("closeScrim()", () => {
-    const expectedUpdateQuery = `
-        mutation {
-         update_scrims(
-           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
-          _set:
-          {
-            active: false,
-            overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
-            skill: 1
-          }
-         )
-         {
-           returning {
-             id
-           }
-         }
-       }
-    `;
+  describe("close and compute scrim", () => {
     const expectedDeleteQuery = `
       mutation {
         delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]}) {
@@ -756,9 +738,24 @@ describe("DB connection", () => {
       }
     }
     `;
-    it("Should correctly post player stats and delete scrim signups", async () => {
+    it("closeScrim()", async () => {
       mockRequest = (query) => {
-        let expected = expectedUpdateQuery;
+        let expected = `
+        mutation {
+         update_scrims(
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+          _set:
+          {
+            active: false
+          }
+         )
+         {
+           returning {
+             id
+           }
+         }
+       }
+    `;
         let returnData: { data: any } = {
           data: {
             update_scrims: {
@@ -786,7 +783,53 @@ describe("DB connection", () => {
               },
             },
           };
-        } else if (query.includes("insert_")) {
+        }
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
+        return Promise.resolve(returnData);
+      };
+      const returnedData = await nhostDb.closeScrim(
+        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+      );
+      expect(returnedData).toEqual([
+        "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
+        "9766e780-3c13-4298-8eed-a3cf9a206db4",
+      ]);
+      expect.assertions(3);
+    });
+
+    it("computeStats()", async () => {
+      mockRequest = (query) => {
+        let expected = `
+        mutation {
+         update_scrims(
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+          _set:
+          {
+            skill: 1,
+            overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
+          }
+         )
+         {
+           returning {
+             id
+           }
+         }
+       }
+    `;
+        let returnData: { data: any } = {
+          data: {
+            update_scrims: {
+              returning: [
+                {
+                  id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                },
+              ],
+            },
+          },
+        };
+        if (query.includes("insert_")) {
           expected = expectedPostQuery;
           returnData = {
             data: {
@@ -800,6 +843,7 @@ describe("DB connection", () => {
             },
           };
         }
+
         expect(query.replace(/\s+/g, ` `)).toEqual(
           expected.replace(/\s+/g, ` `),
         );
@@ -824,20 +868,14 @@ describe("DB connection", () => {
         ultimates_used: 0,
         games_played: 6,
       };
-      const returnedData = await nhostDb.closeScrim(
+      const returnedData = await nhostDb.computeScrim(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
         "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
         1,
         [theHeumanPlayerStats],
       );
-      expect(returnedData).toEqual({
-        deletedSignups: [
-          "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
-          "9766e780-3c13-4298-8eed-a3cf9a206db4",
-        ],
-        insertedStats: ["87e7f005-4416-4033-958a-6ddd2f82b16f"],
-      });
-      expect.assertions(4);
+      expect(returnedData).toEqual(["87e7f005-4416-4033-958a-6ddd2f82b16f"]);
+      expect.assertions(3);
     });
   });
 });

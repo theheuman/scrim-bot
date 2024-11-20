@@ -42,7 +42,7 @@ export class ScrimSignups {
     return scrimId;
   }
 
-  async closeScrim(
+  async computeScrim(
     discordChannelID: string,
     overstatLink: string,
   ): Promise<string> {
@@ -61,8 +61,17 @@ export class ScrimSignups {
       stats,
     );
 
-    await this.db.closeScrim(scrimId, overstatLink, 1, playerStats);
+    await this.db.computeScrim(scrimId, overstatLink, 1, playerStats);
     return overstatLink;
+  }
+
+  async closeScrim(discordChannelID: string) {
+    const scrimId = this.cache.getScrimId(discordChannelID);
+    if (!scrimId) {
+      throw Error("No scrim found for that channel");
+    }
+    await this.db.closeScrim(scrimId);
+    this.cache.removeScrimChannel(discordChannelID);
   }
 
   async addTeam(
