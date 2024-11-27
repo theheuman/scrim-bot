@@ -4,7 +4,9 @@ import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
 const config: {
   nhost: { adminSecret: string; subdomain: string; region: string };
-} = configJson;
+} = configJson as {
+  nhost: { adminSecret: string; subdomain: string; region: string };
+}; 
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
