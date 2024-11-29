@@ -1,5 +1,5 @@
 import { OverstatTournamentResponse } from "../models/overstatModels";
-import { ScrimSignup } from "./signups";
+import { ScrimSignup } from "../models/Scrims";
 import { Player, PlayerStatInsert } from "../models/Player";
 
 export class OverstatService {

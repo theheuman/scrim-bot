@@ -1,9 +1,9 @@
-import { ScrimSignup, ScrimSignups } from "../src/services/signups";
 import { DbMock } from "./mocks/db.mock";
 import { Player, PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
 import { Cache } from "../src/services/cache";
 import { RosterService } from "../src/services/rosters";
+import { ScrimSignup, Scrim } from "../src/models/Scrims";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
@@ -47,11 +47,16 @@ describe("Rosters", () => {
 
   describe("removeSignup()", () => {
     it("Should remove a team", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
 
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [getFineapples()]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [getFineapples()]);
       const dbSpy = jest.spyOn(dbMock, "removeScrimSignup");
 
       await rosters.removeSignup(
@@ -59,8 +64,8 @@ describe("Rosters", () => {
         discordChannel,
         getFineapples().teamName,
       );
-      expect(dbSpy).toHaveBeenCalledWith("Fineapples", scrimId);
-      expect(cache.getSignups(scrimId)).toEqual([]);
+      expect(dbSpy).toHaveBeenCalledWith("Fineapples", scrim.id);
+      expect(cache.getSignups(scrim.id)).toEqual([]);
     });
 
     it("Should not remove a team because there is no scrim with that id", async () => {
@@ -80,11 +85,16 @@ describe("Rosters", () => {
     });
 
     it("Should not remove a team because there are no signups", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       cache.clear();
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, undefined as unknown as ScrimSignup[]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, undefined as unknown as ScrimSignup[]);
       const causeException = async () => {
         await rosters.removeSignup(
           zboy.user,
@@ -99,11 +109,16 @@ describe("Rosters", () => {
     });
 
     it("Should not remove a team because there is no team with that name", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       cache.clear();
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, []);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, []);
       const causeException = async () => {
         await rosters.removeSignup(
           zboy.user,
@@ -116,7 +131,12 @@ describe("Rosters", () => {
     });
 
     it("Should not remove a team because user is not authorized", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       const differentFineapples: ScrimSignup = {
         teamName: "Different Fineapples",
@@ -125,8 +145,8 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
       };
       cache.clear();
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [differentFineapples]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [differentFineapples]);
       const causeException = async () => {
         await rosters.removeSignup(
           zboy.user,
@@ -143,11 +163,16 @@ describe("Rosters", () => {
 
   describe("changeTeamName()", () => {
     it("Should change team name", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
 
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [getFineapples()]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [getFineapples()]);
       const dbSpy = jest.spyOn(dbMock, "changeTeamNameNoAuth");
 
       await rosters.changeTeamName(
@@ -156,13 +181,18 @@ describe("Rosters", () => {
         getFineapples().teamName,
         "Dude Cube",
       );
-      expect(dbSpy).toHaveBeenCalledWith(scrimId, "Fineapples", "Dude Cube");
-      const signups = cache.getSignups(scrimId) ?? [];
+      expect(dbSpy).toHaveBeenCalledWith(scrim.id, "Fineapples", "Dude Cube");
+      const signups = cache.getSignups(scrim.id) ?? [];
       expect(signups[0]?.teamName).toEqual("Dude Cube");
     });
 
     it("Should not change team name because team name already taken", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -171,8 +201,8 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
       };
       cache.clear();
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [getFineapples(), dudeCube]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [getFineapples(), dudeCube]);
       const causeException = async () => {
         await rosters.changeTeamName(
           zboy.user,
@@ -190,7 +220,12 @@ describe("Rosters", () => {
 
   describe("replaceTeammate()", () => {
     it("Should replace teammate", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -198,14 +233,14 @@ describe("Rosters", () => {
         signupId: "214",
         signupPlayer: theheuman.player,
       };
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [dudeCube]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [dudeCube]);
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest
         .spyOn(dbMock, "insertPlayerIfNotExists")
         .mockReturnValue(Promise.resolve(zboy.player.id));
 
-      let signups = cache.getSignups(scrimId) ?? [];
+      let signups = cache.getSignups(scrim.id) ?? [];
       expect(signups[0]?.players[1].displayName).toEqual(
         theheuman.player.displayName,
       );
@@ -217,20 +252,25 @@ describe("Rosters", () => {
         zboy.user,
       );
       expect(dbSpy).toHaveBeenCalledWith(
-        scrimId,
+        scrim.id,
         dudeCube.teamName,
         theheuman.player.id,
         zboy.player.id,
       );
 
-      signups = cache.getSignups(scrimId) ?? [];
+      signups = cache.getSignups(scrim.id) ?? [];
       expect(signups[0]?.players[1].displayName).toEqual(
         zboy.player.displayName,
       );
     });
 
     it("Should not replace teammate because player already on another team", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -238,8 +278,8 @@ describe("Rosters", () => {
         signupId: "214",
         signupPlayer: theheuman.player,
       };
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [dudeCube, getFineapples()]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [dudeCube, getFineapples()]);
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest
         .spyOn(dbMock, "insertPlayerIfNotExists")
@@ -255,7 +295,7 @@ describe("Rosters", () => {
         );
       };
 
-      let signups = cache.getSignups(scrimId) ?? [];
+      let signups = cache.getSignups(scrim.id) ?? [];
       expect(signups[1]?.players[1].displayName).toEqual(
         theheuman.player.displayName,
       );
@@ -265,14 +305,19 @@ describe("Rosters", () => {
       );
 
       expect(dbSpy).toHaveBeenCalledTimes(0);
-      signups = cache.getSignups(scrimId) ?? [];
+      signups = cache.getSignups(scrim.id) ?? [];
       expect(signups[1]?.players[1].displayName).toEqual(
         theheuman.player.displayName,
       );
     });
 
     it("Should not replace teammate because player being replaced is not on the team", async () => {
-      const scrimId = "231478";
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
       const discordChannel = "034528";
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -281,8 +326,8 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
       };
       cache.clear();
-      cache.createScrim(discordChannel, scrimId);
-      cache.setSignups(scrimId, [dudeCube]);
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [dudeCube]);
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
 
       const causeException = async () => {

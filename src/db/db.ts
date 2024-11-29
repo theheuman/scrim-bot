@@ -1,5 +1,5 @@
 import { PlayerInsert, PlayerStatInsert } from "../models/Player";
-import { Scrims, ScrimSignupsWithPlayers } from "./table.interfaces";
+import { ScrimSignupsWithPlayers } from "./table.interfaces";
 
 export type JSONValue =
   | string
@@ -211,11 +211,20 @@ export abstract class DB {
     return returnedData.insert_players.returning.map((entry) => entry.id);
   }
 
-  getActiveScrims(): Promise<{ scrims: Partial<Scrims>[] }> {
+  getActiveScrims(): Promise<{
+    scrims: { discord_channel: string; id: string; date_time_field: string }[];
+  }> {
     return this.get("scrims", { active: true }, [
       "discord_channel",
       "id",
-    ]) as Promise<{ scrims: Partial<Scrims>[] }>;
+      "date_time_field",
+    ]) as Promise<{
+      scrims: {
+        discord_channel: string;
+        id: string;
+        date_time_field: string;
+      }[];
+    }>;
   }
 
   async getScrimSignupsWithPlayers(

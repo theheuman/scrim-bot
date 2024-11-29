@@ -2,7 +2,7 @@ import { OverstatService } from "../src/services/overstat";
 import { mockOverstatResponse } from "./mocks/overstat-response.mock";
 import { User } from "discord.js";
 import { Player, PlayerStatInsert } from "../src/models/Player";
-import { ScrimSignup } from "../src/services/signups";
+import { ScrimSignup } from "../src/models/Scrims";
 import { OverstatTournamentResponse } from "../src/models/overstatModels";
 
 describe("Overstat", () => {

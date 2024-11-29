@@ -67,12 +67,15 @@ export class DbMock extends DB {
     return Promise.resolve(this.insertPlayersResponse);
   }
 
-  override getActiveScrims(): Promise<{ scrims: Partial<Scrims>[] }> {
+  override getActiveScrims(): Promise<{
+    scrims: { discord_channel: string; id: string; date_time_field: string }[];
+  }> {
     return Promise.resolve({
       scrims: [
         {
           id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
           discord_channel: "something",
+          date_time_field: "2024-10-14T20:10:35.706+00:00",
         },
       ],
     });

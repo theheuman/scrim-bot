@@ -4,6 +4,7 @@ import { PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
 import { Cache } from "../src/services/cache";
 import { OverstatService } from "../src/services/overstat";
+import { Scrim } from "../src/models/Scrims";
 
 describe("Signups", () => {
   let dbMock: DbMock;
@@ -209,13 +210,14 @@ describe("Signups", () => {
             {
               id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
               discord_channel: "something",
+              date_time_field: "2024-10-14T20:10:35.706+00:00",
             },
           ],
         });
       });
 
       await signups.updateActiveScrims(true);
-      expect(cache.getScrimId("something")).toEqual(
+      expect(cache.getScrim("something")?.id).toEqual(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
       );
     });
@@ -236,7 +238,7 @@ describe("Signups", () => {
         );
 
       await signups.createScrim(channelId, new Date());
-      expect(cache.getScrimId(channelId)).toEqual("a valid scrim id");
+      expect(cache.getScrim(channelId)?.id).toEqual("a valid scrim id");
       expect.assertions(3);
     });
   });
