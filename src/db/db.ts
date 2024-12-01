@@ -57,7 +57,7 @@ export abstract class DB {
   async createNewScrim(
     dateTime: Date,
     discordChannelID: string,
-    skill: number,
+    skill: number | null = null,
     overstatLink: string | null = null,
   ): Promise<string> {
     const ids = await this.post("scrims", [

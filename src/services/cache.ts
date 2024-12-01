@@ -22,6 +22,10 @@ export class Cache {
   }
 
   removeScrimChannel(discordChannel: string) {
+    const scrim = this.scrimChannelMap.get(discordChannel);
+    if (scrim) {
+      this.activeScrimSignups.delete(scrim.id);
+    }
     this.scrimChannelMap.delete(discordChannel);
   }
 
