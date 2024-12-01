@@ -160,7 +160,6 @@ export class ScrimSignups {
     return signupId;
   }
 
-  // TODO cacheing here?
   async getSignups(
     scrimId: string,
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }> {

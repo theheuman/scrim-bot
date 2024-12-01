@@ -8,7 +8,6 @@ const config: {
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
-  // TODO cache values?
 
   constructor(adminSecret: string, region: string, subdomain: string) {
     super();
@@ -125,7 +124,6 @@ class NhostDb extends DB {
     return returnedData[deleteName].returning[0].id;
   }
 
-  // TODO modify to return records affected and all id's deleted
   async delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
