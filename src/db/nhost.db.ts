@@ -10,7 +10,6 @@ const config: {
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
-  // TODO cache values?
 
   constructor(adminSecret: string, region: string, subdomain: string) {
     super();
@@ -65,13 +64,19 @@ class NhostDb extends DB {
 
   async post(
     tableName: string,
-    data: Record<string, DbValue>,
-  ): Promise<string> {
+    data: Record<string, DbValue>[],
+  ): Promise<string[]> {
     const insertName = "insert_" + tableName;
-    const objects = Object.keys(data)
-      .map((key) => `${key}: ${NhostDb.createValueString(data[key])}`)
-      .join(", ");
-    const objectsString = `(objects: [{ ${objects} }])`;
+    const objects: string[] = [];
+    for (const object of data) {
+      const objectToInsert = Object.keys(object)
+        .map(
+          (key: string) => `${key}: ${NhostDb.createValueString(object[key])}`,
+        )
+        .join(", ");
+      objects.push(`{ ${objectToInsert} }`);
+    }
+    const objectsString = `(objects: [${objects.join(", ")}])`;
     const query = `
       mutation {
         ${insertName}${objectsString} {
@@ -93,7 +98,7 @@ class NhostDb extends DB {
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[insertName].returning[0].id;
+    return returnedData[insertName].returning.map((data) => data.id);
   }
 
   // TODO use delete_by_pk field here? Probably more efficient
@@ -124,7 +129,7 @@ class NhostDb extends DB {
   async delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
-  ): Promise<string> {
+  ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
     const searchString = `(${NhostDb.generateSearchStringFromFields(fieldsToEqual)})`;
     const query = `
@@ -145,7 +150,7 @@ class NhostDb extends DB {
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[deleteName].returning[0].id;
+    return returnedData[deleteName].returning.map((data) => data.id);
   }
 
   async update(
@@ -315,10 +320,11 @@ class NhostDb extends DB {
     const teamData = result.update_scrim_signups_many.find(
       (returned) => !!returned.returning[0]?.team_name,
     );
-    if (!teamData?.returning[0]) {
+    const returnData = teamData?.returning[0];
+    if (!returnData) {
       throw Error("Changes not made");
     }
-    return teamData.returning[0];
+    return returnData;
   }
 
   // TODO smartly compartmentalize these two methods to avoid duplicated code
@@ -381,10 +387,11 @@ class NhostDb extends DB {
     const teamData = result.update_scrim_signups_many.find(
       (returned) => !!returned.returning[0]?.team_name,
     );
-    if (!teamData?.returning[0]) {
+    const returnData = teamData?.returning[0];
+    if (!returnData) {
       throw Error("Changes not made");
     }
-    return teamData.returning[0];
+    return returnData;
   }
 
   private getReplaceTeammateMutationBlock(

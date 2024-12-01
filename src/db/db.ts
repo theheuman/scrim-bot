@@ -1,5 +1,5 @@
-import { PlayerInsert } from "../models/Player";
-import { Scrims, ScrimSignupsWithPlayers } from "./table.interfaces";
+import { PlayerInsert, PlayerStatInsert } from "../models/Player";
+import { ScrimSignupsWithPlayers } from "./table.interfaces";
 
 export type JSONValue =
   | string
@@ -25,14 +25,14 @@ export abstract class DB {
   // returns id of new object as a string
   abstract post(
     tableName: string,
-    data: Record<string, DbValue>,
-  ): Promise<string>;
+    data: Record<string, DbValue>[],
+  ): Promise<string[]>;
   // returns id of the deleted object as a string
   abstract deleteById(tableName: string, id: string): Promise<string>;
   abstract delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
-  ): Promise<string>;
+  ): Promise<string[]>;
   abstract customQuery(query: string): Promise<JSONValue>;
   abstract replaceTeammate(
     scrimId: string,
@@ -54,21 +54,62 @@ export abstract class DB {
     newTeamName: string,
   ): Promise<JSONValue>;
 
-  createNewScrim(
+  async createNewScrim(
     dateTime: Date,
     discordChannelID: string,
-    skill: number,
+    skill: number | null = null,
     overstatLink: string | null = null,
   ): Promise<string> {
-    return this.post("scrims", {
-      date_time_field: dateTime.toISOString(),
-      skill,
-      overstat_link: overstatLink,
-      discord_channel: discordChannelID,
+    const ids = await this.post("scrims", [
+      {
+        date_time_field: dateTime.toISOString(),
+        skill,
+        overstat_link: overstatLink,
+        discord_channel: discordChannelID,
+      },
+    ]);
+    return ids[0];
+  }
+
+  async computeScrim(
+    scrimId: string,
+    overstatLink: string,
+    skill: number,
+    playerStats: PlayerStatInsert[],
+  ): Promise<string[]> {
+    const updatedScrimInfo: { id: string } = (await this.update(
+      "scrims",
+      { id: scrimId },
+      { skill, overstat_link: overstatLink },
+      ["id"],
+    )) as { id: string };
+    if (!updatedScrimInfo?.id) {
+      throw Error(
+        "Could not set skill level or overstat link on scrim, no updates made",
+      );
+    }
+    return this.post(
+      "scrim_player_stats",
+      playerStats as unknown as Record<string, DbValue>[],
+    );
+  }
+
+  async closeScrim(scrimId: string): Promise<string[]> {
+    const updatedScrimInfo: { id: string } = (await this.update(
+      "scrims",
+      { id: scrimId },
+      { active: false },
+      ["id"],
+    )) as { id: string };
+    if (!updatedScrimInfo?.id) {
+      throw Error("Could not set scrim to inactive, no updates made");
+    }
+    return this.delete("scrim_signups", {
+      scrim_id: updatedScrimInfo.id,
     });
   }
 
-  addScrimSignup(
+  async addScrimSignup(
     teamName: string,
     scrimId: string,
     userId: string,
@@ -77,15 +118,18 @@ export abstract class DB {
     playerThreeId: string,
     combinedElo: number | null = null,
   ): Promise<string> {
-    return this.post("scrim_signups", {
-      team_name: teamName,
-      scrim_id: scrimId,
-      signup_player_id: playerId,
-      player_one_id: playerId,
-      player_two_id: playerTwoId,
-      player_three_id: playerThreeId,
-      combined_elo: combinedElo,
-    });
+    const ids = await this.post("scrim_signups", [
+      {
+        team_name: teamName,
+        scrim_id: scrimId,
+        signup_player_id: playerId,
+        player_one_id: playerId,
+        player_two_id: playerTwoId,
+        player_three_id: playerThreeId,
+        combined_elo: combinedElo,
+      },
+    ]);
+    return ids[0];
   }
 
   removeScrimSignup(teamName: string, scrimId: string) {
@@ -167,11 +211,20 @@ export abstract class DB {
     return returnedData.insert_players.returning.map((entry) => entry.id);
   }
 
-  getActiveScrims(): Promise<{ scrims: Partial<Scrims>[] }> {
+  getActiveScrims(): Promise<{
+    scrims: { discord_channel: string; id: string; date_time_field: string }[];
+  }> {
     return this.get("scrims", { active: true }, [
       "discord_channel",
       "id",
-    ]) as Promise<{ scrims: Partial<Scrims>[] }>;
+      "date_time_field",
+    ]) as Promise<{
+      scrims: {
+        discord_channel: string;
+        id: string;
+        date_time_field: string;
+      }[];
+    }>;
   }
 
   async getScrimSignupsWithPlayers(
@@ -189,17 +242,17 @@ export abstract class DB {
           player_one_id
           player_one_discord_id
           player_one_display_name
-          player_one_overstat_link
+          player_one_overstat_id
           player_one_elo
           player_two_id
           player_two_discord_id
           player_two_display_name
-          player_two_overstat_link
+          player_two_overstat_id
           player_two_elo
           player_three_id
           player_three_discord_id
           player_three_display_name
-          player_three_overstat_link
+          player_three_overstat_id
           player_three_elo
         }
       }
@@ -241,8 +294,8 @@ export abstract class DB {
     player: PlayerInsert,
     uniqueQueryName: string,
   ) {
-    const overstatSet = player.overstatLink
-      ? `overstat_link: "${player.overstatLink}"`
+    const overstatSet = player.overstatId
+      ? `overstat_id: "${player.overstatId}"`
       : "";
     const eloSet = player.elo ? `elo: ${player.elo}` : "";
     return `

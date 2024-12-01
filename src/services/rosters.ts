@@ -1,7 +1,7 @@
 import { User } from "discord.js";
 import { DB } from "../db/db";
 import { Cache } from "./cache";
-import { ScrimSignup } from "./signups";
+import { ScrimSignup } from "../models/Scrims";
 
 export class RosterService {
   db: DB;
@@ -34,16 +34,6 @@ export class RosterService {
     let oldPlayerId: string | undefined;
     let oldPlayerIndex = 0;
     for (const player of teamToBeChanged.players) {
-      console.log(
-        "Player on team: " +
-          player.displayName +
-          " " +
-          player.discordId +
-          " Player to be replaced: " +
-          oldUser.displayName +
-          " " +
-          oldUser.id,
-      );
       if (player.discordId === oldUser.id) {
         oldPlayerId = player.id;
         break;
@@ -113,7 +103,7 @@ export class RosterService {
     discordChannel: string,
     teamName: string,
   ): { scrimId: string; signups: ScrimSignup[]; teamToBeChanged: ScrimSignup } {
-    const scrimId = this.cache.getScrimId(discordChannel);
+    const scrimId = this.cache.getScrim(discordChannel)?.id;
     if (!scrimId) {
       throw Error(
         "No scrim id matching that scrim channel present, contact admin",

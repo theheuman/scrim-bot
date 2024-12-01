@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, CommandInteraction } from "discord.js";
-import { ScrimSignup } from "../../services/signups";
+import { ScrimSignup } from "../../models/Scrims";
 import { signups } from "../../services";
 
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
     await interaction.reply({
-      content: "Fetching teams",
+      content: "Fetching teams, command in progress",
     });
 
     const channelSignups = await signups.getSignups(scrimId);

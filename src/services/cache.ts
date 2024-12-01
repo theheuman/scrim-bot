@@ -1,8 +1,8 @@
-import { ScrimSignup } from "./signups";
+import { Scrim, ScrimSignup } from "../models/Scrims";
 
 export class Cache {
   // maps discord channels to scrim ids
-  private scrimChannelMap: Map<string, string>;
+  private scrimChannelMap: Map<string, Scrim>;
 
   // maps scrim id to a list of scrim signups
   private activeScrimSignups: Map<string, ScrimSignup[]>;
@@ -12,16 +12,20 @@ export class Cache {
     this.activeScrimSignups = new Map();
   }
 
-  getScrimId(discordChannel: string): string | undefined {
+  getScrim(discordChannel: string): Scrim | undefined {
     return this.scrimChannelMap.get(discordChannel);
   }
 
-  createScrim(discordChannel: string, scrimId: string) {
-    this.scrimChannelMap.set(discordChannel, scrimId);
-    this.activeScrimSignups.set(scrimId, []);
+  createScrim(discordChannel: string, scrim: Scrim) {
+    this.scrimChannelMap.set(discordChannel, scrim);
+    this.activeScrimSignups.set(scrim.id, []);
   }
 
   removeScrimChannel(discordChannel: string) {
+    const scrim = this.scrimChannelMap.get(discordChannel);
+    if (scrim) {
+      this.activeScrimSignups.delete(scrim.id);
+    }
     this.scrimChannelMap.delete(discordChannel);
   }
 

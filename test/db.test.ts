@@ -1,8 +1,5 @@
 import { nhostDb } from "../src/db/nhost.db";
-import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
-import { JSONValue } from "../src/db/db";
-import { GraphQLError } from "graphql/error";
-import { PlayerInsert } from "../src/models/Player";
+import { PlayerInsert, PlayerStatInsert } from "../src/models/Player";
 import { Scrims } from "../src/db/table.interfaces";
 
 let mockRequest: (query: string) => Promise<any> = jest.fn();
@@ -178,11 +175,13 @@ describe("DB connection", () => {
           },
         });
       };
-      const newID = await nhostDb.post("players", {
-        display_name: "Supreme",
-        discord_id: "244307424838811648",
-      });
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      const newID = await nhostDb.post("players", [
+        {
+          display_name: "Supreme",
+          discord_id: "244307424838811648",
+        },
+      ]);
+      expect(newID).toEqual(["7605b2bf-1875-4415-a04b-75fe47768565"]);
       expect.assertions(2);
     });
     it("Should have correct post query", async () => {
@@ -209,13 +208,15 @@ describe("DB connection", () => {
           },
         });
       };
-      const newID = await nhostDb.post("players", {
-        display_name: "Supreme",
-        discord_id: "244307424838811648",
-        elo: 1,
-        stats: null,
-      });
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      const newID = await nhostDb.post("players", [
+        {
+          display_name: "Supreme",
+          discord_id: "244307424838811648",
+          elo: 1,
+          stats: null,
+        },
+      ]);
+      expect(newID).toEqual(["7605b2bf-1875-4415-a04b-75fe47768565"]);
       expect.assertions(2);
     });
   });
@@ -312,11 +313,11 @@ describe("DB connection", () => {
         });
       };
 
-      const deletedID = await nhostDb.delete("scrim_signups", {
+      const deletedIDs = await nhostDb.delete("scrim_signups", {
         scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
         team_name: "Fineapples",
       });
-      expect(deletedID).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
+      expect(deletedIDs[0]).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
       expect.assertions(2);
     });
 
@@ -356,22 +357,14 @@ describe("DB connection", () => {
   const createPlayer = (
     discordId: string,
     displayName: string,
-    overstatLink?: string,
+    overstatId?: string,
     elo?: number,
   ): PlayerInsert => {
-    return { discordId, displayName, overstatLink, elo };
+    return { discordId, displayName, overstatId: overstatId, elo };
   };
-  const zboy = createPlayer(
-    "316280734115430403",
-    "zboy",
-    "https://overstat.gg/player/749174.Zboy5z5/overview",
-  );
+  const zboy = createPlayer("316280734115430403", "zboy", "749174");
   const supreme = createPlayer("244307424838811648", "Supreme", undefined, 1);
-  const theheuman = createPlayer(
-    "315310843317321732",
-    "TheHeuman",
-    "https://overstat.gg/player/357606.TheHeuman/overview",
-  );
+  const theheuman = createPlayer("315310843317321732", "TheHeuman", "357606");
 
   describe("insert player()", () => {
     it("Should have correct mutation query with no overstat link", async () => {
@@ -471,7 +464,7 @@ describe("DB connection", () => {
               where: {discord_id: {_eq: "316280734115430403"}},
               _set: {
                 display_name: "zboy",
-                overstat_link: "https://overstat.gg/player/749174.Zboy5z5/overview"
+                overstat_id: "749174"
               }
             ) {
               affected_rows
@@ -491,7 +484,7 @@ describe("DB connection", () => {
               where: {discord_id: {_eq: "315310843317321732"}},
               _set: {
                 display_name: "TheHeuman",
-                overstat_link: "https://overstat.gg/player/357606.TheHeuman/overview"
+                overstat_id: "357606"
               }
             ) {
               affected_rows
@@ -705,6 +698,184 @@ describe("DB connection", () => {
         scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
       });
       expect.assertions(2);
+    });
+  });
+
+  describe("close and compute scrim", () => {
+    const expectedDeleteQuery = `
+      mutation {
+        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]}) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+    const expectedPostQuery = `
+      mutation {
+        insert_scrim_player_stats(objects: [{
+  player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+  scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+  assists: 1,
+  characters: "fuse,newcastle",
+  damage_dealt: 4144,
+  damage_taken: 0,
+  grenades_thrown: 0,
+  kills: 9,
+  knockdowns: 9,
+  name: "TheHeuman",
+  respawns_given: 0,
+  revives_given: 2,
+  score: 28,
+  survival_time: 4222,
+  tacticals_used: 0,
+  ultimates_used: 0,
+  games_played: 6
+  }]) {
+        returning {
+          id
+        }
+      }
+    }
+    `;
+    it("closeScrim()", async () => {
+      mockRequest = (query) => {
+        let expected = `
+        mutation {
+         update_scrims(
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+          _set:
+          {
+            active: false
+          }
+         )
+         {
+           returning {
+             id
+           }
+         }
+       }
+    `;
+        let returnData: { data: any } = {
+          data: {
+            update_scrims: {
+              returning: [
+                {
+                  id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                },
+              ],
+            },
+          },
+        };
+        if (query.includes("delete_")) {
+          expected = expectedDeleteQuery;
+          returnData = {
+            data: {
+              delete_scrim_signups: {
+                returning: [
+                  {
+                    id: "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
+                  },
+                  {
+                    id: "9766e780-3c13-4298-8eed-a3cf9a206db4",
+                  },
+                ],
+              },
+            },
+          };
+        }
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
+        return Promise.resolve(returnData);
+      };
+      const returnedData = await nhostDb.closeScrim(
+        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+      );
+      expect(returnedData).toEqual([
+        "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
+        "9766e780-3c13-4298-8eed-a3cf9a206db4",
+      ]);
+      expect.assertions(3);
+    });
+
+    it("computeStats()", async () => {
+      mockRequest = (query) => {
+        let expected = `
+        mutation {
+         update_scrims(
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+          _set:
+          {
+            skill: 1,
+            overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
+          }
+         )
+         {
+           returning {
+             id
+           }
+         }
+       }
+    `;
+        let returnData: { data: any } = {
+          data: {
+            update_scrims: {
+              returning: [
+                {
+                  id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                },
+              ],
+            },
+          },
+        };
+        if (query.includes("insert_")) {
+          expected = expectedPostQuery;
+          returnData = {
+            data: {
+              insert_scrim_player_stats: {
+                returning: [
+                  {
+                    id: "87e7f005-4416-4033-958a-6ddd2f82b16f",
+                  },
+                ],
+              },
+            },
+          };
+        }
+
+        expect(query.replace(/\s+/g, ` `)).toEqual(
+          expected.replace(/\s+/g, ` `),
+        );
+        return Promise.resolve(returnData);
+      };
+      const theHeumanPlayerStats: PlayerStatInsert = {
+        player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        assists: 1,
+        characters: "fuse,newcastle",
+        damage_dealt: 4144,
+        damage_taken: 0,
+        grenades_thrown: 0,
+        kills: 9,
+        knockdowns: 9,
+        name: "TheHeuman",
+        respawns_given: 0,
+        revives_given: 2,
+        score: 28,
+        survival_time: 4222,
+        tacticals_used: 0,
+        ultimates_used: 0,
+        games_played: 6,
+      };
+      const returnedData = await nhostDb.computeScrim(
+        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
+        1,
+        [theHeumanPlayerStats],
+      );
+      expect(returnedData).toEqual(["87e7f005-4416-4033-958a-6ddd2f82b16f"]);
+      expect.assertions(3);
     });
   });
 });

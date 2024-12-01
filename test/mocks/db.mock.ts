@@ -6,7 +6,7 @@ export class DbMock extends DB {
   customQueryResponse: JSONValue;
   deleteResponse: string;
   getResponse: JSONValue;
-  postResponse: string;
+  postResponse: string[];
   addScrimSignupResponse: string;
   insertPlayersResponse: string[];
   insertPlayerIfNotExistsResponse: string;
@@ -17,7 +17,7 @@ export class DbMock extends DB {
     this.customQueryResponse = {};
     this.deleteResponse = "";
     this.getResponse = {};
-    this.postResponse = "";
+    this.postResponse = [""];
     this.addScrimSignupResponse = "";
     this.insertPlayersResponse = [""];
     this.insertPlayerIfNotExistsResponse = "";
@@ -39,7 +39,7 @@ export class DbMock extends DB {
     return Promise.resolve(this.getResponse);
   }
 
-  post(tableName: string, data: Record<string, any>): Promise<string> {
+  post(tableName: string, data: Record<string, any>): Promise<string[]> {
     return Promise.resolve(this.postResponse);
   }
 
@@ -67,12 +67,15 @@ export class DbMock extends DB {
     return Promise.resolve(this.insertPlayersResponse);
   }
 
-  override getActiveScrims(): Promise<{ scrims: Partial<Scrims>[] }> {
+  override getActiveScrims(): Promise<{
+    scrims: { discord_channel: string; id: string; date_time_field: string }[];
+  }> {
     return Promise.resolve({
       scrims: [
         {
           id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
           discord_channel: "something",
+          date_time_field: "2024-10-14T20:10:35.706+00:00",
         },
       ],
     });
@@ -87,8 +90,8 @@ export class DbMock extends DB {
   delete(
     tableName: string,
     fieldsToEqual: Record<string, DbValue>,
-  ): Promise<string> {
-    return Promise.resolve("");
+  ): Promise<string[]> {
+    return Promise.resolve([""]);
   }
 
   replaceTeammate(
