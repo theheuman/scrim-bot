@@ -1,12 +1,13 @@
 {
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "dev": "tsc-watch --onSuccess \"nodemon dist/index.js\"",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "lint": "eslint src/",
     "lint:staged": "npx lint-staged",
-    "test:watch": "jest --watch",
     "prepare": "husky",
     "create-config": "sh scripts/create-config.sh"
   },
