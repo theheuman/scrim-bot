@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { prioService } from "../../services";
 
+// TODO get dates, amount and reason. Probably change command to setPrio, or generate a second command with high prio
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("addlowprio")
@@ -31,20 +32,18 @@ module.exports = {
 
     const users = [user1, user2, user3].filter((user) => user !== null);
 
-    // TODO currently prio command not being awaited, please fix
-    users.forEach((user) => {
-      if (!user) {
-        return;
-      }
-      prioService.setPrio(
+    try {
+      await prioService.setPrio(
         interaction.user,
-        user,
+        users,
         new Date(),
         new Date(),
         -1,
         "Added to low prio",
       );
-    });
+    } catch (e) {
+      await interaction.reply("Error while executing low prio: " + e);
+    }
 
     const userNames = users.map((user) => user?.username).join(", ");
     await interaction.reply(

@@ -21,7 +21,7 @@ module.exports = {
     }
     await prioService.setPrio(
       interaction.user,
-      user,
+      [user],
       new Date(),
       new Date(),
       0,

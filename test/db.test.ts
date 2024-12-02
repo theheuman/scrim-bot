@@ -908,13 +908,13 @@ describe("DB connection", () => {
       });
     };
     const newID = await nhostDb.setPrio(
-      "c79f4607-2343-465a-94e4-f99e63ab7602",
+      ["c79f4607-2343-465a-94e4-f99e63ab7602"],
       startDate,
       endDate,
       amount,
       reason,
     );
-    expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+    expect(newID).toEqual(["7605b2bf-1875-4415-a04b-75fe47768565"]);
     expect.assertions(2);
   });
 });

@@ -138,6 +138,7 @@ export abstract class DB {
       team_name: teamName,
     });
   }
+
   // returns id
   async insertPlayerIfNotExists(
     discordId: string,
@@ -291,22 +292,22 @@ export abstract class DB {
   }
 
   async setPrio(
-    playerId: string,
+    playerIds: string[],
     startDate: Date,
     endDate: Date,
     amount: number,
     reason: string,
-  ): Promise<string> {
-    const ids = await this.post("prio", [
-      {
+  ): Promise<string[]> {
+    return this.post(
+      "prio",
+      playerIds.map((playerId) => ({
         player_id: playerId,
         start_date: startDate,
         end_date: endDate,
         amount,
         reason,
-      },
-    ]);
-    return ids[0];
+      })),
+    );
   }
 
   private generatePlayerUpdateQuery(

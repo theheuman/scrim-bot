@@ -1,5 +1,5 @@
 import { User } from "discord.js";
-import { Player } from "../src/models/Player";
+import { Player, PlayerInsert } from "../src/models/Player";
 import { PrioService } from "../src/services/prio";
 import { DbMock } from "./mocks/db.mock";
 import { CacheService } from "../src/services/cache";
@@ -22,8 +22,11 @@ describe("Prio", () => {
   const authorizedUser: User = {
     id: "authorized",
   } as User;
-  const prioUser: User = {
-    id: "player",
+  const prioUserInCache: User = {
+    id: "in cache",
+  } as User;
+  const prioUserNotCached: User = {
+    id: "not in cache",
   } as User;
 
   beforeEach(() => {
@@ -35,7 +38,9 @@ describe("Prio", () => {
       return Promise.resolve(user.id === authorizedUser.id);
     });
     getPlayerSpy = jest.spyOn(cacheMock, "getPlayer");
-    getPlayerSpy.mockReturnValue(player);
+    getPlayerSpy.mockImplementation((id) => {
+      return id === prioUserInCache.id ? player : undefined;
+    });
     prioService = new PrioService(dbMock, cacheMock, authServiceMock);
   });
 
@@ -46,20 +51,35 @@ describe("Prio", () => {
     const reason = "inting on peoples foreheads";
 
     describe("correctly set prio", () => {
-      let insertSpy: SpyInstance;
-      let dbSetPrioSpy: SpyInstance;
+      let insertSpy: SpyInstance<
+        Promise<string[]>,
+        [players: PlayerInsert[]],
+        string
+      >;
+      let dbSetPrioSpy: SpyInstance<
+        Promise<string[]>,
+        [
+          playerIds: string[],
+          startDate: Date,
+          endDate: Date,
+          amount: number,
+          reason: string,
+        ],
+        string
+      >;
 
       beforeEach(() => {
-        insertSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+        insertSpy = jest.spyOn(dbMock, "insertPlayers");
         dbSetPrioSpy = jest.spyOn(dbMock, "setPrio");
         insertSpy.mockClear();
         dbSetPrioSpy.mockClear();
+        insertSpy.mockReturnValue(Promise.resolve(["a different db id"]));
       });
 
       it("should set prio for players in cache", async () => {
         await prioService.setPrio(
           authorizedUser,
-          prioUser,
+          [prioUserInCache],
           startDate,
           endDate,
           amount,
@@ -67,7 +87,7 @@ describe("Prio", () => {
         );
         expect(insertSpy).toHaveBeenCalledTimes(0);
         expect(dbSetPrioSpy).toHaveBeenCalledWith(
-          player.id,
+          [player.id],
           startDate,
           endDate,
           amount,
@@ -76,18 +96,34 @@ describe("Prio", () => {
       });
 
       it("should set prio for players NOT in cache", async () => {
-        getPlayerSpy.mockReturnValue(undefined);
-        insertSpy.mockReturnValue(Promise.resolve("a different db id"));
         await prioService.setPrio(
           authorizedUser,
-          prioUser,
+          [prioUserNotCached],
           startDate,
           endDate,
           amount,
           reason,
         );
         expect(dbSetPrioSpy).toHaveBeenCalledWith(
-          "a different db id",
+          ["a different db id"],
+          startDate,
+          endDate,
+          amount,
+          reason,
+        );
+      });
+
+      it("should set prio for list of players some NOT in cache", async () => {
+        await prioService.setPrio(
+          authorizedUser,
+          [prioUserInCache, prioUserNotCached],
+          startDate,
+          endDate,
+          amount,
+          reason,
+        );
+        expect(dbSetPrioSpy).toHaveBeenCalledWith(
+          [player.id, "a different db id"],
           startDate,
           endDate,
           amount,
@@ -100,7 +136,7 @@ describe("Prio", () => {
       const causeException = async () => {
         await prioService.setPrio(
           unauthorizedUser,
-          prioUser,
+          [prioUserInCache],
           startDate,
           endDate,
           amount,

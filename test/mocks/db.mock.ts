@@ -131,12 +131,12 @@ export class DbMock extends DB {
   }
 
   async setPrio(
-    playerId: string,
+    playerIds: string[],
     startDate: Date,
     endDate: Date,
     amount: number,
     reason: string,
   ) {
-    return Promise.resolve("0");
+    return Promise.resolve(["0"]);
   }
 }
