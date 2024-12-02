@@ -448,7 +448,7 @@ class NhostDb extends DB {
     if (typeof value === "string") {
       return `"${value}"`;
     } else if (value instanceof Date) {
-      return `"${value.toISOString()}`;
+      return `"${value.toISOString()}"`;
     } else if (value === null) {
       return `null`;
     }

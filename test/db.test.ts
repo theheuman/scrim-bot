@@ -878,4 +878,43 @@ describe("DB connection", () => {
       expect.assertions(3);
     });
   });
+
+  it("Should set prio", async () => {
+    const startDate = new Date();
+    const endDate = new Date();
+    const amount = -400;
+    const reason = "Keeps typing random stuff in chat";
+    mockRequest = (query) => {
+      const expected = `
+      mutation {
+        insert_prio(objects: [{ player_id: "c79f4607-2343-465a-94e4-f99e63ab7602", start_date: "${startDate.toISOString()}", end_date: "${endDate.toISOString()}", amount: -400, reason: "${reason}" }]) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+      expect(query).toEqual(expected);
+      return Promise.resolve({
+        data: {
+          insert_prio: {
+            returning: [
+              {
+                id: "7605b2bf-1875-4415-a04b-75fe47768565",
+              },
+            ],
+          },
+        },
+      });
+    };
+    const newID = await nhostDb.setPrio(
+      "c79f4607-2343-465a-94e4-f99e63ab7602",
+      startDate,
+      endDate,
+      amount,
+      reason,
+    );
+    expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+    expect.assertions(2);
+  });
 });
