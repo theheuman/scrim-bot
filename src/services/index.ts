@@ -11,7 +11,11 @@ export const cache = new CacheService();
 export const overstatService = new OverstatService();
 
 export const authService = new AuthService(nhostDb, cache);
-export const signupsService = new ScrimSignups(nhostDb, cache, overstatService);
-export const rosterService = new RosterService(nhostDb, cache, authService);
-
 export const prioService = new PrioService(nhostDb, cache, authService);
+export const signupsService = new ScrimSignups(
+  nhostDb,
+  cache,
+  overstatService,
+  prioService,
+);
+export const rosterService = new RosterService(nhostDb, cache, authService);

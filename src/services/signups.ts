@@ -5,12 +5,14 @@ import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
 import { CacheService } from "./cache";
 import { OverstatService } from "./overstat";
 import { Scrim, ScrimSignup } from "../models/Scrims";
+import { PrioService } from "./prio";
 
 export class ScrimSignups {
   constructor(
     private db: DB,
     private cache: CacheService,
     private overstatService: OverstatService,
+    private prioService: PrioService,
   ) {
     this.updateActiveScrims();
   }
@@ -29,7 +31,7 @@ export class ScrimSignups {
         if (log) {
           console.log("Added scrim channel", this.cache);
         }
-        this.getSignups(scrim.id);
+        this.getSignups(scrim.discord_channel);
       }
     }
   }
@@ -136,6 +138,7 @@ export class ScrimSignups {
       }),
     );
     const playerIds = await this.db.insertPlayers(convertedPlayers);
+    const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,
       scrimId,
@@ -143,6 +146,7 @@ export class ScrimSignups {
       playerIds[1],
       playerIds[2],
       playerIds[3],
+      signupDate,
     );
     const mappedPlayers: Player[] = convertedPlayers.map((player, index) => ({
       id: playerIds[index],
@@ -156,44 +160,47 @@ export class ScrimSignups {
       players: mappedPlayers.slice(1),
       signupPlayer: mappedPlayers[0],
       signupId,
+      date: signupDate,
     });
     return signupId;
   }
 
   async getSignups(
-    scrimId: string,
+    discordChannelID: string,
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }> {
-    const scrimData = await this.db.getScrimSignupsWithPlayers(scrimId);
+    const scrim = this.cache.getScrim(discordChannelID);
+    if (!scrim) {
+      throw Error("No scrim found for that channel");
+    }
+    const scrimData = await this.db.getScrimSignupsWithPlayers(scrim.id);
     const teams: ScrimSignup[] = [];
     for (const signupData of scrimData) {
       const teamData: ScrimSignup =
         ScrimSignups.convertDbToScrimSignup(signupData);
       teams.push(teamData);
     }
-    // TODO make call for all users who are low prio
-    this.cache.setSignups(scrimId, teams);
-    return ScrimSignups.sortTeams(teams);
+    await this.prioService.setTeamPrioForScrim(scrim, teams);
+    this.cache.setSignups(scrim.id, teams);
+    return this.sortTeams(teams);
   }
 
   getScrimId(discordChannel: string): string | undefined {
     return this.cache.getScrim(discordChannel)?.id;
   }
 
-  static sortTeams(teams: ScrimSignup[]): {
+  private sortTeams(teams: ScrimSignup[]): {
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
   } {
     const waitlistCutoff = 20;
     teams.sort((teamA, teamB) => {
-      const lowPrioAmountA = teamA.players.reduce(
-        (count, player) => (player.lowPrio ? count + 1 : count),
-        0,
-      );
-      const lowPrioAmountB = teamB.players.reduce(
-        (count, player) => (player.lowPrio ? count + 1 : count),
-        0,
-      );
-      return lowPrioAmountA - lowPrioAmountB;
+      const lowPrioResult =
+        (teamA.prio?.amount ?? 0) - (teamB.prio?.amount ?? 0);
+      if (lowPrioResult === 0) {
+        // lower date is better, so switch order of subtraction
+        return teamB.date.valueOf() - teamA.date.valueOf();
+      }
+      return lowPrioResult;
     });
     return { mainList: teams.splice(0, waitlistCutoff), waitList: teams };
   }
@@ -207,6 +214,7 @@ export class ScrimSignups {
       teamName: dbTeamData.team_name,
       players: convertedTeamData.players,
       signupPlayer: convertedTeamData.signupPlayer,
+      date: new Date(dbTeamData.date_time),
     };
   }
 

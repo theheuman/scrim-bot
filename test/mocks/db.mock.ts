@@ -50,6 +50,7 @@ export class DbMock extends DB {
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,
+    date: Date,
     combinedElo: number | null = null,
   ): Promise<string> {
     return Promise.resolve(this.addScrimSignupResponse);
@@ -71,13 +72,7 @@ export class DbMock extends DB {
     scrims: { discord_channel: string; id: string; date_time_field: string }[];
   }> {
     return Promise.resolve({
-      scrims: [
-        {
-          id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-          discord_channel: "something",
-          date_time_field: "2024-10-14T20:10:35.706+00:00",
-        },
-      ],
+      scrims: [],
     });
   }
 
@@ -138,5 +133,17 @@ export class DbMock extends DB {
     reason: string,
   ) {
     return Promise.resolve(["0"]);
+  }
+
+  async getPrio(
+    date: Date,
+  ): Promise<{ id: string; amount: number; reason: string }[]> {
+    return Promise.resolve([
+      {
+        id: "0",
+        amount: 0,
+        reason: "lol",
+      },
+    ]);
   }
 }

@@ -84,7 +84,7 @@ describe("Prio", () => {
       });
 
       it("should set prio for players in cache", async () => {
-        await prioService.setPrio(
+        await prioService.setPlayerPrio(
           authorizedUser,
           [prioUserInCache],
           startDate,
@@ -104,7 +104,7 @@ describe("Prio", () => {
 
       it("should set prio for players NOT in cache", async () => {
         setPlayerSpy.mockClear();
-        await prioService.setPrio(
+        await prioService.setPlayerPrio(
           authorizedUser,
           [prioUserNotCached],
           startDate,
@@ -127,7 +127,7 @@ describe("Prio", () => {
       });
 
       it("should set prio for list of players some NOT in cache", async () => {
-        await prioService.setPrio(
+        await prioService.setPlayerPrio(
           authorizedUser,
           [prioUserInCache, prioUserNotCached],
           startDate,
@@ -147,7 +147,7 @@ describe("Prio", () => {
 
     it("Should throw error if user not authorized", async () => {
       const causeException = async () => {
-        await prioService.setPrio(
+        await prioService.setPlayerPrio(
           unauthorizedUser,
           [prioUserInCache],
           startDate,

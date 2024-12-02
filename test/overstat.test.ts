@@ -80,6 +80,7 @@ describe("Overstat", () => {
       players: [revy, theheuman, cTreazy],
       signupId: "213",
       signupPlayer: zboy.player,
+      date: new Date(),
     };
     const tournamentStats: OverstatTournamentResponse =
       JSON.parse(mockOverstatResponse);

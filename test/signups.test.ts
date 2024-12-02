@@ -4,24 +4,29 @@ import { PlayerInsert, PlayerStatInsert } from "../src/models/Player";
 import { User } from "discord.js";
 import { CacheService } from "../src/services/cache";
 import { OverstatService } from "../src/services/overstat";
-import { Scrim, ScrimSignup } from "../src/models/Scrims";
-import {
-  OverstatTournamentResponse,
-  PlayerTournamentStats,
-} from "../src/models/overstatModels";
+import { ScrimSignup } from "../src/models/Scrims";
+import { OverstatTournamentResponse } from "../src/models/overstatModels";
 import { mockOverstatResponse } from "./mocks/overstat-response.mock";
+import { PrioService } from "../src/services/prio";
+import { AuthService } from "../src/services/auth";
 
 describe("Signups", () => {
   let dbMock: DbMock;
   let cache: CacheService;
   let signups: ScrimSignups;
+  let prioService: PrioService;
   let overstatService: OverstatService;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
     overstatService = new OverstatService();
-    signups = new ScrimSignups(dbMock, cache, overstatService);
+    prioService = new PrioService(
+      dbMock,
+      cache,
+      new AuthService(dbMock, cache),
+    );
+    signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -209,6 +214,13 @@ describe("Signups", () => {
   describe("updateActiveScrims()", () => {
     it("Should get active scrims", async () => {
       cache.clear();
+      cache.createScrim("something", {
+        id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        dateTime: new Date(),
+        discordChannel: "something",
+        active: true,
+      });
+      cache.setSignups("ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", []);
       jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
         return Promise.resolve({
           scrims: [
@@ -235,12 +247,7 @@ describe("Signups", () => {
       jest
         .spyOn(dbMock, "createNewScrim")
         .mockImplementation(
-          (
-            dateTime: Date,
-            discordChannelID: string,
-            skill?: number | null,
-            overstatLink?: string | null,
-          ) => {
+          (_: Date, discordChannelID: string, skill?: number | null) => {
             expect(discordChannelID).toEqual(channelId);
             expect(skill).toEqual(undefined);
             return Promise.resolve("a valid scrim id");

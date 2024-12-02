@@ -116,17 +116,19 @@ export abstract class DB {
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,
+    date: Date,
     combinedElo: number | null = null,
   ): Promise<string> {
     const ids = await this.post("scrim_signups", [
       {
         team_name: teamName,
         scrim_id: scrimId,
-        signup_player_id: playerId,
+        signup_player_id: userId,
         player_one_id: playerId,
         player_two_id: playerTwoId,
         player_three_id: playerThreeId,
         combined_elo: combinedElo,
+        date_time: date,
       },
     ]);
     return ids[0];
@@ -308,6 +310,31 @@ export abstract class DB {
         reason,
       })),
     );
+  }
+
+  // TODO change get to be able to handle greater than and less than queries
+  async getPrio(
+    date: Date,
+  ): Promise<{ id: string; amount: number; reason: string }[]> {
+    const dbData = (await this.get(
+      "prio",
+      {
+        start_date: date,
+        end_date: date,
+      },
+      ["player_id", "amount", "reason"],
+    )) as {
+      prio: {
+        player_id: string;
+        amount: number;
+        reason: string;
+      }[];
+    };
+    return dbData.prio.map(({ player_id, amount, reason }) => ({
+      id: player_id,
+      amount,
+      reason,
+    }));
   }
 
   private generatePlayerUpdateQuery(

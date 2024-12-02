@@ -4,7 +4,10 @@ export interface Player {
   displayName: string;
   overstatId?: string;
   elo?: number;
-  lowPrio?: number;
+  prio?: {
+    amount: number;
+    reason: string;
+  };
 }
 
 export interface PlayerInsert {

@@ -19,7 +19,7 @@ module.exports = {
       interaction.reply("User not found, no command executed");
       return;
     }
-    await prioService.setPrio(
+    await prioService.setPlayerPrio(
       interaction.user,
       [user],
       new Date(),

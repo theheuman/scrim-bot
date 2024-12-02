@@ -33,7 +33,7 @@ module.exports = {
     const users = [user1, user2, user3].filter((user) => user !== null);
 
     try {
-      await prioService.setPrio(
+      await prioService.setPlayerPrio(
         interaction.user,
         users,
         new Date(),

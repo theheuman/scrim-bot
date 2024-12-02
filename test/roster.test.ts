@@ -46,6 +46,7 @@ describe("Rosters", () => {
     players: [revy, theheuman.player, cTreazy],
     signupId: "213",
     signupPlayer: zboy.player,
+    date: new Date(),
   });
 
   describe("removeSignup()", () => {
@@ -146,6 +147,7 @@ describe("Rosters", () => {
         players: [revy, theheuman.player, cTreazy],
         signupId: "213",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.clear();
       cache.createScrim(discordChannel, scrim);
@@ -205,6 +207,7 @@ describe("Rosters", () => {
         players: [revy, theheuman.player, cTreazy],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.clear();
       cache.createScrim(discordChannel, scrim);
@@ -238,6 +241,7 @@ describe("Rosters", () => {
         players: [revy, theheuman.player, cTreazy],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [dudeCube]);
@@ -283,6 +287,7 @@ describe("Rosters", () => {
         players: [zboy.player, supreme, mikey],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [dudeCube, getFineapples()]);
@@ -330,6 +335,7 @@ describe("Rosters", () => {
         players: [revy, supreme, mikey],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.clear();
       cache.createScrim(discordChannel, scrim);
