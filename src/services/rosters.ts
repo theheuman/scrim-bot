@@ -2,12 +2,14 @@ import { User } from "discord.js";
 import { DB } from "../db/db";
 import { CacheService } from "./cache";
 import { ScrimSignup } from "../models/Scrims";
+import { AuthService } from "./auth";
 
 export class RosterService {
-  db: DB;
-  cache: CacheService;
-
-  constructor(db: DB, cache: CacheService) {
+  constructor(
+    private db: DB,
+    private cache: CacheService,
+    private authService: AuthService,
+  ) {
     this.db = db;
     this.cache = cache;
   }
@@ -19,11 +21,8 @@ export class RosterService {
     oldUser: User,
     newUser: User,
   ): Promise<void> {
-    const { teamToBeChanged, scrimId, signups } = this.getDataIfAuthorized(
-      commandUser,
-      discordChannel,
-      teamName,
-    );
+    const { teamToBeChanged, scrimId, signups } =
+      await this.getDataIfAuthorized(commandUser, discordChannel, teamName);
     for (const team of signups) {
       for (const player of team.players) {
         if (player.discordId === newUser.id) {
@@ -65,11 +64,8 @@ export class RosterService {
     discordChannel: string,
     teamName: string,
   ): Promise<void> {
-    const { teamToBeChanged, signups, scrimId } = this.getDataIfAuthorized(
-      user,
-      discordChannel,
-      teamName,
-    );
+    const { teamToBeChanged, signups, scrimId } =
+      await this.getDataIfAuthorized(user, discordChannel, teamName);
     await this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
     signups.splice(signups.indexOf(teamToBeChanged), 1);
   }
@@ -80,11 +76,8 @@ export class RosterService {
     oldTeamName: string,
     newTeamName: string,
   ): Promise<void> {
-    const { teamToBeChanged, scrimId, signups } = this.getDataIfAuthorized(
-      user,
-      discordChannel,
-      oldTeamName,
-    );
+    const { teamToBeChanged, scrimId, signups } =
+      await this.getDataIfAuthorized(user, discordChannel, oldTeamName);
     for (const team of signups) {
       if (team.teamName === newTeamName) {
         throw Error("Team name already taken in this scrim set");
@@ -98,11 +91,15 @@ export class RosterService {
     teamToBeChanged.teamName = newTeamName;
   }
 
-  private getDataIfAuthorized(
+  private async getDataIfAuthorized(
     commandUser: User,
     discordChannel: string,
     teamName: string,
-  ): { scrimId: string; signups: ScrimSignup[]; teamToBeChanged: ScrimSignup } {
+  ): Promise<{
+    scrimId: string;
+    signups: ScrimSignup[];
+    teamToBeChanged: ScrimSignup;
+  }> {
     const scrimId = this.cache.getScrim(discordChannel)?.id;
     if (!scrimId) {
       throw Error(
@@ -117,18 +114,22 @@ export class RosterService {
     if (!teamToBeChanged) {
       throw Error("No team with that name");
     }
-    if (!this.userIsAuthorized(commandUser, teamToBeChanged)) {
+    const isAuthorized = await this.userIsAuthorized(
+      commandUser,
+      teamToBeChanged,
+    );
+    if (!isAuthorized) {
       throw Error("User issuing command not authorized to make changes");
     }
     return { scrimId, signups, teamToBeChanged };
   }
 
-  private userIsAuthorized(user: User, team: ScrimSignup) {
+  private async userIsAuthorized(user: User, team: ScrimSignup) {
     const authorizedPlayers = [team.signupPlayer, ...team.players];
     const foundPlayer = authorizedPlayers.find(
       (player) => player.discordId === user.id,
     );
-    // TODO check for discord admin roles here?
-    return !!foundPlayer;
+    const isAdmin = await this.authService.userIsAdmin(user);
+    return isAdmin || foundPlayer;
   }
 }

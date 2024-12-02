@@ -4,16 +4,19 @@ import { User } from "discord.js";
 import { CacheService } from "../src/services/cache";
 import { RosterService } from "../src/services/rosters";
 import { ScrimSignup, Scrim } from "../src/models/Scrims";
+import { AuthService } from "../src/services/auth";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
   let cache: CacheService;
   let rosters: RosterService;
+  let authService: AuthService;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
-    rosters = new RosterService(dbMock, cache);
+    authService = new AuthService(dbMock, cache);
+    rosters = new RosterService(dbMock, cache, authService);
   });
 
   const zboy: { user: User; player: Player } = {
@@ -147,6 +150,9 @@ describe("Rosters", () => {
       cache.clear();
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [differentFineapples]);
+      jest
+        .spyOn(authService, "userIsAdmin")
+        .mockReturnValue(Promise.resolve(false));
       const causeException = async () => {
         await rosters.removeSignup(
           zboy.user,
