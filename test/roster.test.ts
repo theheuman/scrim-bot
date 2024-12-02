@@ -1,18 +1,18 @@
 import { DbMock } from "./mocks/db.mock";
 import { Player, PlayerInsert } from "../src/models/Player";
 import { User } from "discord.js";
-import { Cache } from "../src/services/cache";
+import { CacheService } from "../src/services/cache";
 import { RosterService } from "../src/services/rosters";
 import { ScrimSignup, Scrim } from "../src/models/Scrims";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
-  let cache: Cache;
+  let cache: CacheService;
   let rosters: RosterService;
 
   beforeEach(() => {
     dbMock = new DbMock();
-    cache = new Cache();
+    cache = new CacheService();
     rosters = new RosterService(dbMock, cache);
   });
 

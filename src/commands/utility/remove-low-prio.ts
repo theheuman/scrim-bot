@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import lowPrioUsers from "../../models/lowPrioUsers";
+import { prioService } from "../../services";
 
+// TODO ask for reason and amount in command
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("removelowprio")
@@ -18,7 +19,14 @@ module.exports = {
       interaction.reply("User not found, no command executed");
       return;
     }
-    lowPrioUsers.delete(user.id as string);
+    await prioService.setPrio(
+      interaction.user,
+      user,
+      new Date(),
+      new Date(),
+      0,
+      "Removed from low prio",
+    );
     await interaction.reply(
       `User ${user.username} has been removed from the low priority list.`,
     );

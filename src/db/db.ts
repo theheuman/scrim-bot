@@ -8,7 +8,7 @@ export type JSONValue =
   | { [x: string]: JSONValue }
   | Array<JSONValue>;
 
-export type DbValue = string | number | boolean | null;
+export type DbValue = string | number | boolean | Date | null;
 
 export abstract class DB {
   abstract get(
@@ -62,7 +62,7 @@ export abstract class DB {
   ): Promise<string> {
     const ids = await this.post("scrims", [
       {
-        date_time_field: dateTime.toISOString(),
+        date_time_field: dateTime,
         skill,
         overstat_link: overstatLink,
         discord_channel: discordChannelID,

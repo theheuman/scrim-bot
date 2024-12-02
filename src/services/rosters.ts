@@ -1,13 +1,13 @@
 import { User } from "discord.js";
 import { DB } from "../db/db";
-import { Cache } from "./cache";
+import { CacheService } from "./cache";
 import { ScrimSignup } from "../models/Scrims";
 
 export class RosterService {
   db: DB;
-  cache: Cache;
+  cache: CacheService;
 
-  constructor(db: DB, cache: Cache) {
+  constructor(db: DB, cache: CacheService) {
     this.db = db;
     this.cache = cache;
   }

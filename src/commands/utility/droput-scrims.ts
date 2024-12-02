@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { rosters } from "../../services";
+import { rosterService } from "../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,7 +20,7 @@ module.exports = {
 
     // TODO user needs to be on team, or have signed team up to be allowed to remove team
     try {
-      await rosters.removeSignup(
+      await rosterService.removeSignup(
         interaction.user,
         channelId as string,
         teamName as string,

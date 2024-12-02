@@ -6,7 +6,7 @@ const config: {
   nhost: { adminSecret: string; subdomain: string; region: string };
 } = configJson as {
   nhost: { adminSecret: string; subdomain: string; region: string };
-}; 
+};
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
@@ -23,7 +23,7 @@ class NhostDb extends DB {
 
   // TODO generate more complicated search queryies, not just _and { _eq }
   private static generateSearchStringFromFields(
-    fields: Record<string, string | number | boolean | null> | undefined,
+    fields: Record<string, string | number | boolean | Date | null> | undefined,
   ): string {
     if (!fields) {
       return "";
@@ -443,10 +443,12 @@ class NhostDb extends DB {
   }
 
   private static createValueString(
-    value: string | number | boolean | null,
+    value: string | number | boolean | Date | null,
   ): string {
     if (typeof value === "string") {
       return `"${value}"`;
+    } else if (value instanceof Date) {
+      return `"${value.toISOString()}`;
     } else if (value === null) {
       return `null`;
     }

@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import lowPrioUsers from "../../models/lowPrioUsers";
+import { prioService } from "../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -31,11 +31,22 @@ module.exports = {
 
     const users = [user1, user2, user3].filter((user) => user !== null);
 
+    // TODO currently prio command not being awaited, please fix
     users.forEach((user) => {
-      lowPrioUsers.add(user.id);
+      if (!user) {
+        return;
+      }
+      prioService.setPrio(
+        interaction.user,
+        user,
+        new Date(),
+        new Date(),
+        -1,
+        "Added to low prio",
+      );
     });
 
-    const userNames = users.map((user) => user.username).join(", ");
+    const userNames = users.map((user) => user?.username).join(", ");
     await interaction.reply(
       `User(s) ${userNames} have been added to the low priority list.`,
     );

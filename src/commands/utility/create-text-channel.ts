@@ -10,7 +10,7 @@ import {
   SlashCommandStringOption,
   TextChannel,
 } from "discord.js";
-import { signups } from "../../services";
+import { signupsService } from "../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -121,9 +121,8 @@ module.exports = {
 
       if (channelId) {
         const dateTime = `${channelDate} - ${channelTime}`;
-        console.log(dateTime);
         const scrimDate = new Date(dateTime);
-        signups.createScrim(channelId, scrimDate);
+        signupsService.createScrim(channelId, scrimDate);
         const channel: TextChannel =
           (await interaction.client.channels.cache.get(
             channelId,

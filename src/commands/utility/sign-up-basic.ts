@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { signups } from "../../services";
+import { signupsService } from "../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -41,10 +41,10 @@ module.exports = {
       return;
     }
 
-    const scrimId = signups.getScrimId(channelId as string);
+    const scrimId = signupsService.getScrimId(channelId as string);
     if (scrimId) {
       try {
-        const signupId = await signups.addTeam(
+        const signupId = await signupsService.addTeam(
           scrimId,
           teamName,
           signupPlayer,

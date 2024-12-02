@@ -2,14 +2,14 @@ import { User } from "discord.js";
 import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { Cache } from "./cache";
+import { CacheService } from "./cache";
 import { OverstatService } from "./overstat";
 import { Scrim, ScrimSignup } from "../models/Scrims";
 
 export class ScrimSignups {
   constructor(
     private db: DB,
-    private cache: Cache,
+    private cache: CacheService,
     private overstatService: OverstatService,
   ) {
     this.updateActiveScrims();
