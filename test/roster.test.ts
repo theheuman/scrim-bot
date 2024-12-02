@@ -1,5 +1,5 @@
 import { DbMock } from "./mocks/db.mock";
-import { Player, PlayerInsert } from "../src/models/Player";
+import { Player } from "../src/models/Player";
 import { User } from "discord.js";
 import { CacheService } from "../src/services/cache";
 import { RosterService } from "../src/services/rosters";

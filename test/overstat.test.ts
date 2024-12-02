@@ -30,13 +30,26 @@ describe("Overstat", () => {
       );
     });
 
-    it("Should throw error", async () => {
-      const causeException = async () => {
-        await overstatService.getOverallStats("https://overstat.gg/_7zpee");
-      };
-      await expect(causeException).rejects.toThrow(
-        "URL Malformated, make sure you are using the fully built url and not the shortcode",
-      );
+    describe("errors", () => {
+      it("Should throw can't split error", async () => {
+        const causeException = async () => {
+          await overstatService.getOverallStats("https://overstat.gg/_7zpee");
+        };
+        await expect(causeException).rejects.toThrow(
+          "URL Malformated, make sure you are using the fully built url and not the shortcode",
+        );
+      });
+
+      it("Should throw no tournament code error", async () => {
+        const causeException = async () => {
+          await overstatService.getOverallStats(
+            "https://overstat.gg/tournament/thevoidesports/.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard",
+          );
+        };
+        await expect(causeException).rejects.toThrow(
+          "URL Malformated no tournament id found, make sure you are using the fully built url and not the shortcode",
+        );
+      });
     });
   });
 
