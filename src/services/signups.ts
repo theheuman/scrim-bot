@@ -195,10 +195,10 @@ export class ScrimSignups {
     const waitlistCutoff = 20;
     teams.sort((teamA, teamB) => {
       const lowPrioResult =
-        (teamA.prio?.amount ?? 0) - (teamB.prio?.amount ?? 0);
+        (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
       if (lowPrioResult === 0) {
         // lower date is better, so switch order of subtraction
-        return teamB.date.valueOf() - teamA.date.valueOf();
+        return teamA.date.valueOf() - teamB.date.valueOf();
       }
       return lowPrioResult;
     });
