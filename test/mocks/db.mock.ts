@@ -39,7 +39,7 @@ export class DbMock extends DB {
     return Promise.resolve(this.getResponse);
   }
 
-  post(tableName: string, data: Record<string, any>): Promise<string[]> {
+  post(tableName: string, data: Record<string, DbValue>[]): Promise<string[]> {
     return Promise.resolve(this.postResponse);
   }
 
@@ -128,5 +128,15 @@ export class DbMock extends DB {
     newPlayerId: string,
   ): Promise<JSONValue> {
     return Promise.resolve({});
+  }
+
+  async setPrio(
+    playerId: string,
+    startDate: Date,
+    endDate: Date,
+    amount: number,
+    reason: string,
+  ) {
+    return Promise.resolve("0");
   }
 }

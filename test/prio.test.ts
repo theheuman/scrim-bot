@@ -8,12 +8,14 @@ import SpyInstance = jest.SpyInstance;
 
 describe("Prio", () => {
   let prioService: PrioService;
-  const overstatLink =
-    "https://overstat.gg/tournament/thevoidesports/9994.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard";
-  let getPlayerSpy: SpyInstance<Player | undefined, [userId: string], any>;
-  let authCheckSpy: SpyInstance<Promise<boolean>, [user: User], any>;
+  let getPlayerSpy: SpyInstance<Player | undefined, [userId: string], string>;
+  let authCheckSpy: SpyInstance<Promise<boolean>, [user: User], string>;
   let dbMock: DbMock;
-  const player: Player = { discordId: "", displayName: "", id: "" };
+  const player: Player = {
+    discordId: "discordId",
+    displayName: "mockPlayer",
+    id: "dbId",
+  };
   const unauthorizedUser: User = {
     id: "unauthorized",
   } as User;
@@ -43,7 +45,56 @@ describe("Prio", () => {
     const amount = 1;
     const reason = "inting on peoples foreheads";
 
-    it("Should set prio", async () => {});
+    describe("correctly set prio", () => {
+      let insertSpy: SpyInstance;
+      let dbSetPrioSpy: SpyInstance;
+
+      beforeEach(() => {
+        insertSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+        dbSetPrioSpy = jest.spyOn(dbMock, "setPrio");
+        insertSpy.mockClear();
+        dbSetPrioSpy.mockClear();
+      });
+
+      it("should set prio for players in cache", async () => {
+        await prioService.setPrio(
+          authorizedUser,
+          prioUser,
+          startDate,
+          endDate,
+          amount,
+          reason,
+        );
+        expect(insertSpy).toHaveBeenCalledTimes(0);
+        expect(dbSetPrioSpy).toHaveBeenCalledWith(
+          player.id,
+          startDate,
+          endDate,
+          amount,
+          reason,
+        );
+      });
+
+      it("should set prio for players NOT in cache", async () => {
+        getPlayerSpy.mockReturnValue(undefined);
+        insertSpy.mockReturnValue(Promise.resolve("a different db id"));
+        await prioService.setPrio(
+          authorizedUser,
+          prioUser,
+          startDate,
+          endDate,
+          amount,
+          reason,
+        );
+        expect(dbSetPrioSpy).toHaveBeenCalledWith(
+          "a different db id",
+          startDate,
+          endDate,
+          amount,
+          reason,
+        );
+      });
+    });
 
     it("Should throw error if user not authorized", async () => {
       const causeException = async () => {

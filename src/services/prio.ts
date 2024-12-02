@@ -31,15 +31,12 @@ export class PrioService {
         prioUser.displayName,
       );
     }
-    const ids = await this.db.post("prio", [
-      {
-        player_id: prioPlayerId,
-        start_date: startDate,
-        end_date: endDate,
-        amount,
-        reason,
-      },
-    ]);
-    return ids[0];
+    return await this.db.setPrio(
+      prioPlayerId,
+      startDate,
+      endDate,
+      amount,
+      reason,
+    );
   }
 }

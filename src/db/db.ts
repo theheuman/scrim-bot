@@ -290,6 +290,25 @@ export abstract class DB {
     );
   }
 
+  async setPrio(
+    playerId: string,
+    startDate: Date,
+    endDate: Date,
+    amount: number,
+    reason: string,
+  ): Promise<string> {
+    const ids = await this.post("prio", [
+      {
+        player_id: playerId,
+        start_date: startDate,
+        end_date: endDate,
+        amount,
+        reason,
+      },
+    ]);
+    return ids[0];
+  }
+
   private generatePlayerUpdateQuery(
     player: PlayerInsert,
     uniqueQueryName: string,
