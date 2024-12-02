@@ -9,6 +9,11 @@ import SpyInstance = jest.SpyInstance;
 describe("Prio", () => {
   let prioService: PrioService;
   let getPlayerSpy: SpyInstance<Player | undefined, [userId: string], string>;
+  let setPlayerSpy: SpyInstance<
+    void,
+    [playerId: string, player: Player],
+    string
+  >;
   let authCheckSpy: SpyInstance<Promise<boolean>, [user: User], string>;
   let dbMock: DbMock;
   const player: Player = {
@@ -27,6 +32,7 @@ describe("Prio", () => {
   } as User;
   const prioUserNotCached: User = {
     id: "not in cache",
+    displayName: "not in cache",
   } as User;
 
   beforeEach(() => {
@@ -41,6 +47,7 @@ describe("Prio", () => {
     getPlayerSpy.mockImplementation((id) => {
       return id === prioUserInCache.id ? player : undefined;
     });
+    setPlayerSpy = jest.spyOn(cacheMock, "setPlayer");
     prioService = new PrioService(dbMock, cacheMock, authServiceMock);
   });
 
@@ -96,6 +103,7 @@ describe("Prio", () => {
       });
 
       it("should set prio for players NOT in cache", async () => {
+        setPlayerSpy.mockClear();
         await prioService.setPrio(
           authorizedUser,
           [prioUserNotCached],
@@ -111,6 +119,11 @@ describe("Prio", () => {
           amount,
           reason,
         );
+        expect(setPlayerSpy).toHaveBeenCalledWith("a different db id", {
+          id: "a different db id",
+          discordId: prioUserNotCached.id,
+          displayName: prioUserNotCached.displayName,
+        });
       });
 
       it("should set prio for list of players some NOT in cache", async () => {

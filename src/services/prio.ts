@@ -44,6 +44,14 @@ export class PrioService {
           displayName: player.displayName,
         })),
       );
+      cacheMissedPlayerIds.forEach((playerId, i) => {
+        const discordUser = cacheMissedPlayers[i];
+        this.cache.setPlayer(playerId, {
+          id: playerId,
+          discordId: discordUser.id,
+          displayName: discordUser.displayName,
+        });
+      });
       playerIds.push(...cacheMissedPlayerIds);
     }
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
