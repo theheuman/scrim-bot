@@ -18,17 +18,16 @@ module.exports = {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname");
 
-    // TODO user needs to be on team, or have signed team up to be allowed to remove team
     try {
       await rosterService.removeSignup(
         interaction.user,
         channelId as string,
         teamName as string,
       );
-      interaction.reply(`Team ${teamName} has been dropped from the signups.`);
+      interaction.reply(`Team ${teamName} has dropped from the signups.`);
     } catch (e) {
       const error = e as Error;
-      interaction.reply(`Did NOT delete team: ${error.message}`);
+      interaction.reply(`Did NOT remove team from scrim: ${error.message}`);
     }
   },
 };

@@ -21,7 +21,6 @@ class NhostDb extends DB {
     });
   }
 
-  // TODO generate more complicated search queryies, not just _and { _eq }
   private static generateSearchStringFromFields(
     fields: Record<string, SearchOptions> | undefined,
   ): string {

@@ -3,6 +3,12 @@ import { User } from "discord.js";
 import { AuthService } from "./auth";
 import { CacheService } from "./cache";
 import { Scrim, ScrimSignup } from "../models/Scrims";
+import { Player } from "../models/Player";
+
+// a map of playerId -> accumulated prio
+type PlayerMap = Map<string, { amount: number; reason: string }>;
+// a player id and its associated prio
+type PlayerPrio = { id: string; amount: number; reason: string };
 
 export class PrioService {
   constructor(
@@ -11,7 +17,6 @@ export class PrioService {
     private authService: AuthService,
   ) {}
 
-  // TODO multiple users in one prio call, will need to edit db.insertPlayerIfNotExists or add additional method
   async setPlayerPrio(
     commandUser: User,
     prioUsers: User[],
@@ -27,6 +32,26 @@ export class PrioService {
     const prioPlayers = prioUsers.map((prioUser) =>
       this.cache.getPlayer(prioUser.id as string),
     );
+    const { cacheMissedPlayers, playerIds } = this.getPlayers(
+      prioPlayers,
+      prioUsers,
+    );
+
+    if (cacheMissedPlayers.length > 0) {
+      const cacheMissedPlayerIds =
+        await this.fetchCacheMissedPlayerIds(cacheMissedPlayers);
+      playerIds.push(...cacheMissedPlayerIds);
+    }
+    return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
+  }
+
+  async setTeamPrioForScrim(scrim: Scrim, teams: ScrimSignup[]) {
+    const playersIdsWithPrio = await this.db.getPrio(scrim.dateTime);
+    const playerMap = this.generatePlayerMap(playersIdsWithPrio);
+    this.setTeamPrio(teams, playerMap);
+  }
+
+  private getPlayers(prioPlayers: (Player | undefined)[], prioUsers: User[]) {
     let index = 0;
     const cacheMissedPlayers: User[] = [];
     const playerIds: string[] = [];
@@ -38,28 +63,32 @@ export class PrioService {
       }
       index++;
     }
-    if (cacheMissedPlayers.length > 0) {
-      const cacheMissedPlayerIds = await this.db.insertPlayers(
-        cacheMissedPlayers.map((player) => ({
-          discordId: player.id,
-          displayName: player.displayName,
-        })),
-      );
-      cacheMissedPlayerIds.forEach((playerId, i) => {
-        const discordUser = cacheMissedPlayers[i];
-        this.cache.setPlayer(playerId, {
-          id: playerId,
-          discordId: discordUser.id,
-          displayName: discordUser.displayName,
-        });
-      });
-      playerIds.push(...cacheMissedPlayerIds);
-    }
-    return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
+    return { cacheMissedPlayers, playerIds };
   }
 
-  async setTeamPrioForScrim(scrim: Scrim, teams: ScrimSignup[]) {
-    const playersIdsWithPrio = await this.db.getPrio(scrim.dateTime);
+  private async fetchCacheMissedPlayerIds(cacheMissedPlayers: User[]) {
+    const cacheMissedPlayerIds = await this.db.insertPlayers(
+      cacheMissedPlayers.map((player) => ({
+        discordId: player.id,
+        displayName: player.displayName,
+      })),
+    );
+    this.addPlayersToCache(cacheMissedPlayers, cacheMissedPlayerIds);
+    return cacheMissedPlayerIds;
+  }
+
+  private addPlayersToCache(players: User[], playerIds: string[]) {
+    playerIds.forEach((playerId, i) => {
+      const discordUser = players[i];
+      this.cache.setPlayer(playerId, {
+        id: playerId,
+        discordId: discordUser.id,
+        displayName: discordUser.displayName,
+      });
+    });
+  }
+
+  private generatePlayerMap(playersIdsWithPrio: PlayerPrio[]): PlayerMap {
     const playerMap: Map<string, { amount: number; reason: string }> =
       new Map();
     for (const player of playersIdsWithPrio) {
@@ -76,6 +105,10 @@ export class PrioService {
         });
       }
     }
+    return playerMap;
+  }
+
+  private setTeamPrio(teams: ScrimSignup[], playerMap: PlayerMap) {
     for (const team of teams) {
       let prio = 0;
       const reason: string[] = [];

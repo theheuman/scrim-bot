@@ -339,7 +339,6 @@ export abstract class DB {
     );
   }
 
-  // TODO change get to be able to handle greater than and less than queries
   async getPrio(
     date: Date,
   ): Promise<{ id: string; amount: number; reason: string }[]> {

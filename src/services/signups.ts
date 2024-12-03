@@ -197,7 +197,7 @@ export class ScrimSignups {
       const lowPrioResult =
         (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
       if (lowPrioResult === 0) {
-        // lower date is better, so switch order of subtraction
+        // lower date is better, so subtract b from a
         return teamA.date.valueOf() - teamB.date.valueOf();
       }
       return lowPrioResult;
