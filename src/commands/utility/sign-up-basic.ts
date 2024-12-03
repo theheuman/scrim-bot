@@ -41,6 +41,7 @@ module.exports = {
       return;
     }
 
+    // TODO move getting scrimId into signups.addTeam method
     const scrimId = signupsService.getScrimId(channelId as string);
     if (scrimId) {
       try {
