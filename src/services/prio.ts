@@ -40,6 +40,7 @@ export class PrioService {
     if (cacheMissedPlayers.length > 0) {
       const cacheMissedPlayerIds =
         await this.fetchCacheMissedPlayerIds(cacheMissedPlayers);
+      this.addPlayersToCache(cacheMissedPlayers, cacheMissedPlayerIds);
       playerIds.push(...cacheMissedPlayerIds);
     }
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
@@ -48,7 +49,7 @@ export class PrioService {
   async setTeamPrioForScrim(scrim: Scrim, teams: ScrimSignup[]) {
     const playersIdsWithPrio = await this.db.getPrio(scrim.dateTime);
     const playerMap = this.generatePlayerMap(playersIdsWithPrio);
-    this.setTeamPrio(teams, playerMap);
+    this.setTeamPrioFromPlayerPrio(teams, playerMap);
   }
 
   private getPlayers(prioPlayers: (Player | undefined)[], prioUsers: User[]) {
@@ -66,15 +67,15 @@ export class PrioService {
     return { cacheMissedPlayers, playerIds };
   }
 
-  private async fetchCacheMissedPlayerIds(cacheMissedPlayers: User[]) {
-    const cacheMissedPlayerIds = await this.db.insertPlayers(
+  private fetchCacheMissedPlayerIds(
+    cacheMissedPlayers: User[],
+  ): Promise<string[]> {
+    return this.db.insertPlayers(
       cacheMissedPlayers.map((player) => ({
         discordId: player.id,
         displayName: player.displayName,
       })),
     );
-    this.addPlayersToCache(cacheMissedPlayers, cacheMissedPlayerIds);
-    return cacheMissedPlayerIds;
   }
 
   private addPlayersToCache(players: User[], playerIds: string[]) {
@@ -92,23 +93,26 @@ export class PrioService {
     const playerMap: Map<string, { amount: number; reason: string }> =
       new Map();
     for (const player of playersIdsWithPrio) {
-      const mapEntry = playerMap.get(player.id);
-      if (!mapEntry) {
+      const playerPrio = playerMap.get(player.id);
+      if (!playerPrio) {
         playerMap.set(player.id, {
           amount: player.amount,
           reason: player.reason,
         });
       } else {
         playerMap.set(player.id, {
-          amount: mapEntry.amount + player.amount,
-          reason: mapEntry.reason + ", " + player.reason,
+          amount: playerPrio.amount + player.amount,
+          reason: playerPrio.reason + ", " + player.reason,
         });
       }
     }
     return playerMap;
   }
 
-  private setTeamPrio(teams: ScrimSignup[], playerMap: PlayerMap) {
+  private setTeamPrioFromPlayerPrio(
+    teams: ScrimSignup[],
+    playerMap: PlayerMap,
+  ) {
     for (const team of teams) {
       let prio = 0;
       const reason: string[] = [];
