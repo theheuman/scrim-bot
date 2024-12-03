@@ -9,16 +9,18 @@ export type JSONValue =
   | Array<JSONValue>;
 
 export type DbValue = string | number | boolean | Date | null;
+export type Comparator = "eq" | "gte" | "lte" | "gt" | "lt";
+export type SearchOptions = { comparator: Comparator; value: DbValue };
 
 export abstract class DB {
   abstract get(
     tableName: string,
-    fieldsToSearch: Record<string, DbValue>,
+    fieldsToSearch: Record<string, SearchOptions>,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
   abstract update(
     tableName: string,
-    fieldsToEquate: Record<string, DbValue>,
+    fieldsToSearch: Record<string, SearchOptions>,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
@@ -31,7 +33,7 @@ export abstract class DB {
   abstract deleteById(tableName: string, id: string): Promise<string>;
   abstract delete(
     tableName: string,
-    fieldsToEqual: Record<string, DbValue>,
+    fieldsToEqual: Record<string, SearchOptions>,
   ): Promise<string[]>;
   abstract customQuery(query: string): Promise<JSONValue>;
   abstract replaceTeammate(
@@ -79,7 +81,12 @@ export abstract class DB {
   ): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-      { id: scrimId },
+      {
+        id: {
+          comparator: "eq",
+          value: scrimId,
+        },
+      },
       { skill, overstat_link: overstatLink },
       ["id"],
     )) as { id: string };
@@ -97,7 +104,12 @@ export abstract class DB {
   async closeScrim(scrimId: string): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-      { id: scrimId },
+      {
+        id: {
+          comparator: "eq",
+          value: scrimId,
+        },
+      },
       { active: false },
       ["id"],
     )) as { id: string };
@@ -105,7 +117,10 @@ export abstract class DB {
       throw Error("Could not set scrim to inactive, no updates made");
     }
     return this.delete("scrim_signups", {
-      scrim_id: updatedScrimInfo.id,
+      scrim_id: {
+        comparator: "eq",
+        value: updatedScrimInfo.id,
+      },
     });
   }
 
@@ -136,8 +151,14 @@ export abstract class DB {
 
   removeScrimSignup(teamName: string, scrimId: string) {
     return this.delete("scrim_signups", {
-      scrim_id: scrimId,
-      team_name: teamName,
+      scrim_id: {
+        comparator: "eq",
+        value: scrimId,
+      },
+      team_name: {
+        comparator: "eq",
+        value: teamName,
+      },
     });
   }
 
@@ -217,7 +238,7 @@ export abstract class DB {
   getActiveScrims(): Promise<{
     scrims: { discord_channel: string; id: string; date_time_field: string }[];
   }> {
-    return this.get("scrims", { active: true }, [
+    return this.get("scrims", { active: { comparator: "eq", value: true } }, [
       "discord_channel",
       "id",
       "date_time_field",
@@ -279,8 +300,14 @@ export abstract class DB {
     return this.update(
       "scrim_signups",
       {
-        scrim_id: scrimId,
-        team_name: oldTeamName,
+        scrim_id: {
+          comparator: "eq",
+          value: scrimId,
+        },
+        team_name: {
+          comparator: "eq",
+          value: oldTeamName,
+        },
       },
       { team_name: newTeamName },
       [
@@ -319,8 +346,14 @@ export abstract class DB {
     const dbData = (await this.get(
       "prio",
       {
-        start_date: date,
-        end_date: date,
+        start_date: {
+          comparator: "lte",
+          value: date,
+        },
+        end_date: {
+          comparator: "gte",
+          value: date,
+        },
       },
       ["player_id", "amount", "reason"],
     )) as {

@@ -1,4 +1,4 @@
-import { DB, DbValue, JSONValue } from "../../src/db/db";
+import { DB, DbValue, JSONValue, SearchOptions } from "../../src/db/db";
 import { PlayerInsert } from "../../src/models/Player";
 import { Scrims, ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
@@ -33,7 +33,7 @@ export class DbMock extends DB {
 
   get(
     tableName: string,
-    fieldsToSearch: Record<string, string>,
+    fieldsToSearch: Record<string, SearchOptions>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     return Promise.resolve(this.getResponse);
@@ -84,7 +84,7 @@ export class DbMock extends DB {
 
   delete(
     tableName: string,
-    fieldsToEqual: Record<string, DbValue>,
+    fieldsToEqual: Record<string, SearchOptions>,
   ): Promise<string[]> {
     return Promise.resolve([""]);
   }
@@ -100,7 +100,7 @@ export class DbMock extends DB {
 
   update(
     tableName: string,
-    fieldsToEquate: Record<string, DbValue>,
+    fieldsToEquate: Record<string, SearchOptions>,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {

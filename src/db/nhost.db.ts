@@ -1,4 +1,4 @@
-import { DB, DbValue, JSONValue } from "./db";
+import { DB, DbValue, JSONValue, SearchOptions } from "./db";
 import configJson from "../../config.json";
 import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
@@ -23,21 +23,21 @@ class NhostDb extends DB {
 
   // TODO generate more complicated search queryies, not just _and { _eq }
   private static generateSearchStringFromFields(
-    fields: Record<string, string | number | boolean | Date | null> | undefined,
+    fields: Record<string, SearchOptions> | undefined,
   ): string {
     if (!fields) {
       return "";
     }
     const searchStringArray = Object.keys(fields).map(
       (fieldKey) =>
-        `{ ${fieldKey}: { _eq: ${NhostDb.createValueString(fields[fieldKey])} } }`,
+        `{ ${fieldKey}: { _${fields[fieldKey].comparator}: ${NhostDb.createValueString(fields[fieldKey].value)} } }`,
     );
     return `where: { _and: [${searchStringArray.join(", ")}]}`;
   }
 
   async get(
     tableName: string,
-    fieldsToSearch: Record<string, DbValue> | undefined,
+    fieldsToSearch: Record<string, SearchOptions> | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     let searchString = NhostDb.generateSearchStringFromFields(fieldsToSearch);
@@ -104,7 +104,7 @@ class NhostDb extends DB {
   // TODO use delete_by_pk field here? Probably more efficient
   async deleteById(tableName: string, id: string): Promise<string> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${NhostDb.generateSearchStringFromFields({ id })})`;
+    const searchString = `(${NhostDb.generateSearchStringFromFields({ id: { comparator: "eq", value: id } })})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -128,7 +128,7 @@ class NhostDb extends DB {
 
   async delete(
     tableName: string,
-    fieldsToEqual: Record<string, DbValue>,
+    fieldsToEqual: Record<string, SearchOptions>,
   ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
     const searchString = `(${NhostDb.generateSearchStringFromFields(fieldsToEqual)})`;
@@ -155,12 +155,12 @@ class NhostDb extends DB {
 
   async update(
     tableName: string,
-    fieldsToEquate: Record<string, DbValue>,
+    fieldsToSearch: Record<string, SearchOptions>,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     const updateName = "update_" + tableName;
-    const searchString = NhostDb.generateSearchStringFromFields(fieldsToEquate);
+    const searchString = NhostDb.generateSearchStringFromFields(fieldsToSearch);
     const fieldsToUpdateArray = Object.keys(fieldsToUpdate).map(
       (key) => `${key}: ${NhostDb.createValueString(fieldsToUpdate[key])}`,
     );
