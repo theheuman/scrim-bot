@@ -979,14 +979,14 @@ describe("DB connection", () => {
 
   it("Should expunge player prio", async () => {
     const ids = [
-      "17538df5-4052-4233-b94b-6ed09b512c59",
       "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08",
+      "17538df5-4052-4233-b94b-6ed09b512c59",
     ];
 
     mockRequest = (query) => {
       const expected = `
       mutation {
-        delete_prio(where: { _or: [{ id: { _eq: "17538df5-4052-4233-b94b-6ed09b512c59" } }, { id: { _eq: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08" } }]}) {
+        delete_prio(where: { _or: [{ id: { _eq: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08" } }, { id: { _eq: "17538df5-4052-4233-b94b-6ed09b512c59" } }]}) {
           returning {
             id
           }
