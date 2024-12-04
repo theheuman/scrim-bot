@@ -66,12 +66,18 @@ describe("DB connection", () => {
       };
       await nhostDb.get(
         "players",
-        {
-          id: {
-            comparator: "eq",
-            value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        [
+          {
+            operator: "and",
+            expressions: [
+              {
+                fieldName: "id",
+                comparator: "eq",
+                value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+              },
+            ],
           },
-        },
+        ],
         ["id", "display_name", "overstat_link"],
       );
       expect.assertions(1);
@@ -105,13 +111,23 @@ describe("DB connection", () => {
 
       const data = await nhostDb.get(
         "players",
-        {
-          id: {
-            comparator: "eq",
-            value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        [
+          {
+            operator: "and",
+            expressions: [
+              {
+                fieldName: "id",
+                comparator: "eq",
+                value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+              },
+              {
+                fieldName: "display_name",
+                comparator: "eq",
+                value: "TheHeuman",
+              },
+            ],
           },
-          display_name: { comparator: "eq", value: "TheHeuman" },
-        },
+        ],
         ["id", "display_name", "overstat_link"],
       );
       expect(data).toEqual({
@@ -150,12 +166,27 @@ describe("DB connection", () => {
         });
       };
 
-      (await nhostDb.get(
+      const scrims = (await nhostDb.get(
         "scrims",
-        { active: { comparator: "eq", value: true } },
+        [
+          {
+            operator: "and",
+            expressions: [
+              { fieldName: "active", comparator: "eq", value: true },
+            ],
+          },
+        ],
         ["discord_channel", "id"],
       )) as { scrims: Partial<Scrims>[] };
-      expect.assertions(1);
+      expect(scrims).toEqual({
+        scrims: [
+          {
+            discord_channel: "something",
+            id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+          },
+        ],
+      });
+      expect.assertions(2);
     });
   });
 
@@ -272,13 +303,19 @@ describe("DB connection", () => {
       };
       const newData = await nhostDb.update(
         "scrim_signups",
-        {
-          scrim_id: {
-            comparator: "eq",
-            value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        [
+          {
+            operator: "and",
+            expressions: [
+              {
+                fieldName: "scrim_id",
+                comparator: "eq",
+                value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+              },
+              { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
+            ],
           },
-          team_name: { comparator: "eq", value: "Fineapples" },
-        },
+        ],
         { team_name: "Dude Cube" },
         [
           "team_name",
@@ -325,13 +362,19 @@ describe("DB connection", () => {
         });
       };
 
-      const deletedIDs = await nhostDb.delete("scrim_signups", {
-        scrim_id: {
-          comparator: "eq",
-          value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+      const deletedIDs = await nhostDb.delete("scrim_signups", [
+        {
+          operator: "and",
+          expressions: [
+            {
+              fieldName: "scrim_id",
+              comparator: "eq",
+              value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+            },
+            { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
+          ],
         },
-        team_name: { comparator: "eq", value: "Fineapples" },
-      });
+      ]);
       expect(deletedIDs[0]).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
       expect.assertions(2);
     });
@@ -895,7 +938,7 @@ describe("DB connection", () => {
     });
   });
 
-  it("Should set prio", async () => {
+  it("Should set player prio", async () => {
     const startDate = new Date();
     const endDate = new Date();
     const amount = -400;
@@ -934,7 +977,47 @@ describe("DB connection", () => {
     expect.assertions(2);
   });
 
-  it("should get prio", async () => {
+  it("Should expunge player prio", async () => {
+    const ids = [
+      "17538df5-4052-4233-b94b-6ed09b512c59",
+      "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08",
+    ];
+
+    mockRequest = (query) => {
+      const expected = `
+      mutation {
+        delete_prio(where: { _or: [{ id: { _eq: "17538df5-4052-4233-b94b-6ed09b512c59" } }, { id: { _eq: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08" } }]}) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+      expect(query).toEqual(expected);
+      return Promise.resolve({
+        data: {
+          delete_prio: {
+            returning: [
+              {
+                id: "17538df5-4052-4233-b94b-6ed09b512c59",
+              },
+              {
+                id: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08",
+              },
+            ],
+          },
+        },
+      });
+    };
+    const deletedIds = await nhostDb.expungePrio(ids);
+    expect(deletedIds).toEqual([
+      "17538df5-4052-4233-b94b-6ed09b512c59",
+      "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08",
+    ]);
+    expect.assertions(2);
+  });
+
+  it("should get team prio", async () => {
     const scrimDate = new Date();
     mockRequest = (query) => {
       const expected = `

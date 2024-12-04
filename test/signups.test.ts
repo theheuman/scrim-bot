@@ -4,7 +4,7 @@ import { Player, PlayerInsert, PlayerStatInsert } from "../src/models/Player";
 import { User } from "discord.js";
 import { CacheService } from "../src/services/cache";
 import { OverstatService } from "../src/services/overstat";
-import { Scrim, ScrimSignup } from "../src/models/Scrims";
+import { ScrimSignup } from "../src/models/Scrims";
 import { OverstatTournamentResponse } from "../src/models/overstatModels";
 import { mockOverstatResponse } from "./mocks/overstat-response.mock";
 import { PrioService } from "../src/services/prio";

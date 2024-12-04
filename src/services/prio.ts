@@ -3,7 +3,6 @@ import { User } from "discord.js";
 import { AuthService } from "./auth";
 import { CacheService } from "./cache";
 import { Scrim, ScrimSignup } from "../models/Scrims";
-import { Player } from "../models/Player";
 
 // a map of playerId -> accumulated prio
 type PlayerMap = Map<string, { amount: number; reason: string }>;
@@ -29,21 +28,17 @@ export class PrioService {
     if (!isAuthorized) {
       throw Error("User not authorized");
     }
-    const prioPlayers = prioUsers.map((prioUser) =>
-      this.cache.getPlayer(prioUser.id as string),
-    );
-    const { cacheMissedPlayers, playerIds } = this.getPlayers(
-      prioPlayers,
-      prioUsers,
-    );
-
-    if (cacheMissedPlayers.length > 0) {
-      const cacheMissedPlayerIds =
-        await this.fetchCacheMissedPlayerIds(cacheMissedPlayers);
-      this.addPlayersToCache(cacheMissedPlayers, cacheMissedPlayerIds);
-      playerIds.push(...cacheMissedPlayerIds);
-    }
+    const playerIds = await this.getPlayerIds(prioUsers);
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
+  }
+
+  async expungePlayerPrio(commandUser: User, prioIds: string[]) {
+    const isAuthorized = await this.authService.userIsAdmin(commandUser);
+    if (!isAuthorized) {
+      throw Error("User not authorized");
+    }
+    // log this interaction somewhere?
+    return await this.db.expungePrio(prioIds);
   }
 
   // changes teams in place and returns the teams, does NOT sort
@@ -54,7 +49,21 @@ export class PrioService {
     return teams;
   }
 
-  private getPlayers(prioPlayers: (Player | undefined)[], prioUsers: User[]) {
+  private async getPlayerIds(prioUsers: User[]): Promise<string[]> {
+    const { cacheMissedPlayers, playerIds } = this.getPlayers(prioUsers);
+    if (cacheMissedPlayers.length > 0) {
+      const cacheMissedPlayerIds =
+        await this.fetchCacheMissedPlayerIds(cacheMissedPlayers);
+      this.addPlayersToCache(cacheMissedPlayers, cacheMissedPlayerIds);
+      playerIds.push(...cacheMissedPlayerIds);
+    }
+    return playerIds;
+  }
+
+  private getPlayers(prioUsers: User[]) {
+    const prioPlayers = prioUsers.map((prioUser) =>
+      this.cache.getPlayer(prioUser.id as string),
+    );
     let index = 0;
     const cacheMissedPlayers: User[] = [];
     const playerIds: string[] = [];

@@ -1,4 +1,4 @@
-import { DB, DbValue, JSONValue, SearchOptions } from "./db";
+import { DB, DbValue, JSONValue, CompoundExpression } from "./db";
 import configJson from "../../config.json";
 import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
@@ -22,24 +22,28 @@ class NhostDb extends DB {
   }
 
   private static generateSearchStringFromFields(
-    fields: Record<string, SearchOptions> | undefined,
+    logicalExpression: CompoundExpression | undefined,
   ): string {
-    if (!fields) {
+    if (!logicalExpression?.length) {
       return "";
     }
-    const searchStringArray = Object.keys(fields).map(
-      (fieldKey) =>
-        `{ ${fieldKey}: { _${fields[fieldKey].comparator}: ${NhostDb.createValueString(fields[fieldKey].value)} } }`,
-    );
-    return `where: { _and: [${searchStringArray.join(", ")}]}`;
+    const searchStringArray = logicalExpression.map((compoundExpression) => {
+      const subExpressions = compoundExpression.expressions.map(
+        (expression) =>
+          `{ ${expression.fieldName}: { _${expression.comparator}: ${NhostDb.createValueString(expression.value)} } }`,
+      );
+      return `_${compoundExpression.operator}: [${subExpressions.join(", ")}]`;
+    });
+    return `where: { ${searchStringArray.join(", ")}}`;
   }
 
   async get(
     tableName: string,
-    fieldsToSearch: Record<string, SearchOptions> | undefined,
+    logicalExpression: CompoundExpression | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
-    let searchString = NhostDb.generateSearchStringFromFields(fieldsToSearch);
+    let searchString =
+      NhostDb.generateSearchStringFromFields(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
       searchString = `(${searchString})`;
@@ -103,7 +107,7 @@ class NhostDb extends DB {
   // TODO use delete_by_pk field here? Probably more efficient
   async deleteById(tableName: string, id: string): Promise<string> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${NhostDb.generateSearchStringFromFields({ id: { comparator: "eq", value: id } })})`;
+    const searchString = `(${NhostDb.generateSearchStringFromFields([{ operator: "and", expressions: [{ fieldName: "id", comparator: "eq", value: id }] }])})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -127,7 +131,7 @@ class NhostDb extends DB {
 
   async delete(
     tableName: string,
-    fieldsToEqual: Record<string, SearchOptions>,
+    fieldsToEqual: CompoundExpression,
   ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
     const searchString = `(${NhostDb.generateSearchStringFromFields(fieldsToEqual)})`;
@@ -154,7 +158,7 @@ class NhostDb extends DB {
 
   async update(
     tableName: string,
-    fieldsToSearch: Record<string, SearchOptions>,
+    fieldsToSearch: CompoundExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
