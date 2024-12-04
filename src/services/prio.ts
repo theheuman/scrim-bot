@@ -46,10 +46,12 @@ export class PrioService {
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
   }
 
-  async setTeamPrioForScrim(scrim: Scrim, teams: ScrimSignup[]) {
+  // changes teams in place and returns the teams, does NOT sort
+  async getTeamPrioForScrim(scrim: Scrim, teams: ScrimSignup[]) {
     const playersIdsWithPrio = await this.db.getPrio(scrim.dateTime);
     const playerMap = this.generatePlayerMap(playersIdsWithPrio);
     this.setTeamPrioFromPlayerPrio(teams, playerMap);
+    return teams;
   }
 
   private getPlayers(prioPlayers: (Player | undefined)[], prioUsers: User[]) {
@@ -120,7 +122,7 @@ export class PrioService {
         const playerPrioEntry = playerMap.get(player.id);
         if (playerPrioEntry) {
           prio += playerPrioEntry.amount;
-          reason.push(`${player.displayName} has ${playerPrioEntry.reason}`);
+          reason.push(`${player.displayName}: ${playerPrioEntry.reason}`);
           player.prio = {
             amount: playerPrioEntry.amount,
             reason: playerPrioEntry.reason,

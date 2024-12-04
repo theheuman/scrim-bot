@@ -181,7 +181,7 @@ describe("Signups", () => {
       } as ScrimSignupsWithPlayers;
 
       jest
-        .spyOn(prioService, "setTeamPrioForScrim")
+        .spyOn(prioService, "getTeamPrioForScrim")
         .mockImplementation((_, teams: ScrimSignup[]) => {
           for (const team of teams) {
             switch (team.teamName) {
@@ -211,7 +211,7 @@ describe("Signups", () => {
                 break;
             }
           }
-          return Promise.resolve();
+          return Promise.resolve(teams);
         });
       jest.spyOn(cache, "getScrim").mockReturnValue({
         id: "",

@@ -179,8 +179,8 @@ export class ScrimSignups {
         ScrimSignups.convertDbToScrimSignup(signupData);
       teams.push(teamData);
     }
-    await this.prioService.setTeamPrioForScrim(scrim, teams);
-    this.cache.setSignups(scrim.id, teams);
+    const prioTeams = await this.prioService.getTeamPrioForScrim(scrim, teams);
+    this.cache.setSignups(scrim.id, prioTeams);
     return this.sortTeams(teams);
   }
 
