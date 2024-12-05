@@ -106,14 +106,9 @@ export abstract class DB {
       throw Error("Could not set scrim to inactive, no updates made");
     }
     return this.delete("scrim_signups", {
-      operator: "and",
-      expressions: [
-        {
-          fieldName: "scrim_id",
-          comparator: "eq",
-          value: updatedScrimInfo.id,
-        },
-      ],
+      fieldName: "scrim_id",
+      comparator: "eq",
+      value: updatedScrimInfo.id,
     });
   }
 
