@@ -71,17 +71,12 @@ export abstract class DB {
   ): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-
       {
-        operator: "and",
-        expressions: [
-          {
-            fieldName: "id",
-            comparator: "eq",
-            value: scrimId,
-          },
-        ],
+        fieldName: "id",
+        comparator: "eq",
+        value: scrimId,
       },
+
       { skill, overstat_link: overstatLink },
       ["id"],
     )) as { id: string };
@@ -99,18 +94,11 @@ export abstract class DB {
   async closeScrim(scrimId: string): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-
       {
-        operator: "and",
-        expressions: [
-          {
-            fieldName: "id",
-            comparator: "eq",
-            value: scrimId,
-          },
-        ],
+        fieldName: "id",
+        comparator: "eq",
+        value: scrimId,
       },
-
       { active: false },
       ["id"],
     )) as { id: string };
@@ -250,12 +238,7 @@ export abstract class DB {
   }> {
     return this.get(
       "scrims",
-
-      {
-        operator: "and",
-        expressions: [{ fieldName: "active", comparator: "eq", value: true }],
-      },
-
+      { fieldName: "active", comparator: "eq", value: true },
       ["discord_channel", "id", "date_time_field"],
     ) as Promise<{
       scrims: {
@@ -314,7 +297,6 @@ export abstract class DB {
   ): Promise<JSONValue> {
     return this.update(
       "scrim_signups",
-
       {
         operator: "and",
         expressions: [
@@ -330,7 +312,6 @@ export abstract class DB {
           },
         ],
       },
-
       { team_name: newTeamName },
       [
         "team_name",

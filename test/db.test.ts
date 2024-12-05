@@ -876,7 +876,7 @@ describe("DB connection", () => {
         let expected = `
         mutation {
          update_scrims(
-           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }] },
+           where: { id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } },
           _set:
           {
             active: false
@@ -936,20 +936,16 @@ describe("DB connection", () => {
       mockRequest = (query) => {
         let expected = `
         mutation {
-         update_scrims(
-           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }] },
-          _set:
-          {
-            skill: 1,
-            overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
+          update_scrims(
+            where: { id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } },
+            _set: {
+              skill: 1,
+              overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
+            }
+          ) {
+           returning { id }
           }
-         )
-         {
-           returning {
-             id
-           }
-         }
-       }
+        }
     `;
         let returnData: { data: object } = {
           data: {
