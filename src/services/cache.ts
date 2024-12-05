@@ -11,6 +11,8 @@ export class CacheService {
   // maps discord user id to player
   private playerMap: Map<string, Player>;
 
+  private adminRoles: Set<string> | undefined;
+
   constructor() {
     this.scrimChannelMap = new Map();
     this.activeScrimSignups = new Map();
@@ -47,6 +49,15 @@ export class CacheService {
 
   setPlayer(userId: string, player: Player) {
     this.playerMap.set(userId, player);
+  }
+
+  getAdminRoles(): Set<string> | undefined {
+    return this.adminRoles;
+  }
+
+  setAdminRoles(roles: string[]): Set<string> {
+    this.adminRoles = new Set(roles);
+    return this.adminRoles;
   }
 
   clear() {

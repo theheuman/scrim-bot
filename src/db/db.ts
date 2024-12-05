@@ -5,7 +5,7 @@ import { JSONValue, DbValue, LogicalExpression } from "./types";
 export abstract class DB {
   abstract get(
     tableName: string,
-    logicalExpression: LogicalExpression,
+    logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
   abstract update(
@@ -381,6 +381,22 @@ export abstract class DB {
       amount,
       reason,
     }));
+  }
+
+  async getAdminRoles(): Promise<string[]> {
+    const results = (await this.get("scrim_roles", undefined, [
+      "discord_role_id",
+    ])) as { scrim_roles: { discord_role_id: string }[] };
+    return results.scrim_roles.map((role) => role.discord_role_id);
+  }
+
+  async addAdminRoles(
+    roles: { id: string; name: string }[],
+  ): Promise<string[]> {
+    return this.post(
+      "scrim_roles",
+      roles.map((role) => ({ discord_role_id: role.id, role_name: role.name })),
+    );
   }
 
   private generatePlayerUpdateQuery(
