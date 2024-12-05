@@ -837,7 +837,7 @@ describe("DB connection", () => {
   describe("close and compute scrim", () => {
     const expectedDeleteQuery = `
       mutation {
-        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }] }) {
+        delete_scrim_signups(where: { scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }) {
           returning {
             id
           }
