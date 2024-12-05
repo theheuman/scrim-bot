@@ -1,4 +1,5 @@
-import { DB, DbValue, JSONValue, CompoundExpression } from "../../src/db/db";
+import { DB } from "../../src/db/db";
+import { DbValue, JSONValue, LogicalExpression } from "../../src/db/types";
 import { PlayerInsert } from "../../src/models/Player";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
@@ -33,7 +34,7 @@ export class DbMock extends DB {
 
   get(
     tableName: string,
-    fieldsToSearch: CompoundExpression,
+    fieldsToSearch: LogicalExpression,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     return Promise.resolve(this.getResponse);
@@ -84,7 +85,7 @@ export class DbMock extends DB {
 
   delete(
     tableName: string,
-    fieldsToEqual: CompoundExpression,
+    fieldsToEqual: LogicalExpression,
   ): Promise<string[]> {
     return Promise.resolve([""]);
   }
@@ -100,7 +101,7 @@ export class DbMock extends DB {
 
   update(
     tableName: string,
-    fieldsToEquate: CompoundExpression,
+    fieldsToEquate: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {

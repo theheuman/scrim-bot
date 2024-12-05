@@ -1,35 +1,16 @@
 import { PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
-
-export type JSONValue =
-  | string
-  | number
-  | boolean
-  | { [x: string]: JSONValue }
-  | Array<JSONValue>;
-
-export type DbValue = string | number | boolean | Date | null;
-export type Comparator = "eq" | "gte" | "lte" | "gt" | "lt";
-export type Operator = "and" | "or";
-export type Expression = {
-  fieldName: string;
-  comparator: Comparator;
-  value: DbValue;
-};
-export type CompoundExpression = {
-  operator: Operator;
-  expressions: Expression[];
-}[];
+import { JSONValue, DbValue, LogicalExpression } from "./types";
 
 export abstract class DB {
   abstract get(
     tableName: string,
-    logicalExpression: CompoundExpression,
+    logicalExpression: LogicalExpression,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
   abstract update(
     tableName: string,
-    logicalExpression: CompoundExpression,
+    logicalExpression: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
@@ -42,7 +23,7 @@ export abstract class DB {
   abstract deleteById(tableName: string, id: string): Promise<string>;
   abstract delete(
     tableName: string,
-    logicalExpression: CompoundExpression,
+    logicalExpression: LogicalExpression,
   ): Promise<string[]>;
   abstract customQuery(query: string): Promise<JSONValue>;
   abstract replaceTeammate(
@@ -90,18 +71,17 @@ export abstract class DB {
   ): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-      [
-        {
-          operator: "and",
-          expressions: [
-            {
-              fieldName: "id",
-              comparator: "eq",
-              value: scrimId,
-            },
-          ],
-        },
-      ],
+
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "id",
+            comparator: "eq",
+            value: scrimId,
+          },
+        ],
+      },
       { skill, overstat_link: overstatLink },
       ["id"],
     )) as { id: string };
@@ -119,36 +99,34 @@ export abstract class DB {
   async closeScrim(scrimId: string): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-      [
-        {
-          operator: "and",
-          expressions: [
-            {
-              fieldName: "id",
-              comparator: "eq",
-              value: scrimId,
-            },
-          ],
-        },
-      ],
+
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "id",
+            comparator: "eq",
+            value: scrimId,
+          },
+        ],
+      },
+
       { active: false },
       ["id"],
     )) as { id: string };
     if (!updatedScrimInfo?.id) {
       throw Error("Could not set scrim to inactive, no updates made");
     }
-    return this.delete("scrim_signups", [
-      {
-        operator: "and",
-        expressions: [
-          {
-            fieldName: "scrim_id",
-            comparator: "eq",
-            value: updatedScrimInfo.id,
-          },
-        ],
-      },
-    ]);
+    return this.delete("scrim_signups", {
+      operator: "and",
+      expressions: [
+        {
+          fieldName: "scrim_id",
+          comparator: "eq",
+          value: updatedScrimInfo.id,
+        },
+      ],
+    });
   }
 
   async addScrimSignup(
@@ -177,23 +155,21 @@ export abstract class DB {
   }
 
   removeScrimSignup(teamName: string, scrimId: string) {
-    return this.delete("scrim_signups", [
-      {
-        operator: "and",
-        expressions: [
-          {
-            fieldName: "scrim_id",
-            comparator: "eq",
-            value: scrimId,
-          },
-          {
-            fieldName: "team_name",
-            comparator: "eq",
-            value: teamName,
-          },
-        ],
-      },
-    ]);
+    return this.delete("scrim_signups", {
+      operator: "and",
+      expressions: [
+        {
+          fieldName: "scrim_id",
+          comparator: "eq",
+          value: scrimId,
+        },
+        {
+          fieldName: "team_name",
+          comparator: "eq",
+          value: teamName,
+        },
+      ],
+    });
   }
 
   // returns id
@@ -274,12 +250,12 @@ export abstract class DB {
   }> {
     return this.get(
       "scrims",
-      [
-        {
-          operator: "and",
-          expressions: [{ fieldName: "active", comparator: "eq", value: true }],
-        },
-      ],
+
+      {
+        operator: "and",
+        expressions: [{ fieldName: "active", comparator: "eq", value: true }],
+      },
+
       ["discord_channel", "id", "date_time_field"],
     ) as Promise<{
       scrims: {
@@ -338,23 +314,23 @@ export abstract class DB {
   ): Promise<JSONValue> {
     return this.update(
       "scrim_signups",
-      [
-        {
-          operator: "and",
-          expressions: [
-            {
-              fieldName: "scrim_id",
-              comparator: "eq",
-              value: scrimId,
-            },
-            {
-              fieldName: "team_name",
-              comparator: "eq",
-              value: oldTeamName,
-            },
-          ],
-        },
-      ],
+
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "scrim_id",
+            comparator: "eq",
+            value: scrimId,
+          },
+          {
+            fieldName: "team_name",
+            comparator: "eq",
+            value: oldTeamName,
+          },
+        ],
+      },
+
       { team_name: newTeamName },
       [
         "team_name",
@@ -386,16 +362,14 @@ export abstract class DB {
   }
 
   async expungePrio(prioIds: string[]): Promise<string[]> {
-    return this.delete("prio", [
-      {
-        operator: "or",
-        expressions: prioIds.map((id) => ({
-          fieldName: "id",
-          comparator: "eq",
-          value: id,
-        })),
-      },
-    ]);
+    return this.delete("prio", {
+      operator: "or",
+      expressions: prioIds.map((id) => ({
+        fieldName: "id",
+        comparator: "eq",
+        value: id,
+      })),
+    });
   }
 
   async getPrio(
@@ -403,23 +377,21 @@ export abstract class DB {
   ): Promise<{ id: string; amount: number; reason: string }[]> {
     const dbData = (await this.get(
       "prio",
-      [
-        {
-          operator: "and",
-          expressions: [
-            {
-              fieldName: "start_date",
-              comparator: "lte",
-              value: date,
-            },
-            {
-              fieldName: "end_date",
-              comparator: "gte",
-              value: date,
-            },
-          ],
-        },
-      ],
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "start_date",
+            comparator: "lte",
+            value: date,
+          },
+          {
+            fieldName: "end_date",
+            comparator: "gte",
+            value: date,
+          },
+        ],
+      },
       ["player_id", "amount", "reason"],
     )) as {
       prio: {

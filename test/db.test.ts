@@ -54,10 +54,10 @@ describe("DB connection", () => {
       mockRequest = (query) => {
         const expected = `
       query {
-        players(where: { _and: [{ id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }]}) {
+        players(where: { id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }) {
           id
           display_name
-          overstat_link
+          overstat_id
         }
       }
     `;
@@ -66,28 +66,21 @@ describe("DB connection", () => {
       };
       await nhostDb.get(
         "players",
-        [
-          {
-            operator: "and",
-            expressions: [
-              {
-                fieldName: "id",
-                comparator: "eq",
-                value: "f272a11e-5b30-4aea-b596-af2464de59ba",
-              },
-            ],
-          },
-        ],
-        ["id", "display_name", "overstat_link"],
+        {
+          fieldName: "id",
+          comparator: "eq",
+          value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+        },
+        ["id", "display_name", "overstat_id"],
       );
       expect.assertions(1);
     });
 
-    it("Should have multiple search fields", async () => {
+    it("Should have a compound expression", async () => {
       mockRequest = (query) => {
         const expected = `
       query {
-        players(where: { _and: [{ id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }, { display_name: { _eq: "TheHeuman" } }]}) {
+        players(where: { _and: [{ id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }, { display_name: { _eq: "TheHeuman" } }] }) {
           id
           display_name
           overstat_link
@@ -111,23 +104,22 @@ describe("DB connection", () => {
 
       const data = await nhostDb.get(
         "players",
-        [
-          {
-            operator: "and",
-            expressions: [
-              {
-                fieldName: "id",
-                comparator: "eq",
-                value: "f272a11e-5b30-4aea-b596-af2464de59ba",
-              },
-              {
-                fieldName: "display_name",
-                comparator: "eq",
-                value: "TheHeuman",
-              },
-            ],
-          },
-        ],
+
+        {
+          operator: "and",
+          expressions: [
+            {
+              fieldName: "id",
+              comparator: "eq",
+              value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+            },
+            {
+              fieldName: "display_name",
+              comparator: "eq",
+              value: "TheHeuman",
+            },
+          ],
+        },
         ["id", "display_name", "overstat_link"],
       );
       expect(data).toEqual({
@@ -143,11 +135,98 @@ describe("DB connection", () => {
       expect.assertions(2);
     });
 
+    it("Should have nested compound expressions", async () => {
+      mockRequest = (query) => {
+        const expected = `
+      query {
+        players(where: { _or: [{ _and: [{ id: { _eq: "f272a11e-5b30-4aea-b596-af2464de59ba" } }, { display_name: { _eq: "TheHeuman" } }] }, { _and: [{ id: { _eq: "106ea7fa-47c8-4f4e-a6ca-3fdd92401ebd" } }, { display_name: { _eq: "Revy" } }] }] }) {
+          id
+          display_name
+          overstat_id
+        }
+      }
+    `;
+        expect(query).toEqual(expected);
+        return Promise.resolve({
+          data: {
+            players: [
+              {
+                id: "106ea7fa-47c8-4f4e-a6ca-3fdd92401ebd",
+                display_name: "Revy",
+                overstat_id: null,
+              },
+              {
+                id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                display_name: "TheHeuman",
+                overstat_id: "357606",
+              },
+            ],
+          },
+        });
+      };
+
+      const data = await nhostDb.get(
+        "players",
+        {
+          operator: "or",
+          expressions: [
+            {
+              operator: "and",
+              expressions: [
+                {
+                  fieldName: "id",
+                  comparator: "eq",
+                  value: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                },
+                {
+                  fieldName: "display_name",
+                  comparator: "eq",
+                  value: "TheHeuman",
+                },
+              ],
+            },
+            {
+              operator: "and",
+              expressions: [
+                {
+                  fieldName: "id",
+                  comparator: "eq",
+                  value: "106ea7fa-47c8-4f4e-a6ca-3fdd92401ebd",
+                },
+                {
+                  fieldName: "display_name",
+                  comparator: "eq",
+                  value: "Revy",
+                },
+              ],
+            },
+          ],
+        },
+
+        ["id", "display_name", "overstat_id"],
+      );
+      expect(data).toEqual({
+        players: [
+          {
+            id: "106ea7fa-47c8-4f4e-a6ca-3fdd92401ebd",
+            display_name: "Revy",
+            overstat_id: null,
+          },
+          {
+            id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+            display_name: "TheHeuman",
+            overstat_id: "357606",
+          },
+        ],
+      });
+      expect.assertions(2);
+    });
+
     it("Should get active scrims", async () => {
       mockRequest = (query) => {
         const expected = `
       query {
-        scrims(where: { _and: [{ active: { _eq: true } }]}) {
+        scrims(where: { _and: [{ active: { _eq: true } }] }) {
           discord_channel
           id
         }
@@ -168,14 +247,12 @@ describe("DB connection", () => {
 
       const scrims = (await nhostDb.get(
         "scrims",
-        [
-          {
-            operator: "and",
-            expressions: [
-              { fieldName: "active", comparator: "eq", value: true },
-            ],
-          },
-        ],
+
+        {
+          operator: "and",
+          expressions: [{ fieldName: "active", comparator: "eq", value: true }],
+        },
+
         ["discord_channel", "id"],
       )) as { scrims: Partial<Scrims>[] };
       expect(scrims).toEqual({
@@ -267,7 +344,7 @@ describe("DB connection", () => {
         const expected = `
         mutation {
          update_scrim_signups(
-           where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }, { team_name: { _eq: "Fineapples" } }]},
+           where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }, { team_name: { _eq: "Fineapples" } }] },
           _set:
           { team_name: "Dude Cube" }
          )
@@ -303,19 +380,18 @@ describe("DB connection", () => {
       };
       const newData = await nhostDb.update(
         "scrim_signups",
-        [
-          {
-            operator: "and",
-            expressions: [
-              {
-                fieldName: "scrim_id",
-                comparator: "eq",
-                value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-              },
-              { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
-            ],
-          },
-        ],
+        {
+          operator: "and",
+          expressions: [
+            {
+              fieldName: "scrim_id",
+              comparator: "eq",
+              value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+            },
+            { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
+          ],
+        },
+
         { team_name: "Dude Cube" },
         [
           "team_name",
@@ -341,7 +417,7 @@ describe("DB connection", () => {
       mockRequest = (query) => {
         const expected = `
       mutation {
-        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }, { team_name: { _eq: "Fineapples" } }]}) {
+        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }, { team_name: { _eq: "Fineapples" } }] }) {
           returning {
             id
           }
@@ -362,19 +438,17 @@ describe("DB connection", () => {
         });
       };
 
-      const deletedIDs = await nhostDb.delete("scrim_signups", [
-        {
-          operator: "and",
-          expressions: [
-            {
-              fieldName: "scrim_id",
-              comparator: "eq",
-              value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-            },
-            { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
-          ],
-        },
-      ]);
+      const deletedIDs = await nhostDb.delete("scrim_signups", {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "scrim_id",
+            comparator: "eq",
+            value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+          },
+          { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
+        ],
+      });
       expect(deletedIDs[0]).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
       expect.assertions(2);
     });
@@ -383,7 +457,7 @@ describe("DB connection", () => {
       mockRequest = (query) => {
         const expected = `
       mutation {
-        delete_players(where: { _and: [{ id: { _eq: "02ac47c9-bde8-4f74-abf6-59b2c534d965" } }]}) {
+        delete_players(where: { id: { _eq: "02ac47c9-bde8-4f74-abf6-59b2c534d965" } }) {
           returning {
             id
           }
@@ -763,7 +837,7 @@ describe("DB connection", () => {
   describe("close and compute scrim", () => {
     const expectedDeleteQuery = `
       mutation {
-        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]}) {
+        delete_scrim_signups(where: { _and: [{ scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }] }) {
           returning {
             id
           }
@@ -802,7 +876,7 @@ describe("DB connection", () => {
         let expected = `
         mutation {
          update_scrims(
-           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }] },
           _set:
           {
             active: false
@@ -863,7 +937,7 @@ describe("DB connection", () => {
         let expected = `
         mutation {
          update_scrims(
-           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }]},
+           where: { _and: [{ id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }] },
           _set:
           {
             skill: 1,
@@ -986,7 +1060,7 @@ describe("DB connection", () => {
     mockRequest = (query) => {
       const expected = `
       mutation {
-        delete_prio(where: { _or: [{ id: { _eq: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08" } }, { id: { _eq: "17538df5-4052-4233-b94b-6ed09b512c59" } }]}) {
+        delete_prio(where: { _or: [{ id: { _eq: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08" } }, { id: { _eq: "17538df5-4052-4233-b94b-6ed09b512c59" } }] }) {
           returning {
             id
           }
@@ -1022,7 +1096,7 @@ describe("DB connection", () => {
     mockRequest = (query) => {
       const expected = `
       query {
-        prio(where: { _and: [{ start_date: { _lte: "${scrimDate.toISOString()}" } }, { end_date: { _gte: "${scrimDate.toISOString()}" } }]}) {
+        prio(where: { _and: [{ start_date: { _lte: "${scrimDate.toISOString()}" } }, { end_date: { _gte: "${scrimDate.toISOString()}" } }] }) {
           player_id
           amount
           reason

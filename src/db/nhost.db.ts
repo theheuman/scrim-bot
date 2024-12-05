@@ -1,7 +1,15 @@
-import { DB, DbValue, JSONValue, CompoundExpression } from "./db";
+import { DB } from "./db";
+import {
+  DbValue,
+  isCompoundExpression,
+  isExpression,
+  JSONValue,
+  LogicalExpression,
+} from "./types";
 import configJson from "../../config.json";
 import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
+
 const config: {
   nhost: { adminSecret: string; subdomain: string; region: string };
 } = configJson as {
@@ -21,29 +29,40 @@ class NhostDb extends DB {
     });
   }
 
-  private static generateSearchStringFromFields(
-    logicalExpression: CompoundExpression | undefined,
+  private generateSearchStringFromFields(
+    logicalExpression: LogicalExpression | undefined,
   ): string {
-    if (!logicalExpression?.length) {
+    if (logicalExpression === undefined) {
       return "";
     }
-    const searchStringArray = logicalExpression.map((compoundExpression) => {
-      const subExpressions = compoundExpression.expressions.map(
-        (expression) =>
-          `{ ${expression.fieldName}: { _${expression.comparator}: ${NhostDb.createValueString(expression.value)} } }`,
-      );
-      return `_${compoundExpression.operator}: [${subExpressions.join(", ")}]`;
-    });
-    return `where: { ${searchStringArray.join(", ")}}`;
+    const searchString = this.getCompoundExpressionString(logicalExpression);
+    return `where: ${searchString}`;
+  }
+
+  // recursive to handle nested compound statements
+  private getCompoundExpressionString(
+    logicalExpression: LogicalExpression,
+  ): string {
+    if (isCompoundExpression(logicalExpression)) {
+      const subExpressions = logicalExpression.expressions.map((expression) => {
+        if (isExpression(expression)) {
+          return `{ ${expression.fieldName}: { _${expression.comparator}: ${NhostDb.createValueString(expression.value)} } }`;
+        }
+        return this.getCompoundExpressionString(expression);
+      });
+      return `{ _${logicalExpression.operator}: [${subExpressions.join(", ")}] }`;
+    } else if (isExpression(logicalExpression)) {
+      return `{ ${logicalExpression.fieldName}: { _${logicalExpression.comparator}: ${NhostDb.createValueString(logicalExpression.value)} } }`;
+    }
+    return "";
   }
 
   async get(
     tableName: string,
-    logicalExpression: CompoundExpression | undefined,
+    logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
-    let searchString =
-      NhostDb.generateSearchStringFromFields(logicalExpression);
+    let searchString = this.generateSearchStringFromFields(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
       searchString = `(${searchString})`;
@@ -107,7 +126,7 @@ class NhostDb extends DB {
   // TODO use delete_by_pk field here? Probably more efficient
   async deleteById(tableName: string, id: string): Promise<string> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${NhostDb.generateSearchStringFromFields([{ operator: "and", expressions: [{ fieldName: "id", comparator: "eq", value: id }] }])})`;
+    const searchString = `(${this.generateSearchStringFromFields({ fieldName: "id", comparator: "eq", value: id })})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -131,10 +150,10 @@ class NhostDb extends DB {
 
   async delete(
     tableName: string,
-    fieldsToEqual: CompoundExpression,
+    fieldsToEqual: LogicalExpression,
   ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${NhostDb.generateSearchStringFromFields(fieldsToEqual)})`;
+    const searchString = `(${this.generateSearchStringFromFields(fieldsToEqual)})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -158,12 +177,12 @@ class NhostDb extends DB {
 
   async update(
     tableName: string,
-    fieldsToSearch: CompoundExpression,
+    fieldsToSearch: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     const updateName = "update_" + tableName;
-    const searchString = NhostDb.generateSearchStringFromFields(fieldsToSearch);
+    const searchString = this.generateSearchStringFromFields(fieldsToSearch);
     const fieldsToUpdateArray = Object.keys(fieldsToUpdate).map(
       (key) => `${key}: ${NhostDb.createValueString(fieldsToUpdate[key])}`,
     );
