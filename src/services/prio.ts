@@ -1,5 +1,5 @@
 import { DB } from "../db/db";
-import { User } from "discord.js";
+import { GuildMember, User } from "discord.js";
 import { AuthService } from "./auth";
 import { CacheService } from "./cache";
 import { Scrim, ScrimSignup } from "../models/Scrims";
@@ -17,14 +17,15 @@ export class PrioService {
   ) {}
 
   async setPlayerPrio(
-    commandUser: User,
+    memberUsingCommand: GuildMember,
     prioUsers: User[],
     startDate: Date,
     endDate: Date,
     amount: number,
     reason: string,
   ) {
-    const isAuthorized = await this.authService.userIsAdmin(commandUser);
+    const isAuthorized =
+      await this.authService.memberIsAdmin(memberUsingCommand);
     if (!isAuthorized) {
       throw Error("User not authorized");
     }
@@ -32,8 +33,9 @@ export class PrioService {
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
   }
 
-  async expungePlayerPrio(commandUser: User, prioIds: string[]) {
-    const isAuthorized = await this.authService.userIsAdmin(commandUser);
+  async expungePlayerPrio(memberUsingCommand: GuildMember, prioIds: string[]) {
+    const isAuthorized =
+      await this.authService.memberIsAdmin(memberUsingCommand);
     if (!isAuthorized) {
       throw Error("User not authorized");
     }

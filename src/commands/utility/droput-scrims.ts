@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { rosterService } from "../../services";
+import { isGuildMember } from "../../utility/utility";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,9 +19,16 @@ module.exports = {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname");
 
+    if (!isGuildMember(interaction.member)) {
+      interaction.reply(
+        "Can't find the member issuing the command or this is an api command, no command executed",
+      );
+      return;
+    }
+
     try {
       await rosterService.removeSignup(
-        interaction.user,
+        interaction.member,
         channelId as string,
         teamName as string,
       );

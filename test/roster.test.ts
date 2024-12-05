@@ -1,6 +1,6 @@
 import { DbMock } from "./mocks/db.mock";
 import { Player } from "../src/models/Player";
-import { User } from "discord.js";
+import { GuildMember, User } from "discord.js";
 import { CacheService } from "../src/services/cache";
 import { RosterService } from "../src/services/rosters";
 import { ScrimSignup, Scrim } from "../src/models/Scrims";
@@ -17,14 +17,19 @@ describe("Rosters", () => {
     cache = new CacheService();
     authService = new AuthService(dbMock, cache);
     rosters = new RosterService(dbMock, cache, authService);
+    jest
+      .spyOn(authService, "memberIsAdmin")
+      .mockReturnValue(Promise.resolve(true));
   });
 
-  const zboy: { user: User; player: Player } = {
+  const zboy: { user: User; member: GuildMember; player: Player } = {
     user: { id: "0", displayName: "Zboy" } as User,
+    member: { id: "0" } as GuildMember,
     player: { discordId: "0", id: "1987254", displayName: "Zboy" },
   };
-  const theheuman: { user: User; player: Player } = {
+  const theheuman: { user: User; member: GuildMember; player: Player } = {
     user: { id: "1", displayName: "TheHeuman" } as User,
+    member: { id: "1" } as GuildMember,
     player: { discordId: "1", id: "123", displayName: "TheHeuman" },
   };
 
@@ -64,7 +69,7 @@ describe("Rosters", () => {
       const dbSpy = jest.spyOn(dbMock, "removeScrimSignup");
 
       await rosters.removeSignup(
-        zboy.user,
+        zboy.member,
         discordChannel,
         getFineapples().teamName,
       );
@@ -75,7 +80,7 @@ describe("Rosters", () => {
     it("Should not remove a team because there is no scrim with that id", async () => {
       const causeException = async () => {
         await rosters.removeSignup(
-          zboy.user,
+          zboy.member,
           "034528",
           getFineapples().teamName,
         );
@@ -101,7 +106,7 @@ describe("Rosters", () => {
       cache.setSignups(scrim.id, undefined as unknown as ScrimSignup[]);
       const causeException = async () => {
         await rosters.removeSignup(
-          zboy.user,
+          zboy.member,
           discordChannel,
           getFineapples().teamName,
         );
@@ -125,7 +130,7 @@ describe("Rosters", () => {
       cache.setSignups(scrim.id, []);
       const causeException = async () => {
         await rosters.removeSignup(
-          zboy.user,
+          zboy.member,
           discordChannel,
           getFineapples().teamName,
         );
@@ -153,11 +158,11 @@ describe("Rosters", () => {
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [differentFineapples]);
       jest
-        .spyOn(authService, "userIsAdmin")
+        .spyOn(authService, "memberIsAdmin")
         .mockReturnValue(Promise.resolve(false));
       const causeException = async () => {
         await rosters.removeSignup(
-          zboy.user,
+          zboy.member,
           discordChannel,
           differentFineapples.teamName,
         );
@@ -184,7 +189,7 @@ describe("Rosters", () => {
       const dbSpy = jest.spyOn(dbMock, "changeTeamNameNoAuth");
 
       await rosters.changeTeamName(
-        zboy.user,
+        zboy.member,
         discordChannel,
         getFineapples().teamName,
         "Dude Cube",
@@ -214,7 +219,7 @@ describe("Rosters", () => {
       cache.setSignups(scrim.id, [getFineapples(), dudeCube]);
       const causeException = async () => {
         await rosters.changeTeamName(
-          zboy.user,
+          zboy.member,
           discordChannel,
           getFineapples().teamName,
           dudeCube.teamName,
@@ -255,7 +260,7 @@ describe("Rosters", () => {
         theheuman.player.displayName,
       );
       await rosters.replaceTeammate(
-        theheuman.user,
+        theheuman.member,
         discordChannel,
         dudeCube.teamName,
         theheuman.user,
@@ -298,7 +303,7 @@ describe("Rosters", () => {
 
       const causeException = async () => {
         await rosters.replaceTeammate(
-          theheuman.user,
+          theheuman.member,
           discordChannel,
           getFineapples().teamName,
           theheuman.user,
@@ -344,7 +349,7 @@ describe("Rosters", () => {
 
       const causeException = async () => {
         await rosters.replaceTeammate(
-          theheuman.user,
+          theheuman.member,
           discordChannel,
           dudeCube.teamName,
           zboy.user,
