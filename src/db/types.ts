@@ -19,6 +19,15 @@ export type CompoundExpression = {
 };
 export type LogicalExpression = CompoundExpression | Expression;
 
+export enum DbTable {
+  scrims = "scrims",
+  scrimAdminRoles = "scrim_admin_roles",
+  players = "players",
+  scrimPlayerStats = "scrim_player_stats",
+  scrimSignups = "scrim_signups",
+  prio = "prio",
+}
+
 export function isCompoundExpression(
   value: LogicalExpression,
 ): value is CompoundExpression {
