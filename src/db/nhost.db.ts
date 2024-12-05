@@ -29,7 +29,7 @@ class NhostDb extends DB {
     });
   }
 
-  private generateSearchStringFromFields(
+  private generateWhereClause(
     logicalExpression: LogicalExpression | undefined,
   ): string {
     if (logicalExpression === undefined) {
@@ -62,7 +62,7 @@ class NhostDb extends DB {
     logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
-    let searchString = this.generateSearchStringFromFields(logicalExpression);
+    let searchString = this.generateWhereClause(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
       searchString = `(${searchString})`;
@@ -126,7 +126,7 @@ class NhostDb extends DB {
   // TODO use delete_by_pk field here? Probably more efficient
   async deleteById(tableName: string, id: string): Promise<string> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${this.generateSearchStringFromFields({ fieldName: "id", comparator: "eq", value: id })})`;
+    const searchString = `(${this.generateWhereClause({ fieldName: "id", comparator: "eq", value: id })})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -153,7 +153,7 @@ class NhostDb extends DB {
     fieldsToEqual: LogicalExpression,
   ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${this.generateSearchStringFromFields(fieldsToEqual)})`;
+    const searchString = `(${this.generateWhereClause(fieldsToEqual)})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -182,7 +182,7 @@ class NhostDb extends DB {
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     const updateName = "update_" + tableName;
-    const searchString = this.generateSearchStringFromFields(fieldsToSearch);
+    const searchString = this.generateWhereClause(fieldsToSearch);
     const fieldsToUpdateArray = Object.keys(fieldsToUpdate).map(
       (key) => `${key}: ${NhostDb.createValueString(fieldsToUpdate[key])}`,
     );
