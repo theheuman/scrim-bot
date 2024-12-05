@@ -1,6 +1,7 @@
-import { DB, DbValue, JSONValue } from "../../src/db/db";
+import { DB } from "../../src/db/db";
+import { DbValue, JSONValue, LogicalExpression } from "../../src/db/types";
 import { PlayerInsert } from "../../src/models/Player";
-import { Scrims, ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
+import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
 export class DbMock extends DB {
   customQueryResponse: JSONValue;
@@ -33,13 +34,13 @@ export class DbMock extends DB {
 
   get(
     tableName: string,
-    fieldsToSearch: Record<string, string>,
+    fieldsToSearch: LogicalExpression,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     return Promise.resolve(this.getResponse);
   }
 
-  post(tableName: string, data: Record<string, any>): Promise<string[]> {
+  post(tableName: string, data: Record<string, DbValue>[]): Promise<string[]> {
     return Promise.resolve(this.postResponse);
   }
 
@@ -50,6 +51,7 @@ export class DbMock extends DB {
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,
+    date: Date,
     combinedElo: number | null = null,
   ): Promise<string> {
     return Promise.resolve(this.addScrimSignupResponse);
@@ -71,13 +73,7 @@ export class DbMock extends DB {
     scrims: { discord_channel: string; id: string; date_time_field: string }[];
   }> {
     return Promise.resolve({
-      scrims: [
-        {
-          id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-          discord_channel: "something",
-          date_time_field: "2024-10-14T20:10:35.706+00:00",
-        },
-      ],
+      scrims: [],
     });
   }
 
@@ -89,7 +85,7 @@ export class DbMock extends DB {
 
   delete(
     tableName: string,
-    fieldsToEqual: Record<string, DbValue>,
+    fieldsToEqual: LogicalExpression,
   ): Promise<string[]> {
     return Promise.resolve([""]);
   }
@@ -105,7 +101,7 @@ export class DbMock extends DB {
 
   update(
     tableName: string,
-    fieldsToEquate: Record<string, DbValue>,
+    fieldsToEquate: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
@@ -128,5 +124,31 @@ export class DbMock extends DB {
     newPlayerId: string,
   ): Promise<JSONValue> {
     return Promise.resolve({});
+  }
+
+  async setPrio(
+    playerIds: string[],
+    startDate: Date,
+    endDate: Date,
+    amount: number,
+    reason: string,
+  ) {
+    return Promise.resolve(["0"]);
+  }
+
+  async getPrio(
+    date: Date,
+  ): Promise<{ id: string; amount: number; reason: string }[]> {
+    return Promise.resolve([
+      {
+        id: "0",
+        amount: 0,
+        reason: "lol",
+      },
+    ]);
+  }
+
+  async expungePrio() {
+    return Promise.resolve([]);
   }
 }

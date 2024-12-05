@@ -1,12 +1,20 @@
-import { DB, DbValue, JSONValue } from "./db";
+import { DB } from "./db";
+import {
+  DbValue,
+  isCompoundExpression,
+  isExpression,
+  JSONValue,
+  LogicalExpression,
+} from "./types";
 import configJson from "../../config.json";
 import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
+
 const config: {
   nhost: { adminSecret: string; subdomain: string; region: string };
 } = configJson as {
   nhost: { adminSecret: string; subdomain: string; region: string };
-}; 
+};
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
@@ -21,26 +29,40 @@ class NhostDb extends DB {
     });
   }
 
-  // TODO generate more complicated search queryies, not just _and { _eq }
-  private static generateSearchStringFromFields(
-    fields: Record<string, string | number | boolean | null> | undefined,
+  private generateWhereClause(
+    logicalExpression: LogicalExpression | undefined,
   ): string {
-    if (!fields) {
+    if (logicalExpression === undefined) {
       return "";
     }
-    const searchStringArray = Object.keys(fields).map(
-      (fieldKey) =>
-        `{ ${fieldKey}: { _eq: ${NhostDb.createValueString(fields[fieldKey])} } }`,
-    );
-    return `where: { _and: [${searchStringArray.join(", ")}]}`;
+    const searchString = this.getCompoundExpressionString(logicalExpression);
+    return `where: ${searchString}`;
+  }
+
+  // recursive to handle nested compound statements
+  private getCompoundExpressionString(
+    logicalExpression: LogicalExpression,
+  ): string {
+    if (isCompoundExpression(logicalExpression)) {
+      const subExpressions = logicalExpression.expressions.map((expression) => {
+        if (isExpression(expression)) {
+          return `{ ${expression.fieldName}: { _${expression.comparator}: ${NhostDb.createValueString(expression.value)} } }`;
+        }
+        return this.getCompoundExpressionString(expression);
+      });
+      return `{ _${logicalExpression.operator}: [${subExpressions.join(", ")}] }`;
+    } else if (isExpression(logicalExpression)) {
+      return `{ ${logicalExpression.fieldName}: { _${logicalExpression.comparator}: ${NhostDb.createValueString(logicalExpression.value)} } }`;
+    }
+    return "";
   }
 
   async get(
     tableName: string,
-    fieldsToSearch: Record<string, DbValue> | undefined,
+    logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
-    let searchString = NhostDb.generateSearchStringFromFields(fieldsToSearch);
+    let searchString = this.generateWhereClause(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
       searchString = `(${searchString})`;
@@ -104,7 +126,7 @@ class NhostDb extends DB {
   // TODO use delete_by_pk field here? Probably more efficient
   async deleteById(tableName: string, id: string): Promise<string> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${NhostDb.generateSearchStringFromFields({ id })})`;
+    const searchString = `(${this.generateWhereClause({ fieldName: "id", comparator: "eq", value: id })})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -128,10 +150,10 @@ class NhostDb extends DB {
 
   async delete(
     tableName: string,
-    fieldsToEqual: Record<string, DbValue>,
+    fieldsToEqual: LogicalExpression,
   ): Promise<string[]> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${NhostDb.generateSearchStringFromFields(fieldsToEqual)})`;
+    const searchString = `(${this.generateWhereClause(fieldsToEqual)})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
@@ -155,12 +177,12 @@ class NhostDb extends DB {
 
   async update(
     tableName: string,
-    fieldsToEquate: Record<string, DbValue>,
+    fieldsToSearch: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue> {
     const updateName = "update_" + tableName;
-    const searchString = NhostDb.generateSearchStringFromFields(fieldsToEquate);
+    const searchString = this.generateWhereClause(fieldsToSearch);
     const fieldsToUpdateArray = Object.keys(fieldsToUpdate).map(
       (key) => `${key}: ${NhostDb.createValueString(fieldsToUpdate[key])}`,
     );
@@ -443,10 +465,12 @@ class NhostDb extends DB {
   }
 
   private static createValueString(
-    value: string | number | boolean | null,
+    value: string | number | boolean | Date | null,
   ): string {
     if (typeof value === "string") {
       return `"${value}"`;
+    } else if (value instanceof Date) {
+      return `"${value.toISOString()}"`;
     } else if (value === null) {
       return `null`;
     }

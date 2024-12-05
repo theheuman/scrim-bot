@@ -14,5 +14,9 @@ export interface ScrimSignup {
   players: Player[];
   signupId: string;
   signupPlayer: Player;
-  prio?: number;
+  prio?: {
+    amount: number;
+    reasons: string;
+  };
+  date: Date;
 }

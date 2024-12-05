@@ -1,19 +1,22 @@
 import { DbMock } from "./mocks/db.mock";
-import { Player, PlayerInsert } from "../src/models/Player";
+import { Player } from "../src/models/Player";
 import { User } from "discord.js";
-import { Cache } from "../src/services/cache";
+import { CacheService } from "../src/services/cache";
 import { RosterService } from "../src/services/rosters";
 import { ScrimSignup, Scrim } from "../src/models/Scrims";
+import { AuthService } from "../src/services/auth";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
-  let cache: Cache;
+  let cache: CacheService;
   let rosters: RosterService;
+  let authService: AuthService;
 
   beforeEach(() => {
     dbMock = new DbMock();
-    cache = new Cache();
-    rosters = new RosterService(dbMock, cache);
+    cache = new CacheService();
+    authService = new AuthService(dbMock, cache);
+    rosters = new RosterService(dbMock, cache, authService);
   });
 
   const zboy: { user: User; player: Player } = {
@@ -43,6 +46,7 @@ describe("Rosters", () => {
     players: [revy, theheuman.player, cTreazy],
     signupId: "213",
     signupPlayer: zboy.player,
+    date: new Date(),
   });
 
   describe("removeSignup()", () => {
@@ -143,10 +147,14 @@ describe("Rosters", () => {
         players: [revy, theheuman.player, cTreazy],
         signupId: "213",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.clear();
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [differentFineapples]);
+      jest
+        .spyOn(authService, "userIsAdmin")
+        .mockReturnValue(Promise.resolve(false));
       const causeException = async () => {
         await rosters.removeSignup(
           zboy.user,
@@ -199,6 +207,7 @@ describe("Rosters", () => {
         players: [revy, theheuman.player, cTreazy],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.clear();
       cache.createScrim(discordChannel, scrim);
@@ -232,6 +241,7 @@ describe("Rosters", () => {
         players: [revy, theheuman.player, cTreazy],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [dudeCube]);
@@ -277,6 +287,7 @@ describe("Rosters", () => {
         players: [zboy.player, supreme, mikey],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.createScrim(discordChannel, scrim);
       cache.setSignups(scrim.id, [dudeCube, getFineapples()]);
@@ -324,6 +335,7 @@ describe("Rosters", () => {
         players: [revy, supreme, mikey],
         signupId: "214",
         signupPlayer: theheuman.player,
+        date: new Date(),
       };
       cache.clear();
       cache.createScrim(discordChannel, scrim);

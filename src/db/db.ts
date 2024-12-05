@@ -1,24 +1,16 @@
 import { PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
-
-export type JSONValue =
-  | string
-  | number
-  | boolean
-  | { [x: string]: JSONValue }
-  | Array<JSONValue>;
-
-export type DbValue = string | number | boolean | null;
+import { JSONValue, DbValue, LogicalExpression } from "./types";
 
 export abstract class DB {
   abstract get(
     tableName: string,
-    fieldsToSearch: Record<string, DbValue>,
+    logicalExpression: LogicalExpression,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
   abstract update(
     tableName: string,
-    fieldsToEquate: Record<string, DbValue>,
+    logicalExpression: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
@@ -31,7 +23,7 @@ export abstract class DB {
   abstract deleteById(tableName: string, id: string): Promise<string>;
   abstract delete(
     tableName: string,
-    fieldsToEqual: Record<string, DbValue>,
+    logicalExpression: LogicalExpression,
   ): Promise<string[]>;
   abstract customQuery(query: string): Promise<JSONValue>;
   abstract replaceTeammate(
@@ -62,7 +54,7 @@ export abstract class DB {
   ): Promise<string> {
     const ids = await this.post("scrims", [
       {
-        date_time_field: dateTime.toISOString(),
+        date_time_field: dateTime,
         skill,
         overstat_link: overstatLink,
         discord_channel: discordChannelID,
@@ -79,7 +71,12 @@ export abstract class DB {
   ): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-      { id: scrimId },
+      {
+        fieldName: "id",
+        comparator: "eq",
+        value: scrimId,
+      },
+
       { skill, overstat_link: overstatLink },
       ["id"],
     )) as { id: string };
@@ -97,7 +94,11 @@ export abstract class DB {
   async closeScrim(scrimId: string): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
       "scrims",
-      { id: scrimId },
+      {
+        fieldName: "id",
+        comparator: "eq",
+        value: scrimId,
+      },
       { active: false },
       ["id"],
     )) as { id: string };
@@ -105,7 +106,14 @@ export abstract class DB {
       throw Error("Could not set scrim to inactive, no updates made");
     }
     return this.delete("scrim_signups", {
-      scrim_id: updatedScrimInfo.id,
+      operator: "and",
+      expressions: [
+        {
+          fieldName: "scrim_id",
+          comparator: "eq",
+          value: updatedScrimInfo.id,
+        },
+      ],
     });
   }
 
@@ -116,17 +124,19 @@ export abstract class DB {
     playerId: string,
     playerTwoId: string,
     playerThreeId: string,
+    date: Date,
     combinedElo: number | null = null,
   ): Promise<string> {
     const ids = await this.post("scrim_signups", [
       {
         team_name: teamName,
         scrim_id: scrimId,
-        signup_player_id: playerId,
+        signup_player_id: userId,
         player_one_id: playerId,
         player_two_id: playerTwoId,
         player_three_id: playerThreeId,
         combined_elo: combinedElo,
+        date_time: date,
       },
     ]);
     return ids[0];
@@ -134,10 +144,22 @@ export abstract class DB {
 
   removeScrimSignup(teamName: string, scrimId: string) {
     return this.delete("scrim_signups", {
-      scrim_id: scrimId,
-      team_name: teamName,
+      operator: "and",
+      expressions: [
+        {
+          fieldName: "scrim_id",
+          comparator: "eq",
+          value: scrimId,
+        },
+        {
+          fieldName: "team_name",
+          comparator: "eq",
+          value: teamName,
+        },
+      ],
     });
   }
+
   // returns id
   async insertPlayerIfNotExists(
     discordId: string,
@@ -214,11 +236,11 @@ export abstract class DB {
   getActiveScrims(): Promise<{
     scrims: { discord_channel: string; id: string; date_time_field: string }[];
   }> {
-    return this.get("scrims", { active: true }, [
-      "discord_channel",
-      "id",
-      "date_time_field",
-    ]) as Promise<{
+    return this.get(
+      "scrims",
+      { fieldName: "active", comparator: "eq", value: true },
+      ["discord_channel", "id", "date_time_field"],
+    ) as Promise<{
       scrims: {
         discord_channel: string;
         id: string;
@@ -276,8 +298,19 @@ export abstract class DB {
     return this.update(
       "scrim_signups",
       {
-        scrim_id: scrimId,
-        team_name: oldTeamName,
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "scrim_id",
+            comparator: "eq",
+            value: scrimId,
+          },
+          {
+            fieldName: "team_name",
+            comparator: "eq",
+            value: oldTeamName,
+          },
+        ],
       },
       { team_name: newTeamName },
       [
@@ -288,6 +321,71 @@ export abstract class DB {
         "scrim_id",
       ],
     );
+  }
+
+  async setPrio(
+    playerIds: string[],
+    startDate: Date,
+    endDate: Date,
+    amount: number,
+    reason: string,
+  ): Promise<string[]> {
+    return this.post(
+      "prio",
+      playerIds.map((playerId) => ({
+        player_id: playerId,
+        start_date: startDate,
+        end_date: endDate,
+        amount,
+        reason,
+      })),
+    );
+  }
+
+  async expungePrio(prioIds: string[]): Promise<string[]> {
+    return this.delete("prio", {
+      operator: "or",
+      expressions: prioIds.map((id) => ({
+        fieldName: "id",
+        comparator: "eq",
+        value: id,
+      })),
+    });
+  }
+
+  async getPrio(
+    date: Date,
+  ): Promise<{ id: string; amount: number; reason: string }[]> {
+    const dbData = (await this.get(
+      "prio",
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "start_date",
+            comparator: "lte",
+            value: date,
+          },
+          {
+            fieldName: "end_date",
+            comparator: "gte",
+            value: date,
+          },
+        ],
+      },
+      ["player_id", "amount", "reason"],
+    )) as {
+      prio: {
+        player_id: string;
+        amount: number;
+        reason: string;
+      }[];
+    };
+    return dbData.prio.map(({ player_id, amount, reason }) => ({
+      id: player_id,
+      amount,
+      reason,
+    }));
   }
 
   private generatePlayerUpdateQuery(

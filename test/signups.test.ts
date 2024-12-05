@@ -1,27 +1,33 @@
 import { ScrimSignups } from "../src/services/signups";
 import { DbMock } from "./mocks/db.mock";
-import { PlayerInsert, PlayerStatInsert } from "../src/models/Player";
+import { Player, PlayerInsert, PlayerStatInsert } from "../src/models/Player";
 import { User } from "discord.js";
-import { Cache } from "../src/services/cache";
+import { CacheService } from "../src/services/cache";
 import { OverstatService } from "../src/services/overstat";
-import { Scrim, ScrimSignup } from "../src/models/Scrims";
-import {
-  OverstatTournamentResponse,
-  PlayerTournamentStats,
-} from "../src/models/overstatModels";
+import { ScrimSignup } from "../src/models/Scrims";
+import { OverstatTournamentResponse } from "../src/models/overstatModels";
 import { mockOverstatResponse } from "./mocks/overstat-response.mock";
+import { PrioService } from "../src/services/prio";
+import { AuthService } from "../src/services/auth";
+import { ScrimSignupsWithPlayers } from "../src/db/table.interfaces";
 
 describe("Signups", () => {
   let dbMock: DbMock;
-  let cache: Cache;
+  let cache: CacheService;
   let signups: ScrimSignups;
+  let prioService: PrioService;
   let overstatService: OverstatService;
 
   beforeEach(() => {
     dbMock = new DbMock();
-    cache = new Cache();
+    cache = new CacheService();
     overstatService = new OverstatService();
-    signups = new ScrimSignups(dbMock, cache, overstatService);
+    prioService = new PrioService(
+      dbMock,
+      cache,
+      new AuthService(dbMock, cache),
+    );
+    signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -154,61 +160,150 @@ describe("Signups", () => {
   });
 
   describe("getSignups()", () => {
-    it("Should get all teams", async () => {
-      const theheuman = { id: "123", displayName: "TheHeuman" } as User;
-      const zboy = { id: "456", displayName: "Zboy" } as User;
-      const supreme = { id: "789", displayName: "Supreme" } as User;
-      const expectedSignup = {
-        teamName: "Fineapples",
-        scrimId: "32451",
-        signupId: "4685",
-      };
-
-      cache.setSignups("32451", []);
-      jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
-        const expected: PlayerInsert[] = [
-          { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "456", displayName: "Zboy" },
-          { discordId: "789", displayName: "Supreme" },
-        ];
-        expect(players).toEqual(expected);
-        return Promise.resolve(["111", "444", "777"]);
-      });
+    it("Should sort teams correctly by prio and signup date", async () => {
+      // both positive and negative prio
+      // two teams tied for prio with different dates
+      const highPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-28T20:10:35.706+00:00",
+        team_name: "High Prio",
+      } as ScrimSignupsWithPlayers;
+      const lowPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-10T20:10:35.706+00:00",
+        team_name: "Low Prio",
+      } as ScrimSignupsWithPlayers;
+      const mediumPrioTeam1: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-13T20:10:35.706+00:00",
+        team_name: "Medium Prio 1",
+      } as ScrimSignupsWithPlayers;
+      const mediumPrioTeam2: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-14T20:10:35.706+00:00",
+        team_name: "Medium Prio 2",
+      } as ScrimSignupsWithPlayers;
 
       jest
-        .spyOn(dbMock, "addScrimSignup")
-        .mockImplementation(
-          (
-            teamName: string,
-            scrimId: string,
-            playerId: string,
-            playerIdTwo: string,
-            playerIdThree: string,
-          ) => {
-            expect(teamName).toEqual(expectedSignup.teamName);
-            expect(scrimId).toEqual(expectedSignup.scrimId);
-            expect(playerId).toEqual("111");
-            expect(playerIdTwo).toEqual("444");
-            expect(playerIdThree).toEqual("777");
-            return Promise.resolve(expectedSignup.signupId);
-          },
+        .spyOn(prioService, "getTeamPrioForScrim")
+        .mockImplementation((_, teams: ScrimSignup[]) => {
+          for (const team of teams) {
+            switch (team.teamName) {
+              case highPrioTeam.team_name:
+                team.prio = {
+                  amount: 1,
+                  reasons: "Player 1 has league prio",
+                };
+                break;
+              case mediumPrioTeam1.team_name:
+                team.prio = {
+                  amount: 0,
+                  reasons: "",
+                };
+                break;
+              case mediumPrioTeam2.team_name:
+                team.prio = {
+                  amount: 0,
+                  reasons: "",
+                };
+                break;
+              case lowPrioTeam.team_name:
+                team.prio = {
+                  amount: -5,
+                  reasons: "Player 1 is an enemy of the people",
+                };
+                break;
+            }
+          }
+          return Promise.resolve(teams);
+        });
+      jest.spyOn(cache, "getScrim").mockReturnValue({
+        id: "",
+        dateTime: new Date(),
+        discordChannel: "",
+        active: false,
+      });
+      jest
+        .spyOn(dbMock, "getScrimSignupsWithPlayers")
+        .mockReturnValue(
+          Promise.resolve([
+            lowPrioTeam,
+            mediumPrioTeam2,
+            highPrioTeam,
+            mediumPrioTeam1,
+          ]),
         );
 
-      const signupId = await signups.addTeam(
-        expectedSignup.scrimId,
-        expectedSignup.teamName,
-        theheuman,
-        [theheuman, zboy, supreme],
+      const generateUndefinedPlayer = (): Player => {
+        return {
+          discordId: undefined,
+          displayName: undefined,
+          elo: undefined,
+          id: undefined,
+          overstatId: undefined,
+        } as unknown as Player;
+      };
+      const generateScrimSignupFromWithPlayers = (
+        team: ScrimSignupsWithPlayers,
+        prio: {
+          amount: number;
+          reasons: string;
+        },
+      ): ScrimSignup => {
+        return {
+          teamName: team.team_name,
+          players: [
+            generateUndefinedPlayer(),
+            generateUndefinedPlayer(),
+            generateUndefinedPlayer(),
+          ],
+          signupId: "for now we dont get the id",
+          signupPlayer: generateUndefinedPlayer(),
+          date: new Date(team.date_time),
+          prio,
+        };
+      };
+      const expectedTeams: ScrimSignup[] = [
+        generateScrimSignupFromWithPlayers(highPrioTeam, {
+          amount: 1,
+          reasons: "Player 1 has league prio",
+        }),
+        generateScrimSignupFromWithPlayers(mediumPrioTeam1, {
+          amount: 0,
+          reasons: "",
+        }),
+        generateScrimSignupFromWithPlayers(mediumPrioTeam2, {
+          amount: 0,
+          reasons: "",
+        }),
+        generateScrimSignupFromWithPlayers(lowPrioTeam, {
+          amount: -5,
+          reasons: "Player 1 is an enemy of the people",
+        }),
+      ];
+      const teamsSignedUp = await signups.getSignups("");
+      expect(teamsSignedUp.mainList).toEqual(expectedTeams);
+    });
+
+    it("Should throw error when no scrim", async () => {
+      cache.clear();
+
+      const causeException = async () => {
+        await signups.getSignups("");
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "No scrim found for that channel",
       );
-      expect(signupId).toEqual(expectedSignup.signupId);
-      expect.assertions(7);
     });
   });
 
   describe("updateActiveScrims()", () => {
     it("Should get active scrims", async () => {
       cache.clear();
+      cache.createScrim("something", {
+        id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        dateTime: new Date(),
+        discordChannel: "something",
+        active: true,
+      });
+      cache.setSignups("ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", []);
       jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
         return Promise.resolve({
           scrims: [
@@ -235,12 +330,7 @@ describe("Signups", () => {
       jest
         .spyOn(dbMock, "createNewScrim")
         .mockImplementation(
-          (
-            dateTime: Date,
-            discordChannelID: string,
-            skill?: number | null,
-            overstatLink?: string | null,
-          ) => {
+          (_: Date, discordChannelID: string, skill?: number | null) => {
             expect(discordChannelID).toEqual(channelId);
             expect(skill).toEqual(undefined);
             return Promise.resolve("a valid scrim id");

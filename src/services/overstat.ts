@@ -20,7 +20,7 @@ export class OverstatService {
     }
     if (!tournamentId) {
       throw Error(
-        "URL Malformated, make sure you are using the fully built url and not the shortcode",
+        "URL Malformated no tournament id found, make sure you are using the fully built url and not the shortcode",
       );
     }
     return tournamentId;

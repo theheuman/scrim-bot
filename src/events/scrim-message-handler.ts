@@ -1,5 +1,5 @@
 import { Events, Message } from "discord.js";
-import { signups } from "../services";
+import { signupsService } from "../services";
 
 export const whitelistedCommands = new Set<string>([
   "/signup",
@@ -10,7 +10,7 @@ export const whitelistedCommands = new Set<string>([
 module.exports = {
   name: Events.MessageCreate,
   async execute(message: Message) {
-    if (signups.getScrimId(message.channel.id as string)) {
+    if (signupsService.getScrimId(message.channel.id as string)) {
       console.log("Scrim signup channel message detected");
       if (!whitelistedCommands.has(message.content)) {
         const botReply = await message.reply(
