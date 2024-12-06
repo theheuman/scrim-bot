@@ -77,6 +77,12 @@ export class CacheService {
     }
   }
 
+  removeAdminRoles(roleIds: string[]) {
+    for (const roleId of roleIds) {
+      this.adminRolesMap?.delete(roleId);
+    }
+  }
+
   clear() {
     this.scrimChannelMap.clear();
     this.activeScrimSignups.clear();

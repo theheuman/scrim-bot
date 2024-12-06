@@ -21,6 +21,12 @@ export class AuthService {
     return dbIds;
   }
 
+  async removeAdminRoles(roleIds: string[]): Promise<string[]> {
+    const dbIds = await this.db.removeAdminRoles(roleIds);
+    this.cache.removeAdminRoles(roleIds);
+    return dbIds;
+  }
+
   private async getAdminRoleSet(): Promise<Map<string, DiscordRole>> {
     let adminRoleSet = this.cache.getAdminRolesMap();
     if (!adminRoleSet) {

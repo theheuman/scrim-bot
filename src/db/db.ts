@@ -407,6 +407,17 @@ export abstract class DB {
     );
   }
 
+  async removeAdminRoles(roleIds: string[]): Promise<string[]> {
+    return this.delete(DbTable.scrimAdminRoles, {
+      operator: "or",
+      expressions: roleIds.map((roleId) => ({
+        fieldName: "discord_role_id",
+        comparator: "eq",
+        value: roleId,
+      })),
+    });
+  }
+
   private generatePlayerUpdateQuery(
     player: PlayerInsert,
     uniqueQueryName: string,
