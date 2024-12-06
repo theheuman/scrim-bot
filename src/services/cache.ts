@@ -1,5 +1,6 @@
 import { Scrim, ScrimSignup } from "../models/Scrims";
 import { Player } from "../models/Player";
+import { DiscordRole } from "../models/Role";
 
 export class CacheService {
   // maps discord channels to scrim ids
@@ -11,7 +12,8 @@ export class CacheService {
   // maps discord user id to player
   private playerMap: Map<string, Player>;
 
-  private adminRoles: Set<string> | undefined;
+  // maps role id, to DiscordRole
+  private adminRoles: Map<string, DiscordRole> | undefined;
 
   constructor() {
     this.scrimChannelMap = new Map();
@@ -51,12 +53,12 @@ export class CacheService {
     this.playerMap.set(userId, player);
   }
 
-  getAdminRoles(): Set<string> | undefined {
+  getAdminRoles(): Map<string, DiscordRole> | undefined {
     return this.adminRoles;
   }
 
-  setAdminRoles(roles: string[]): Set<string> {
-    this.adminRoles = new Set(roles);
+  setAdminRoles(roles: DiscordRole[]): Map<string, DiscordRole> {
+    this.adminRoles = new Map(roles.map((role) => [role.discordRoleId, role]));
     return this.adminRoles;
   }
 

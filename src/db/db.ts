@@ -1,6 +1,7 @@
 import { PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
 import { DbTable, DbValue, JSONValue, LogicalExpression } from "./types";
+import { DiscordRole } from "../models/Role";
 
 export abstract class DB {
   abstract get(
@@ -383,11 +384,17 @@ export abstract class DB {
     }));
   }
 
-  async getAdminRoles(): Promise<string[]> {
+  async getAdminRoles(): Promise<DiscordRole[]> {
     const results = (await this.get(DbTable.scrimAdminRoles, undefined, [
       "discord_role_id",
-    ])) as { scrim_roles: { discord_role_id: string }[] };
-    return results.scrim_roles.map((role) => role.discord_role_id);
+      "role_name",
+    ])) as {
+      scrim_admin_roles: { discord_role_id: string; role_name: string }[];
+    };
+    return results.scrim_admin_roles.map((role) => ({
+      discordRoleId: role.discord_role_id,
+      roleName: role.role_name,
+    }));
   }
 
   async addAdminRoles(

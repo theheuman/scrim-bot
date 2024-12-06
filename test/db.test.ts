@@ -1122,4 +1122,70 @@ describe("DB connection", () => {
       },
     ]);
   });
+
+  it("Should add admin role", async () => {
+    const voidAdminRole = {
+      id: "1060737998423072778",
+      name: "The Void Admin",
+    };
+
+    mockRequest = (query) => {
+      const expected = `
+      mutation {
+        insert_scrim_admin_roles(objects: [{ discord_role_id: "1060737998423072778", role_name: "The Void Admin" }]) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+      expect(query).toEqual(expected);
+      return Promise.resolve({
+        data: {
+          insert_scrim_admin_roles: {
+            returning: [
+              {
+                id: "1a8740fc-dfc1-4f94-8c3f-04177656ceef",
+              },
+            ],
+          },
+        },
+      });
+    };
+    const newId = await nhostDb.addAdminRoles([voidAdminRole]);
+    expect(newId).toEqual(["1a8740fc-dfc1-4f94-8c3f-04177656ceef"]);
+    expect.assertions(2);
+  });
+
+  it("Should get admin roles", async () => {
+    mockRequest = (query) => {
+      const expected = `
+      query {
+        scrim_admin_roles {
+          discord_role_id
+          role_name
+        }
+      }
+    `;
+      expect(query).toEqual(expected);
+      return Promise.resolve({
+        data: {
+          scrim_admin_roles: [
+            {
+              discord_role_id: "1060737998423072778",
+              role_name: "The Void Admin",
+            },
+          ],
+        },
+      });
+    };
+    const adminRoles = await nhostDb.getAdminRoles();
+    expect(adminRoles).toEqual([
+      {
+        discordRoleId: "1060737998423072778",
+        roleName: "The Void Admin",
+      },
+    ]);
+    expect.assertions(2);
+  });
 });

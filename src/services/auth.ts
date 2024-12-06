@@ -1,6 +1,7 @@
 import { DB } from "../db/db";
 import { GuildMember } from "discord.js";
 import { CacheService } from "./cache";
+import { DiscordRole } from "../models/Role";
 
 export class AuthService {
   constructor(
@@ -14,7 +15,7 @@ export class AuthService {
     return this.hasAdminRole(memberRoleIds, adminRoleSet);
   }
 
-  private async getAdminRoleSet() {
+  private async getAdminRoleSet(): Promise<Map<string, DiscordRole>> {
     let adminRoleSet = this.cache.getAdminRoles();
     if (!adminRoleSet) {
       const adminRolesArray = await this.db.getAdminRoles();
@@ -23,7 +24,10 @@ export class AuthService {
     return adminRoleSet;
   }
 
-  private hasAdminRole(memberRoleIds: string[], adminRoleSet: Set<string>) {
-    return memberRoleIds.some((item) => adminRoleSet.has(item));
+  private hasAdminRole(
+    memberRoleIds: string[],
+    adminRoleMao: Map<string, DiscordRole>,
+  ) {
+    return memberRoleIds.some((item) => adminRoleMao.has(item));
   }
 }
