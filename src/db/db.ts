@@ -397,12 +397,13 @@ export abstract class DB {
     }));
   }
 
-  async addAdminRoles(
-    roles: { id: string; name: string }[],
-  ): Promise<string[]> {
+  async addAdminRoles(roles: DiscordRole[]): Promise<string[]> {
     return this.post(
       DbTable.scrimAdminRoles,
-      roles.map((role) => ({ discord_role_id: role.id, role_name: role.name })),
+      roles.map((role) => ({
+        discord_role_id: role.discordRoleId,
+        role_name: role.roleName,
+      })),
     );
   }
 

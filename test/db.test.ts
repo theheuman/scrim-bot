@@ -1125,8 +1125,8 @@ describe("DB connection", () => {
 
   it("Should add admin role", async () => {
     const voidAdminRole = {
-      id: "1060737998423072778",
-      name: "The Void Admin",
+      discordRoleId: "1060737998423072778",
+      roleName: "The Void Admin",
     };
 
     mockRequest = (query) => {

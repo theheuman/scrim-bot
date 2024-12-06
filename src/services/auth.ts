@@ -15,11 +15,17 @@ export class AuthService {
     return this.hasAdminRole(memberRoleIds, adminRoleSet);
   }
 
+  async addAdminRoles(roles: DiscordRole[]): Promise<string[]> {
+    const dbIds = await this.db.addAdminRoles(roles);
+    this.cache.addAdminRoles(roles);
+    return dbIds;
+  }
+
   private async getAdminRoleSet(): Promise<Map<string, DiscordRole>> {
-    let adminRoleSet = this.cache.getAdminRoles();
+    let adminRoleSet = this.cache.getAdminRolesMap();
     if (!adminRoleSet) {
       const adminRolesArray = await this.db.getAdminRoles();
-      adminRoleSet = this.cache.setAdminRoles(adminRolesArray);
+      adminRoleSet = this.cache.setAdminRolesMap(adminRolesArray);
     }
     return adminRoleSet;
   }

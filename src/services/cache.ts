@@ -13,7 +13,7 @@ export class CacheService {
   private playerMap: Map<string, Player>;
 
   // maps role id, to DiscordRole
-  private adminRoles: Map<string, DiscordRole> | undefined;
+  private adminRolesMap: Map<string, DiscordRole> | undefined;
 
   constructor() {
     this.scrimChannelMap = new Map();
@@ -53,13 +53,28 @@ export class CacheService {
     this.playerMap.set(userId, player);
   }
 
-  getAdminRoles(): Map<string, DiscordRole> | undefined {
-    return this.adminRoles;
+  getAdminRolesMap(): Map<string, DiscordRole> | undefined {
+    return this.adminRolesMap;
   }
 
-  setAdminRoles(roles: DiscordRole[]): Map<string, DiscordRole> {
-    this.adminRoles = new Map(roles.map((role) => [role.discordRoleId, role]));
-    return this.adminRoles;
+  setAdminRolesMap(roles: DiscordRole[]): Map<string, DiscordRole> {
+    this.adminRolesMap = new Map(
+      roles.map((role) => [role.discordRoleId, role]),
+    );
+    return this.adminRolesMap;
+  }
+
+  addAdminRoles(roles: DiscordRole[]) {
+    if (!this.adminRolesMap) {
+      this.setAdminRolesMap(roles);
+    } else {
+      for (const role of roles) {
+        this.adminRolesMap.set(role.discordRoleId, {
+          discordRoleId: role.discordRoleId,
+          roleName: role.roleName,
+        });
+      }
+    }
   }
 
   clear() {
