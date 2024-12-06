@@ -1188,4 +1188,33 @@ describe("DB connection", () => {
     ]);
     expect.assertions(2);
   });
+
+  it("Should remove admin roles", async () => {
+    mockRequest = (query) => {
+      const expected = `
+      mutation {
+        delete_scrim_admin_roles(where: { _or: [{ discord_role_id: { _eq: "1060737998423072778" } }] }) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+      expect(query).toEqual(expected);
+      return Promise.resolve({
+        data: {
+          delete_scrim_admin_roles: {
+            returning: [
+              {
+                id: "1a8740fc-dfc1-4f94-8c3f-04177656ceef",
+              },
+            ],
+          },
+        },
+      });
+    };
+    const deletedIds = await nhostDb.removeAdminRoles(["1060737998423072778"]);
+    expect(deletedIds).toEqual(["1a8740fc-dfc1-4f94-8c3f-04177656ceef"]);
+    expect.assertions(2);
+  });
 });
