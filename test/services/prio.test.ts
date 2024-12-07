@@ -1,11 +1,11 @@
 import { GuildMember, User } from "discord.js";
-import { Player, PlayerInsert } from "../src/models/Player";
-import { PrioService } from "../src/services/prio";
-import { DbMock } from "./mocks/db.mock";
-import { CacheService } from "../src/services/cache";
-import { AuthService } from "../src/services/auth";
+import { Player, PlayerInsert } from "../../src/models/Player";
+import { PrioService } from "../../src/services/prio";
+import { DbMock } from "../mocks/db.mock";
+import { CacheService } from "../../src/services/cache";
+import { AuthService } from "../../src/services/auth";
 import SpyInstance = jest.SpyInstance;
-import { Scrim, ScrimSignup } from "../src/models/Scrims";
+import { Scrim, ScrimSignup } from "../../src/models/Scrims";
 
 describe("Prio", () => {
   let prioService: PrioService;
