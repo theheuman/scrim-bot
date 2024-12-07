@@ -1,12 +1,7 @@
-import { OverstatService } from "../src/services/overstat";
-import { mockOverstatResponse } from "./mocks/overstat-response.mock";
-import { GuildMember, User } from "discord.js";
-import { Player, PlayerStatInsert } from "../src/models/Player";
-import { ScrimSignup } from "../src/models/Scrims";
-import { OverstatTournamentResponse } from "../src/models/overstatModels";
-import { AuthService } from "../src/services/auth";
-import { DbMock } from "./mocks/db.mock";
-import { CacheService } from "../src/services/cache";
+import { GuildMember } from "discord.js";
+import { AuthService } from "../../src/services/auth";
+import { DbMock } from "../mocks/db.mock";
+import { CacheService } from "../../src/services/cache";
 
 describe("Auth", () => {
   let service: AuthService;

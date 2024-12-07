@@ -1,10 +1,10 @@
-import { DbMock } from "./mocks/db.mock";
-import { Player } from "../src/models/Player";
+import { DbMock } from "../mocks/db.mock";
+import { Player } from "../../src/models/Player";
 import { GuildMember, User } from "discord.js";
-import { CacheService } from "../src/services/cache";
-import { RosterService } from "../src/services/rosters";
-import { ScrimSignup, Scrim } from "../src/models/Scrims";
-import { AuthService } from "../src/services/auth";
+import { CacheService } from "../../src/services/cache";
+import { RosterService } from "../../src/services/rosters";
+import { ScrimSignup, Scrim } from "../../src/models/Scrims";
+import { AuthService } from "../../src/services/auth";
 
 describe("Rosters", () => {
   let dbMock: DbMock;

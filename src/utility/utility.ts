@@ -4,5 +4,5 @@ import type { APIInteractionGuildMember } from "../../node_modules/discord-api-t
 export function isGuildMember(
   value: GuildMember | APIInteractionGuildMember | null,
 ): value is GuildMember {
-  return (value as GuildMember).roles !== undefined;
+  return (value as GuildMember)?.roles !== undefined;
 }
