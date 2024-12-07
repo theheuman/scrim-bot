@@ -1,6 +1,7 @@
 import { DB } from "../db/db";
-import { User } from "discord.js";
+import { GuildMember } from "discord.js";
 import { CacheService } from "./cache";
+import { DiscordRole } from "../models/Role";
 
 export class AuthService {
   constructor(
@@ -8,9 +9,37 @@ export class AuthService {
     private cache: CacheService,
   ) {}
 
-  async userIsAdmin(user: User): Promise<boolean> {
-    console.log(this.db, this.cache, user);
-    // TODO check users roles against a static DB table with roles
-    return true;
+  async memberIsAdmin(member: GuildMember): Promise<boolean> {
+    const memberRoleIds = member.roles.cache.map((role) => role.id);
+    const adminRoleSet = await this.getAdminRoleSet();
+    return this.hasAdminRole(memberRoleIds, adminRoleSet);
+  }
+
+  async addAdminRoles(roles: DiscordRole[]): Promise<string[]> {
+    const dbIds = await this.db.addAdminRoles(roles);
+    this.cache.addAdminRoles(roles);
+    return dbIds;
+  }
+
+  async removeAdminRoles(roleIds: string[]): Promise<string[]> {
+    const dbIds = await this.db.removeAdminRoles(roleIds);
+    this.cache.removeAdminRoles(roleIds);
+    return dbIds;
+  }
+
+  private async getAdminRoleSet(): Promise<Map<string, DiscordRole>> {
+    let adminRoleSet = this.cache.getAdminRolesMap();
+    if (!adminRoleSet) {
+      const adminRolesArray = await this.db.getAdminRoles();
+      adminRoleSet = this.cache.setAdminRolesMap(adminRolesArray);
+    }
+    return adminRoleSet;
+  }
+
+  private hasAdminRole(
+    memberRoleIds: string[],
+    adminRoleMao: Map<string, DiscordRole>,
+  ) {
+    return memberRoleIds.some((item) => adminRoleMao.has(item));
   }
 }

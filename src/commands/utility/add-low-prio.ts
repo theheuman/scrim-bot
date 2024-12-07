@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { prioService } from "../../services";
+import { isGuildMember } from "../../utility/utility";
 
 // TODO get dates, amount and reason. Probably change command to setPrio, or generate a second command with high prio
 module.exports = {
@@ -26,6 +27,13 @@ module.exports = {
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
+    if (!isGuildMember(interaction.member)) {
+      interaction.reply(
+        "Can't find the member issuing the command or this is an api command, no command executed",
+      );
+      return;
+    }
+
     const user1 = interaction.options.getUser("user1");
     const user2 = interaction.options.getUser("user2");
     const user3 = interaction.options.getUser("user3");
@@ -34,7 +42,7 @@ module.exports = {
 
     try {
       await prioService.setPlayerPrio(
-        interaction.user,
+        interaction.member,
         users,
         new Date(),
         new Date(),

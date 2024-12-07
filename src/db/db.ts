@@ -1,28 +1,29 @@
 import { PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
-import { JSONValue, DbValue, LogicalExpression } from "./types";
+import { DbTable, DbValue, JSONValue, LogicalExpression } from "./types";
+import { DiscordRole } from "../models/Role";
 
 export abstract class DB {
   abstract get(
-    tableName: string,
-    logicalExpression: LogicalExpression,
+    tableName: DbTable,
+    logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
   abstract update(
-    tableName: string,
+    tableName: DbTable,
     logicalExpression: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
     fieldsToReturn: string[],
   ): Promise<JSONValue>;
   // returns id of new object as a string
   abstract post(
-    tableName: string,
+    tableName: DbTable,
     data: Record<string, DbValue>[],
   ): Promise<string[]>;
   // returns id of the deleted object as a string
-  abstract deleteById(tableName: string, id: string): Promise<string>;
+  abstract deleteById(tableName: DbTable, id: string): Promise<string>;
   abstract delete(
-    tableName: string,
+    tableName: DbTable,
     logicalExpression: LogicalExpression,
   ): Promise<string[]>;
   abstract customQuery(query: string): Promise<JSONValue>;
@@ -52,7 +53,7 @@ export abstract class DB {
     skill: number | null = null,
     overstatLink: string | null = null,
   ): Promise<string> {
-    const ids = await this.post("scrims", [
+    const ids = await this.post(DbTable.scrims, [
       {
         date_time_field: dateTime,
         skill,
@@ -70,7 +71,7 @@ export abstract class DB {
     playerStats: PlayerStatInsert[],
   ): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
-      "scrims",
+      DbTable.scrims,
       {
         fieldName: "id",
         comparator: "eq",
@@ -86,14 +87,14 @@ export abstract class DB {
       );
     }
     return this.post(
-      "scrim_player_stats",
+      DbTable.scrimPlayerStats,
       playerStats as unknown as Record<string, DbValue>[],
     );
   }
 
   async closeScrim(scrimId: string): Promise<string[]> {
     const updatedScrimInfo: { id: string } = (await this.update(
-      "scrims",
+      DbTable.scrims,
       {
         fieldName: "id",
         comparator: "eq",
@@ -105,15 +106,10 @@ export abstract class DB {
     if (!updatedScrimInfo?.id) {
       throw Error("Could not set scrim to inactive, no updates made");
     }
-    return this.delete("scrim_signups", {
-      operator: "and",
-      expressions: [
-        {
-          fieldName: "scrim_id",
-          comparator: "eq",
-          value: updatedScrimInfo.id,
-        },
-      ],
+    return this.delete(DbTable.scrimSignups, {
+      fieldName: "scrim_id",
+      comparator: "eq",
+      value: updatedScrimInfo.id,
     });
   }
 
@@ -127,7 +123,7 @@ export abstract class DB {
     date: Date,
     combinedElo: number | null = null,
   ): Promise<string> {
-    const ids = await this.post("scrim_signups", [
+    const ids = await this.post(DbTable.scrimSignups, [
       {
         team_name: teamName,
         scrim_id: scrimId,
@@ -143,7 +139,7 @@ export abstract class DB {
   }
 
   removeScrimSignup(teamName: string, scrimId: string) {
-    return this.delete("scrim_signups", {
+    return this.delete(DbTable.scrimSignups, {
       operator: "and",
       expressions: [
         {
@@ -237,7 +233,7 @@ export abstract class DB {
     scrims: { discord_channel: string; id: string; date_time_field: string }[];
   }> {
     return this.get(
-      "scrims",
+      DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
       ["discord_channel", "id", "date_time_field"],
     ) as Promise<{
@@ -296,7 +292,7 @@ export abstract class DB {
     newTeamName: string,
   ): Promise<JSONValue> {
     return this.update(
-      "scrim_signups",
+      DbTable.scrimSignups,
       {
         operator: "and",
         expressions: [
@@ -331,7 +327,7 @@ export abstract class DB {
     reason: string,
   ): Promise<string[]> {
     return this.post(
-      "prio",
+      DbTable.prio,
       playerIds.map((playerId) => ({
         player_id: playerId,
         start_date: startDate,
@@ -343,7 +339,7 @@ export abstract class DB {
   }
 
   async expungePrio(prioIds: string[]): Promise<string[]> {
-    return this.delete("prio", {
+    return this.delete(DbTable.prio, {
       operator: "or",
       expressions: prioIds.map((id) => ({
         fieldName: "id",
@@ -357,7 +353,7 @@ export abstract class DB {
     date: Date,
   ): Promise<{ id: string; amount: number; reason: string }[]> {
     const dbData = (await this.get(
-      "prio",
+      DbTable.prio,
       {
         operator: "and",
         expressions: [
@@ -386,6 +382,40 @@ export abstract class DB {
       amount,
       reason,
     }));
+  }
+
+  async getAdminRoles(): Promise<DiscordRole[]> {
+    const results = (await this.get(DbTable.scrimAdminRoles, undefined, [
+      "discord_role_id",
+      "role_name",
+    ])) as {
+      scrim_admin_roles: { discord_role_id: string; role_name: string }[];
+    };
+    return results.scrim_admin_roles.map((role) => ({
+      discordRoleId: role.discord_role_id,
+      roleName: role.role_name,
+    }));
+  }
+
+  async addAdminRoles(roles: DiscordRole[]): Promise<string[]> {
+    return this.post(
+      DbTable.scrimAdminRoles,
+      roles.map((role) => ({
+        discord_role_id: role.discordRoleId,
+        role_name: role.roleName,
+      })),
+    );
+  }
+
+  async removeAdminRoles(roleIds: string[]): Promise<string[]> {
+    return this.delete(DbTable.scrimAdminRoles, {
+      operator: "or",
+      expressions: roleIds.map((roleId) => ({
+        fieldName: "discord_role_id",
+        comparator: "eq",
+        value: roleId,
+      })),
+    });
   }
 
   private generatePlayerUpdateQuery(

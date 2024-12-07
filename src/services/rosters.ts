@@ -1,4 +1,4 @@
-import { User } from "discord.js";
+import { GuildMember, User } from "discord.js";
 import { DB } from "../db/db";
 import { CacheService } from "./cache";
 import { ScrimSignup } from "../models/Scrims";
@@ -15,14 +15,18 @@ export class RosterService {
   }
 
   async replaceTeammate(
-    commandUser: User,
+    memberUsingCommand: GuildMember,
     discordChannel: string,
     teamName: string,
     oldUser: User,
     newUser: User,
   ): Promise<void> {
     const { teamToBeChanged, scrimId, signups } =
-      await this.getDataIfAuthorized(commandUser, discordChannel, teamName);
+      await this.getDataIfAuthorized(
+        memberUsingCommand,
+        discordChannel,
+        teamName,
+      );
     for (const team of signups) {
       for (const player of team.players) {
         if (player.discordId === newUser.id) {
@@ -60,24 +64,32 @@ export class RosterService {
   }
 
   async removeSignup(
-    user: User,
+    memberUsingCommand: GuildMember,
     discordChannel: string,
     teamName: string,
   ): Promise<void> {
     const { teamToBeChanged, signups, scrimId } =
-      await this.getDataIfAuthorized(user, discordChannel, teamName);
+      await this.getDataIfAuthorized(
+        memberUsingCommand,
+        discordChannel,
+        teamName,
+      );
     await this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
     signups.splice(signups.indexOf(teamToBeChanged), 1);
   }
 
   async changeTeamName(
-    user: User,
+    memberUsingCommand: GuildMember,
     discordChannel: string,
     oldTeamName: string,
     newTeamName: string,
   ): Promise<void> {
     const { teamToBeChanged, scrimId, signups } =
-      await this.getDataIfAuthorized(user, discordChannel, oldTeamName);
+      await this.getDataIfAuthorized(
+        memberUsingCommand,
+        discordChannel,
+        oldTeamName,
+      );
     for (const team of signups) {
       if (team.teamName === newTeamName) {
         throw Error("Team name already taken in this scrim set");
@@ -92,7 +104,7 @@ export class RosterService {
   }
 
   private async getDataIfAuthorized(
-    commandUser: User,
+    memberUsingCommand: GuildMember,
     discordChannel: string,
     teamName: string,
   ): Promise<{
@@ -114,8 +126,8 @@ export class RosterService {
     if (!teamToBeChanged) {
       throw Error("No team with that name");
     }
-    const isAuthorized = await this.userIsAuthorized(
-      commandUser,
+    const isAuthorized = await this.memberIsAuthorized(
+      memberUsingCommand,
       teamToBeChanged,
     );
     if (!isAuthorized) {
@@ -124,12 +136,12 @@ export class RosterService {
     return { scrimId, signups, teamToBeChanged };
   }
 
-  private async userIsAuthorized(user: User, team: ScrimSignup) {
+  private async memberIsAuthorized(member: GuildMember, team: ScrimSignup) {
     const authorizedPlayers = [team.signupPlayer, ...team.players];
     const foundPlayer = authorizedPlayers.find(
-      (player) => player.discordId === user.id,
+      (player) => player.discordId === member.id,
     );
-    const isAdmin = await this.authService.userIsAdmin(user);
+    const isAdmin = await this.authService.memberIsAdmin(member);
     return isAdmin || foundPlayer;
   }
 }
