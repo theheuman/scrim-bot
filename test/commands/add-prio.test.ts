@@ -31,8 +31,11 @@ describe("Add prio", () => {
     string
   >;
   let member: GuildMember;
-  const supreme: User = { name: "Supreme", id: "1" } as unknown as User;
-  const theHeuman: User = { name: "TheHeuman", id: "2" } as unknown as User;
+  const supreme: User = { displayName: "Supreme", id: "1" } as unknown as User;
+  const theHeuman: User = {
+    displayName: "TheHeuman",
+    id: "2",
+  } as unknown as User;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
     [reply: string | InteractionReplyOptions | MessagePayload],
