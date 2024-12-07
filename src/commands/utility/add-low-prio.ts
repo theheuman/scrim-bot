@@ -28,7 +28,7 @@ module.exports = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!isGuildMember(interaction.member)) {
-      interaction.reply(
+      await interaction.reply(
         "Can't find the member issuing the command or this is an api command, no command executed",
       );
       return;
@@ -46,16 +46,16 @@ module.exports = {
         users,
         new Date(),
         new Date(),
-        -1,
-        "Added to low prio",
+        -400,
+        "Prio reason",
       );
     } catch (e) {
       await interaction.reply("Error while executing low prio: " + e);
     }
 
-    const userNames = users.map((user) => user?.username).join(", ");
+    // TODO reply with actual data
     await interaction.reply(
-      `User(s) ${userNames} have been added to the low priority list.`,
+      "Added -400 prio to 3 players from 1/12/25 to 1/13/25 because Prio reason. Supreme added prio with id: db id; Supreme added prio with id: db id 2; Supreme added prio with id: db id 3",
     );
   },
 };
