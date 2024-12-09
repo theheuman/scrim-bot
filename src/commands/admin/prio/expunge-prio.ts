@@ -1,15 +1,15 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { prioService } from "../../services";
-import { isGuildMember } from "../../utility/utility";
+import { prioService } from "../../../services";
+import { isGuildMember } from "../../../utility/utility";
 
-// TODO ask for reason and amount in command
+// TODO ask for reason and amount in command, change execute command to work correctly
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("removelowprio")
-    .setDescription("Removes a user from the low priority list")
+    .setName("expungeprio")
+    .setDescription("Removes a priority entry from the db")
     .addUserOption((option) =>
       option
-        .setName("low-prio-id")
+        .setName("prio-id")
         .setDescription("Prio db id to be removed from priority table")
         .setRequired(true),
     ),

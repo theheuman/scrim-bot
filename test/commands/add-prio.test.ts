@@ -11,7 +11,7 @@ import { prioService } from "../../src/services";
 import SpyInstance = jest.SpyInstance;
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const addPrioCommand = require("../../src/commands/utility/add-low-prio");
+const addPrioCommand = require("../../src/commands/admin/prio/add-prio");
 
 describe("Add prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine

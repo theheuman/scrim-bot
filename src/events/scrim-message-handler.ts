@@ -1,6 +1,7 @@
 import { Events, Message } from "discord.js";
 import { signupsService } from "../services";
 
+// TODO I'm not sure what this file's purpose is, it seems like it is a filter to delete all messages that aren't bot commands
 export const whitelistedCommands = new Set<string>([
   "/signup",
   "/signuplist",
