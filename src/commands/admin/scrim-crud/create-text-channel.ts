@@ -10,7 +10,7 @@ import {
   SlashCommandStringOption,
   TextChannel,
 } from "discord.js";
-import { signupsService } from "../../services";
+import { signupsService } from "../../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()

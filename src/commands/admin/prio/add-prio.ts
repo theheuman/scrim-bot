@@ -1,29 +1,20 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { prioService } from "../../services";
-import { isGuildMember } from "../../utility/utility";
+import { prioService } from "../../../services";
+import { isGuildMember } from "../../../utility/utility";
 
 // TODO get dates, amount and reason. Probably change command to setPrio, or generate a second command with high prio
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("addlowprio")
-    .setDescription("Adds up to 3 users to the low priority list")
+    .setName("addprio")
+    .setDescription("Adds a prio entry for up to three players")
     .addUserOption((option) =>
-      option
-        .setName("user1")
-        .setDescription("First user to add to low priority list")
-        .setRequired(true),
+      option.setName("user1").setDescription("First user").setRequired(true),
     )
     .addUserOption((option) =>
-      option
-        .setName("user2")
-        .setDescription("Second user to add to low priority list")
-        .setRequired(false),
+      option.setName("user2").setDescription("Second user").setRequired(false),
     )
     .addUserOption((option) =>
-      option
-        .setName("user3")
-        .setDescription("Third user to add to low priority list")
-        .setRequired(false),
+      option.setName("user3").setDescription("Third user").setRequired(false),
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {

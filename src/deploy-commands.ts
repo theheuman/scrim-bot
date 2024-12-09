@@ -19,6 +19,7 @@ const commandFolders = fs.readdirSync(foldersPath);
 
 console.log(`Found command folders: ${commandFolders}`);
 
+// TODO update to recursively search folders. Don't think admin commands will come with in this implementation
 for (const folder of commandFolders) {
   // Grab all the command files from the commands directory you created earlier
   const commandsPath = path.join(foldersPath, folder);
