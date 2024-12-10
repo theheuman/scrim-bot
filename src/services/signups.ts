@@ -55,7 +55,7 @@ export class ScrimSignups {
     discordChannelID: string,
     overstatLink: string,
     skill: number,
-  ): Promise<string> {
+  ) {
     const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
@@ -85,7 +85,6 @@ export class ScrimSignups {
     await this.db.computeScrim(scrimId, overstatLink, skill, playerStats);
     scrim.overstatLink = overstatLink;
     scrim.skill = skill;
-    return overstatLink;
   }
 
   async closeScrim(discordChannelID: string) {
