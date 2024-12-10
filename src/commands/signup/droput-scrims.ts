@@ -19,6 +19,8 @@ module.exports = {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname");
 
+    await interaction.reply("Fetched all input and working on your request!");
+
     if (!isGuildMember(interaction.member)) {
       interaction.reply(
         "Can't find the member issuing the command or this is an api command, no command executed",

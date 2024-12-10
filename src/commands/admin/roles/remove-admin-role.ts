@@ -3,12 +3,14 @@ import {
   PermissionFlagsBits,
   ChatInputCommandInteraction,
 } from "discord.js";
-import { signupsService } from "../../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("createscrimsignup") // Command name matching file name
-    .setDescription("Creates a new scrim signup text channel")
+    .setName("removeadminrole") // Command name matching file name
+    .setDescription("Removes a role that can perform scrim admin actions")
+    .addRoleOption((option) =>
+      option.setName("role").setDescription("Role to add").setRequired(true),
+    )
     // You will usually only want users that can create new channels to
     // be able to use this command and this is what this line does.
     // Feel free to remove it if you want to allow any users to
@@ -26,10 +28,5 @@ module.exports = {
     await interaction.reply({
       content: "Fetched all input and working on your request!",
     });
-    const channelId = interaction.channelId;
-
-    await signupsService.closeScrim(channelId);
-
-    // TODO after closing the scrim delete the channel
   },
 };

@@ -3,11 +3,10 @@ import {
   PermissionFlagsBits,
   ChatInputCommandInteraction,
 } from "discord.js";
-import { signupsService } from "../../../services";
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("createscrimsignup") // Command name matching file name
+    .setName("get-signups") // Command name matching file name
     .setDescription("Creates a new scrim signup text channel")
     // You will usually only want users that can create new channels to
     // be able to use this command and this is what this line does.
@@ -23,13 +22,6 @@ module.exports = {
     // Before executing any other code, we need to acknowledge the interaction.
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
-    await interaction.reply({
-      content: "Fetched all input and working on your request!",
-    });
-    const channelId = interaction.channelId;
-
-    await signupsService.closeScrim(channelId);
-
-    // TODO after closing the scrim delete the channel
+    await interaction.reply("Fetched all input and working on your request!");
   },
 };
