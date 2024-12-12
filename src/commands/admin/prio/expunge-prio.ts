@@ -1,8 +1,9 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { prioService } from "../../../services";
-import { isGuildMember } from "../../../utility/utility";
+import {
+  ChatInputCommandInteraction,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from "discord.js";
 
-// TODO ask for reason and amount in command, change execute command to work correctly
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("expungeprio")
@@ -12,23 +13,28 @@ module.exports = {
         .setName("prio-id")
         .setDescription("Prio db id to be removed from priority table")
         .setRequired(true),
-    ),
+    )
+    // You will usually only want users that can create new channels to
+    // be able to use this command and this is what this line does.
+    // Feel free to remove it if you want to allow any users to
+    // create new channels
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+    // It's impossible to create normal text channels inside DMs, so
+    // it's in your best interest in disabling this command through DMs
+    // as well. Threads, however, can be created in DMs, but we will see
+    // more about them later in this post
+    .setDMPermission(false),
 
   async execute(interaction: ChatInputCommandInteraction) {
-    const user = interaction.options.getUser("user");
-    if (!user) {
-      interaction.reply("User not found, no command executed");
-      return;
-    }
-    if (!isGuildMember(interaction.member)) {
-      interaction.reply(
-        "Can't find the member issuing the command or this is an api command, no command executed",
-      );
-      return;
-    }
-    await prioService.expungePlayerPrio(interaction.member, [user.id]);
-    await interaction.reply(
-      `User ${user.username} has been removed from the low priority list.`,
-    );
+    await interaction.reply("Fetched all input and working on your request!");
+
+    // check if member issuing the command is an admin
+
+    // get prio id from interaction
+
+    // in a catch try block
+    // send prio id to prioService
+
+    // reply to interaction if command is successful
   },
 };
