@@ -34,7 +34,7 @@ module.exports = {
 
     // in a catch try block
     // send prio id to prioService
-
-    // reply to interaction if command is successful
+    // reply to interaction that command is successful
+    // in catch block reply to interaction that command was unsuccessful
   },
 };
