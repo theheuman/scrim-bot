@@ -9,6 +9,7 @@ import {
 import configJson from "../../config.json";
 import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
+import { ExpungedPlayerPrio } from "../models/Prio";
 
 const config: {
   nhost: { adminSecret: string; subdomain: string; region: string };
@@ -148,17 +149,18 @@ class NhostDb extends DB {
     return returnedData[deleteName].returning[0].id;
   }
 
-  async delete(
+  async delete<K extends string>(
     tableName: string,
-    fieldsToEqual: LogicalExpression,
-  ): Promise<string[]> {
+    logicalExpression: LogicalExpression,
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>> {
     const deleteName = "delete_" + tableName;
-    const searchString = `(${this.generateWhereClause(fieldsToEqual)})`;
+    const searchString = `(${this.generateWhereClause(logicalExpression)})`;
     const query = `
       mutation {
         ${deleteName}${searchString} {
           returning {
-            id
+            ${fieldsToReturn.join("\n          ")}
           }
         }
       }
@@ -170,9 +172,11 @@ class NhostDb extends DB {
     if (!result.data || result.error) {
       throw Error("Graph ql error: " + result.error);
     }
-    const returnedData: Record<string, { returning: { id: string }[] }> =
-      result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[deleteName].returning.map((data) => data.id);
+    const returnedData = result.data as Record<
+      string,
+      { returning: Array<Record<K, DbValue>> }
+    >;
+    return returnedData[deleteName].returning;
   }
 
   async update(
@@ -451,6 +455,46 @@ class NhostDb extends DB {
         },
         _set: { player_${playerNumber}_id: "${newPlayerId}" }
       `;
+  }
+
+  async expungePrio(prioIds: string[]): Promise<ExpungedPlayerPrio[]> {
+    const prioIdLogicalExpression: LogicalExpression = {
+      operator: "or",
+      expressions: prioIds.map((id) => ({
+        fieldName: "id",
+        comparator: "eq",
+        value: id,
+      })),
+    };
+    const query = `
+      mutation {
+        delete_prio(${this.generateWhereClause(prioIdLogicalExpression)}) {
+          returning {
+            player {
+              discord_id
+              display_name
+            }
+            amount
+            end_date
+          }
+        }
+      }
+    `;
+    const deletedEntries = (await this.customQuery(query)) as unknown as {
+      delete_prio: {
+        returning: {
+          player: { discord_id: string; display_name: string };
+          amount: number;
+          end_date: string;
+        }[];
+      };
+    };
+    return deletedEntries.delete_prio.returning.map((entry) => ({
+      playerDiscordId: entry.player.discord_id,
+      playerDisplayName: entry.player.display_name,
+      amount: entry.amount,
+      endDate: new Date(entry.end_date),
+    }));
   }
 
   async customQuery(query: string): Promise<JSONValue> {
