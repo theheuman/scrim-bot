@@ -438,18 +438,22 @@ describe("DB connection", () => {
         });
       };
 
-      const deletedIDs = await nhostDb.delete("scrim_signups", {
-        operator: "and",
-        expressions: [
-          {
-            fieldName: "scrim_id",
-            comparator: "eq",
-            value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-          },
-          { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
-        ],
-      });
-      expect(deletedIDs[0]).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
+      const deletedIDs = await nhostDb.delete(
+        "scrim_signups",
+        {
+          operator: "and",
+          expressions: [
+            {
+              fieldName: "scrim_id",
+              comparator: "eq",
+              value: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+            },
+            { fieldName: "team_name", comparator: "eq", value: "Fineapples" },
+          ],
+        },
+        ["id"],
+      );
+      expect(deletedIDs[0].id).toEqual("6237fd9b-9f72-4748-96fb-620b8e087c1f");
       expect.assertions(2);
     });
 
@@ -1058,7 +1062,12 @@ describe("DB connection", () => {
       mutation {
         delete_prio(where: { _or: [{ id: { _eq: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08" } }, { id: { _eq: "17538df5-4052-4233-b94b-6ed09b512c59" } }] }) {
           returning {
-            id
+            player {
+              discord_id
+              display_name
+            }
+            amount
+            end_date
           }
         }
       }
@@ -1069,22 +1078,32 @@ describe("DB connection", () => {
           delete_prio: {
             returning: [
               {
-                id: "17538df5-4052-4233-b94b-6ed09b512c59",
+                player: {
+                  discord_id: "7456",
+                  display_name: "Treazy",
+                },
+                amount: -400,
+                end_date: "2024-12-15",
               },
               {
-                id: "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08",
+                player: {
+                  discord_id: "436819",
+                  display_name: "Revy",
+                },
+                amount: -20,
+                end_date: "2024-12-17",
               },
             ],
           },
         },
       });
     };
-    const deletedIds = await nhostDb.expungePrio(ids);
-    expect(deletedIds).toEqual([
-      "17538df5-4052-4233-b94b-6ed09b512c59",
-      "1d03b32b-6b6b-496c-a72e-48ba9ab1ad08",
-    ]);
-    expect.assertions(2);
+    const expungedPrios = await nhostDb.expungePrio(ids);
+    const treazyPrio = expungedPrios[0];
+    const revyPrio = expungedPrios[1];
+    expect(treazyPrio.playerDisplayName).toEqual("Treazy");
+    expect(revyPrio.playerDisplayName).toEqual("Revy");
+    expect.assertions(3);
   });
 
   it("should get team prio", async () => {

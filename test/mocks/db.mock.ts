@@ -83,11 +83,14 @@ export class DbMock extends DB {
     return Promise.resolve([]);
   }
 
-  delete(
+  delete<K extends string>(
     tableName: string,
-    fieldsToEqual: LogicalExpression,
-  ): Promise<string[]> {
-    return Promise.resolve([""]);
+    logicalEpression: LogicalExpression,
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>> {
+    return Promise.resolve([{ id: "" }] as unknown as Array<
+      Record<K, DbValue>
+    >);
   }
 
   replaceTeammate(
