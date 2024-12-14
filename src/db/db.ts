@@ -109,7 +109,7 @@ export abstract class DB {
     if (!updatedScrimInfo?.id) {
       throw Error("Could not set scrim to inactive, no updates made");
     }
-    const deletedEntries: { id: string }[] = (await this.delete(
+    const deletedEntries = await this.delete(
       DbTable.scrimSignups,
       {
         fieldName: "scrim_id",
@@ -117,8 +117,8 @@ export abstract class DB {
         value: updatedScrimInfo.id,
       },
       ["id"],
-    )) as { id: string }[];
-    return deletedEntries.map((entry) => entry.id);
+    );
+    return deletedEntries.map((entry) => entry.id as string);
   }
 
   async addScrimSignup(
@@ -147,7 +147,7 @@ export abstract class DB {
   }
 
   async removeScrimSignup(teamName: string, scrimId: string): Promise<string> {
-    const deletedEntries = (await this.delete(
+    const deletedEntries = await this.delete(
       DbTable.scrimSignups,
       {
         operator: "and",
@@ -165,8 +165,8 @@ export abstract class DB {
         ],
       },
       ["id"],
-    )) as { id: string }[];
-    return deletedEntries[0].id;
+    );
+    return deletedEntries[0].id as string;
   }
 
   // returns id
