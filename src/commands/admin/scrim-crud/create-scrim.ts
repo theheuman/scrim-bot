@@ -9,6 +9,7 @@ import {
   CategoryChannel,
   SlashCommandStringOption,
   TextChannel,
+  Guild,
 } from "discord.js";
 import { signupsService } from "../../../services";
 
@@ -84,7 +85,14 @@ module.exports = {
       interaction.reply("Can't find server, contact admin");
       return;
     }
-    // TODO if we parsed and accepted input as expected return all good, else ask for better input
+    if (!interaction.channel) {
+      interaction.reply(
+        "Can't find channel command was sent from, contact admin",
+      );
+      return;
+    }
+
+    // TODO if we parsed and accepted input as expected reply all good, else ask for better input and error out
     if (!dateString) {
       interaction.reply(
         "Unable to parse date, please supply correct format. " +
@@ -114,42 +122,23 @@ module.exports = {
     // send message in channel, let user know if fails but don't throw error
     // reply everything created
 
-    let createdChannel: TextChannel | undefined = undefined;
-    // TODO why did supreme put channel creation in a try catch, can an error be thrown here?
+    let createdChannel: TextChannel;
     try {
-      const channel = interaction.channel as TextChannel;
-      const category = channel.parent as CategoryChannel;
-      if (category) {
-        // If the channel where the command belongs to a category,
-        // create another channel in the same category.
-        createdChannel = await category.children.create({
-          name: chosenChannelName, // The name given to the channel by the user
-          type: ChannelType.GuildText, // The type of the channel created.
-          // Since "text" is the default channel created, this could be ommitted
-        });
-      } else {
-        // If the channel where the command was used is stray,
-        // create another stray channel in the server.
-        createdChannel = await interaction.guild.channels.create({
-          name: chosenChannelName, // The name given to the channel by the user
-          type: ChannelType.GuildText, // The type of the channel created.
-          // Since "text" is the default channel created, this could be ommitted
-        });
-        // Notice how we are creating a channel in the list of channels
-        // of the server. This will cause the channel to spawn at the top
-        // of the channels list, without belonging to any categories
-      }
+      createdChannel = await createSignupChannel(
+        interaction.guild,
+        (interaction.channel as TextChannel).parent,
+        chosenChannelName,
+      );
     } catch (error) {
-      // If an error occurred and we were not able to create the channel
-      // the bot is most likely received the "Missing Permissions" error.
-      await interaction.editReply("Your channel could not be created!" + error);
+      await interaction.editReply("Scrim channel could not be created" + error);
       return;
     }
 
     try {
-      signupsService.createScrim(createdChannel.id, scrimDate);
+      await signupsService.createScrim(createdChannel.id, scrimDate);
     } catch (error) {
       await interaction.editReply("Scrim not created" + error);
+      return;
     }
 
     await createdChannel.send(
@@ -159,4 +148,33 @@ module.exports = {
       `Scrim created, channel: <#${createdChannel.id}>`,
     );
   },
+};
+
+const createSignupChannel = (
+  guild: Guild,
+  category: CategoryChannel | null,
+  channelName: string,
+): Promise<TextChannel> => {
+  // TODO why did supreme put channel creation in a try catch, can an error be thrown here?
+
+  if (category) {
+    // If the channel where the command belongs to a category,
+    // create another channel in the same category.
+    return category.children.create({
+      name: channelName, // The name given to the channel by the user
+      type: ChannelType.GuildText, // The type of the channel created.
+      // Since "text" is the default channel created, this could be ommitted
+    });
+  } else {
+    // If the channel where the command was used is stray,
+    // create another stray channel in the server.
+    return guild.channels.create({
+      name: channelName, // The name given to the channel by the user
+      type: ChannelType.GuildText, // The type of the channel created.
+      // Since "text" is the default channel created, this could be ommitted
+    });
+    // Notice how we are creating a channel in the list of channels
+    // of the server. This will cause the channel to spawn at the top
+    // of the channels list, without belonging to any categories
+  }
 };
