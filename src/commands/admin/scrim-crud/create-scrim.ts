@@ -12,6 +12,7 @@ import {
   Guild,
 } from "discord.js";
 import { signupsService } from "../../../services";
+import { getTimezoneOffset } from "date-fns-tz";
 
 const expectedDateFormat = "Expected MM/dd";
 const expectedTimeFormat = "Expected hhpm";
@@ -64,23 +65,6 @@ module.exports = {
     // more about them later in this post
     .setDMPermission(false),
   async execute(interaction: ChatInputCommandInteraction) {
-    /*
-       TODO change variable names for date, time, type
-       can we change so discord only accepts date times?
-
-       reply that channel was created
-       try to add scrim to db, if unsuccessful, delete channel, reply with error
-       */
-
-    // After acknowledging the interaction, we retrieve the string sent by the user
-    const scrimDateString = interaction.options.getString(dateArg, true);
-    const scrimTimeString = interaction.options.getString(timeArg, true);
-    const scrimName = interaction.options.getString(nameArg, true);
-
-    // TODO parse date and time and create a date object
-    const scrimDate = new Date(scrimDateString + scrimTimeString);
-    const dateString = `${scrimDate.getMonth() + 1}-${scrimDate.getDate()}`;
-
     if (!interaction.guild) {
       interaction.reply("Can't find server, contact admin");
       return;
@@ -92,18 +76,18 @@ module.exports = {
       return;
     }
 
-    // TODO if we parsed and accepted input as expected reply all good, else ask for better input and error out
-    if (!dateString) {
+    const scrimDateString = interaction.options.getString(dateArg, true);
+    const scrimTimeString = interaction.options.getString(timeArg, true);
+    const scrimName = interaction.options.getString(nameArg, true);
+
+    let scrimDate: Date;
+    try {
+      scrimDate = parseScrimDate(scrimDateString, scrimTimeString);
+    } catch (e) {
       interaction.reply(
-        "Unable to parse date, please supply correct format. " +
-          expectedDateFormat,
+        `Can't parse date ${e} please supply correct format ${expectedDateFormat} ${expectedTimeFormat}`,
       );
-    }
-    if (!dateString) {
-      interaction.reply(
-        "Unable to parse time, please supply correct format. " +
-          expectedTimeFormat,
-      );
+      return;
     }
 
     // Discord only gives us 3 seconds to acknowledge an interaction before
@@ -112,8 +96,9 @@ module.exports = {
       content: "Fetched all input and working on your request!",
     });
 
+    const dateStringForTitle = `${scrimDate.getMonth() + 1}-${scrimDate.getDate()}`;
     const controllerSpacer = `🎮┋`;
-    const chosenChannelName = `${controllerSpacer}${dateString}-eastern-${scrimName}-scrims`;
+    const chosenChannelName = `${controllerSpacer}${dateStringForTitle}-eastern-${scrimName}-scrims`;
 
     // create channel in method
     // get channel or throw channel error
@@ -177,4 +162,42 @@ const createSignupChannel = (
     // of the server. This will cause the channel to spawn at the top
     // of the channels list, without belonging to any categories
   }
+};
+
+// throws if unparseable
+const parseScrimDate = (monthDay: string, time: string) => {
+  const { monthString, dayString } = getMonthDayString(monthDay);
+  const timeString = getTimeString(time);
+  const now = new Date();
+  let calculatedYear = now.getFullYear();
+  // if we're in december setting up a january scrim use correct year
+  if (monthString === "01" && now.getMonth() >= 1) {
+    calculatedYear++;
+  }
+  const utcOffset = getUtcOffset();
+  const dateString = `${calculatedYear}-${monthString}-${dayString}T${timeString}-${utcOffset}`;
+  return new Date(dateString);
+};
+
+const getMonthDayString = (monthDay: string) => {
+  const monthDaySplit = monthDay.split("/");
+  const month = Number(monthDaySplit[0]);
+  const day = Number(monthDaySplit[1]);
+  if (month <= 0 || month > 12) {
+    throw Error("Month not parseable");
+  } else if (day <= 0 || day > 31) {
+    throw Error("Day not parseable");
+  }
+  const monthString = String(month).padStart(2, "0");
+  const dayString = String(day).padStart(2, "0");
+  return { monthString, dayString };
+};
+
+const getTimeString = (time: string) => {
+  return time;
+};
+
+const getUtcOffset = () => {
+  const offsetHours = getTimezoneOffset("America/New_York") / 60 / 60 / 1000;
+  return String(offsetHours).padStart(2, "0") + ":00";
 };
