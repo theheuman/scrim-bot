@@ -15,7 +15,7 @@ import { signupsService } from "../../../services";
 import { getTimezoneOffset } from "date-fns-tz";
 
 const expectedDateFormat = "Expected MM/dd";
-const expectedTimeFormat = "Expected hhpm";
+const expectedTimeFormat = "Expected hh:mm pm";
 
 const dateArg = "date";
 const timeArg = "time";
@@ -140,8 +140,6 @@ const createSignupChannel = (
   category: CategoryChannel | null,
   channelName: string,
 ): Promise<TextChannel> => {
-  // TODO why did supreme put channel creation in a try catch, can an error be thrown here?
-
   if (category) {
     // If the channel where the command belongs to a category,
     // create another channel in the same category.
@@ -193,8 +191,39 @@ const getMonthDayString = (monthDay: string) => {
   return { monthString, dayString };
 };
 
+// expected format hh:mm am
 const getTimeString = (time: string) => {
-  return time;
+  const timeArray = time.trim().split(" ");
+  const hourMinuteString = timeArray[0];
+  const ampmLabel = timeArray[1];
+  const hourMinuteArray = hourMinuteString.split(":");
+  const hour = Number(hourMinuteArray[0]);
+  const minute = Number(hourMinuteArray[1]);
+  if (hour <= 0 || hour > 12) {
+    throw Error("Hour not valid");
+  } else if (minute < 0 || minute > 59) {
+    throw Error("Minute not valid");
+  }
+
+  let hourString;
+  if (ampmLabel === "am") {
+    if (hour == 12) {
+      hourString = "00";
+    } else {
+      hourString = hour.toString().padStart(2, "0");
+    }
+    // check if 12, else keep same
+  } else if (ampmLabel !== "pm") {
+    if (hour == 12) {
+      hourString = "12";
+    } else {
+      hourString = (hour + 12).toString().padStart(2, "0");
+    }
+  } else {
+    throw Error("AMPM Label is invalid");
+  }
+  const minuteString = minute.toString().padStart(2, "0");
+  return `${hourString}:${minuteString}:00`;
 };
 
 const getUtcOffset = () => {
