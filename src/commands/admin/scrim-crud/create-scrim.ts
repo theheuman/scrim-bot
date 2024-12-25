@@ -12,7 +12,7 @@ import {
   Guild,
 } from "discord.js";
 import { signupsService } from "../../../services";
-import { getTimezoneOffset } from "date-fns-tz";
+import { format, getTimezoneOffset } from "date-fns-tz";
 
 const expectedDateFormat = "Expected MM/dd";
 const expectedTimeFormat = "Expected hh:mm pm";
@@ -85,7 +85,7 @@ module.exports = {
       scrimDate = parseScrimDate(scrimDateString, scrimTimeString);
     } catch (e) {
       interaction.reply(
-        `Can't parse date ${e} please supply correct format ${expectedDateFormat} ${expectedTimeFormat}`,
+        `Can't parse date: ${e}; please supply correct format ${expectedDateFormat} ${expectedTimeFormat}`,
       );
       return;
     }
@@ -98,7 +98,7 @@ module.exports = {
 
     const dateStringForTitle = `${scrimDate.getMonth() + 1}-${scrimDate.getDate()}`;
     const controllerSpacer = `🎮┋`;
-    const chosenChannelName = `${controllerSpacer}${dateStringForTitle}-eastern-${scrimName}-scrims`;
+    const chosenChannelName = `${controllerSpacer}${dateStringForTitle}-${format(scrimDate, "ha")}-eastern-${scrimName}-scrims`;
 
     // create channel in method
     // get channel or throw channel error
@@ -126,11 +126,12 @@ module.exports = {
       return;
     }
 
+    const discordTimeString = `<t:${Math.floor(scrimDate.valueOf() / 1000)}:t>`;
     await createdChannel.send(
-      `Scrims will begin at ${scrimTimeString} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`,
+      `Scrims will begin at ${discordTimeString} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`,
     );
     await interaction.editReply(
-      `Scrim created, channel: <#${createdChannel.id}>`,
+      `Scrim created. Channel: <#${createdChannel.id}>`,
     );
   },
 };
@@ -173,7 +174,7 @@ const parseScrimDate = (monthDay: string, time: string) => {
     calculatedYear++;
   }
   const utcOffset = getUtcOffset();
-  const dateString = `${calculatedYear}-${monthString}-${dayString}T${timeString}-${utcOffset}`;
+  const dateString = `${calculatedYear}-${monthString}-${dayString}T${timeString}${utcOffset}`;
   return new Date(dateString);
 };
 
@@ -195,12 +196,14 @@ const getMonthDayString = (monthDay: string) => {
 const getTimeString = (time: string) => {
   const timeArray = time.trim().split(" ");
   const hourMinuteString = timeArray[0];
-  const ampmLabel = timeArray[1];
+  const ampmLabel = timeArray[1].toLowerCase();
   const hourMinuteArray = hourMinuteString.split(":");
   const hour = Number(hourMinuteArray[0]);
-  const minute = Number(hourMinuteArray[1]);
+  let minute = Number(hourMinuteArray[1]);
   if (hour <= 0 || hour > 12) {
     throw Error("Hour not valid");
+  } else if (isNaN(minute)) {
+    minute = 0;
   } else if (minute < 0 || minute > 59) {
     throw Error("Minute not valid");
   }
@@ -213,14 +216,14 @@ const getTimeString = (time: string) => {
       hourString = hour.toString().padStart(2, "0");
     }
     // check if 12, else keep same
-  } else if (ampmLabel !== "pm") {
+  } else if (ampmLabel === "pm") {
     if (hour == 12) {
       hourString = "12";
     } else {
       hourString = (hour + 12).toString().padStart(2, "0");
     }
   } else {
-    throw Error("AMPM Label is invalid");
+    throw Error("am/pm Label is invalid");
   }
   const minuteString = minute.toString().padStart(2, "0");
   return `${hourString}:${minuteString}:00`;
@@ -228,5 +231,5 @@ const getTimeString = (time: string) => {
 
 const getUtcOffset = () => {
   const offsetHours = getTimezoneOffset("America/New_York") / 60 / 60 / 1000;
-  return String(offsetHours).padStart(2, "0") + ":00";
+  return `-${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
 };
