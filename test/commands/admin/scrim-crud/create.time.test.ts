@@ -37,6 +37,8 @@ describe("Create scrim", () => {
   >;
   const newChannelMessageSpy = jest.fn();
   const fakeDate = new Date("2024-11-14");
+  let scrimTimeString = "8 pm";
+  let scrimDateString = "11/15";
 
   beforeAll(() => {
     member = {
@@ -58,9 +60,9 @@ describe("Create scrim", () => {
       options: {
         getString: (key: string) => {
           if (key === "time") {
-            return "8 pm";
+            return scrimTimeString;
           } else if (key === "date") {
-            return "11/15";
+            return scrimDateString;
           } else if (key === "name") {
             return "open-edwe";
           }
@@ -115,41 +117,117 @@ describe("Create scrim", () => {
     );
   });
 
-  it("Should set scrim date in january", async () => {});
+  it("Should set scrim date in January", async () => {
+    jest.setSystemTime(new Date("2024-12-2"));
+    scrimDateString = "1/1";
+    scrimTimeString = "8 pm";
 
-  it("Should set scrim for 12:30 am", async () => {});
-  it("Should set scrim for a normal am hour", async () => {});
+    await createScrimCommand.execute(basicInteraction);
+    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
+      "newly created channel id",
+      new Date("2025-01-01T20:00:00-05:00"),
+    );
+  });
 
-  it("Should set scrim for 12:30 pm", async () => {});
-  it("Should set scrim for a normal pm hour", async () => {});
+  it("Should set scrim for 12:30 am", async () => {
+    jest.setSystemTime(new Date("2024-12-2"));
+    scrimDateString = "12/3";
+    scrimTimeString = "12:30 am";
+
+    await createScrimCommand.execute(basicInteraction);
+    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
+      "newly created channel id",
+      new Date("2024-12-03T00:30:00-05:00"),
+    );
+  });
+
+  it("Should set scrim for a normal am hour", async () => {
+    jest.setSystemTime(new Date("2024-12-2"));
+    scrimDateString = "12/3";
+    scrimTimeString = "10:00 am";
+
+    await createScrimCommand.execute(basicInteraction);
+    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
+      "newly created channel id",
+      new Date("2024-12-03T10:00:00-05:00"),
+    );
+  });
+
+  it("Should set scrim for 12:30 pm", async () => {
+    jest.setSystemTime(new Date("2024-12-2"));
+    scrimDateString = "12/3";
+    scrimTimeString = "12:30 pm";
+
+    await createScrimCommand.execute(basicInteraction);
+    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
+      "newly created channel id",
+      new Date("2024-12-03T12:30:00-05:00"),
+    );
+  });
 
   describe("errors", () => {
     describe("invalid date", () => {
       it("Should not create scrim because of invalid month", async () => {
-        replySpy = jest.spyOn(basicInteraction, "reply");
+        jest.setSystemTime(new Date("2024-12-2"));
+        scrimDateString = "13/3";
+        scrimTimeString = "8:00 pm";
+
         await createScrimCommand.execute(basicInteraction);
         expect(replySpy).toHaveBeenCalledWith(
-          "Can't find the member issuing the command or this is an api command, no command executed",
+          "Can't parse arguments: Error: Month not parseable; please supply correct format Expected MM/dd Expected hh:mm pm",
         );
         expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
       });
 
-      it("Should not create scrim because of invalid day", async () => {});
+      it("Should not create scrim because of invalid day", async () => {
+        jest.setSystemTime(new Date("2024-12-2"));
+        scrimDateString = "12/32";
+        scrimTimeString = "8:00 pm";
+
+        await createScrimCommand.execute(basicInteraction);
+        expect(replySpy).toHaveBeenCalledWith(
+          "Can't parse arguments: Error: Day not parseable; please supply correct format Expected MM/dd Expected hh:mm pm",
+        );
+        expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
+      });
     });
 
     describe("invalid time", () => {
       it("Should not create scrim because of invalid hour", async () => {
-        replySpy = jest.spyOn(basicInteraction, "reply");
+        jest.setSystemTime(new Date("2024-12-2"));
+        scrimDateString = "12/3";
+        scrimTimeString = "13:00 pm";
+
         await createScrimCommand.execute(basicInteraction);
         expect(replySpy).toHaveBeenCalledWith(
-          "Can't find the member issuing the command or this is an api command, no command executed",
+          "Can't parse arguments: Error: Hour not valid; please supply correct format Expected MM/dd Expected hh:mm pm",
         );
         expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
       });
 
-      it("Should not create scrim because of invalid minute", async () => {});
+      it("Should not create scrim because of invalid minute", async () => {
+        jest.setSystemTime(new Date("2024-12-2"));
+        scrimDateString = "12/3";
+        scrimTimeString = "8:60 pm";
 
-      it("Should not create scrim because of invalid ampm label", async () => {});
+        await createScrimCommand.execute(basicInteraction);
+        expect(replySpy).toHaveBeenCalledWith(
+          "Can't parse arguments: Error: Minute not valid; please supply correct format Expected MM/dd Expected hh:mm pm",
+        );
+        expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
+      });
+
+      it("Should not create scrim because of invalid ampm label", async () => {
+        jest.setSystemTime(new Date("2024-12-2"));
+        scrimDateString = "12/3";
+        scrimTimeString = "8:00 xm";
+
+        await createScrimCommand.execute(basicInteraction);
+        expect(replySpy).toHaveBeenCalledWith(
+          "Can't parse arguments: Error: am/pm label is invalid; please supply correct format Expected MM/dd Expected hh:mm pm",
+        );
+        expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
+      });
     });
   });
 });

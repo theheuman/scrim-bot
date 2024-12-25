@@ -85,7 +85,7 @@ module.exports = {
       scrimDate = parseScrimDate(scrimDateString, scrimTimeString);
     } catch (e) {
       interaction.reply(
-        `Can't parse date: ${e}; please supply correct format ${expectedDateFormat} ${expectedTimeFormat}`,
+        `Can't parse arguments: ${e}; please supply correct format ${expectedDateFormat} ${expectedTimeFormat}`,
       );
       return;
     }
@@ -223,7 +223,7 @@ const getTimeString = (time: string) => {
       hourString = (hour + 12).toString().padStart(2, "0");
     }
   } else {
-    throw Error("am/pm Label is invalid");
+    throw Error("am/pm label is invalid");
   }
   const minuteString = minute.toString().padStart(2, "0");
   return `${hourString}:${minuteString}:00`;
