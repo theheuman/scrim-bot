@@ -1,93 +1,162 @@
 import {
   ChatInputCommandInteraction,
   GuildMember,
+  InteractionEditReplyOptions,
   InteractionReplyOptions,
   InteractionResponse,
+  Message,
   MessagePayload,
-  Snowflake,
   User,
 } from "discord.js";
-import { prioService } from "../../../../src/services";
+import { signupsService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const createScrimCommand = require("../../../../src/commands/admin/scrim-crud/create-scrim");
 
 describe("Create scrim", () => {
-  // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
-  const channelId = "some id" as unknown as Snowflake;
   let basicInteraction: ChatInputCommandInteraction;
   let noMemberInteraction: ChatInputCommandInteraction;
-  let setPlayerPrioSpy: SpyInstance<
-    Promise<string[]>,
-    [
-      memberUsingCommand: GuildMember,
-      prioUsers: User[],
-      startDate: Date,
-      endDate: Date,
-      amount: number,
-      reason: string,
-    ],
-    string
-  >;
   let member: GuildMember;
-  const supreme: User = { displayName: "Supreme", id: "1" } as unknown as User;
-  const theHeuman: User = {
-    displayName: "TheHeuman",
-    id: "2",
-  } as unknown as User;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
     [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
+  let editReplySpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [options: string | InteractionEditReplyOptions | MessagePayload],
+    string
+  >;
+  let signupsCreateScrimSpy: SpyInstance<
+    Promise<string>,
+    [channelId: string, scrimDate: Date],
+    string
+  >;
+  const newChannelMessageSpy = jest.fn();
+  const theHeuman: User = {
+    displayName: "TheHeuman",
+    id: "2",
+  } as unknown as User;
+
+  const fakeDate = new Date("2024-11-14");
 
   beforeAll(() => {
     member = {
       roles: {},
     } as GuildMember;
+    const createChannelMethod = (options: { name: string; type: string }) => {
+      console.log("Creating channel", options.name, options.type);
+      return {
+        send: newChannelMessageSpy,
+        id: "newly created channel id",
+      };
+    };
     basicInteraction = {
-      options: {
-        getUser: () => supreme,
+      guild: {
+        channels: {
+          create: createChannelMethod,
+        },
       },
-      reply: (message: string) => {
-        console.log("Replying to command with:", message);
-      },
-      channelId,
-      member,
-    } as unknown as ChatInputCommandInteraction;
-    noMemberInteraction = {
       options: {
-        getUser: () => theHeuman,
         getString: (key: string) => {
-          if (key === "reason") {
-            return "Prio reason";
-          } else if (key === "amount") {
-            return "-400";
+          if (key === "time") {
+            return "8 pm";
+          } else if (key === "date") {
+            return "11/15";
+          } else if (key === "name") {
+            return "open-edwe";
           }
         },
       },
       reply: (message: string) => {
         console.log("Replying to command with:", message);
       },
-      channelId,
+      editReply: (message: string) => {
+        console.log("Editing reply to:", message);
+      },
+      channel: {
+        parent: {
+          children: {
+            create: createChannelMethod,
+          },
+        },
+      },
+      member,
     } as unknown as ChatInputCommandInteraction;
-    setPlayerPrioSpy = jest.spyOn(prioService, "setPlayerPrio");
-    setPlayerPrioSpy.mockClear();
-    setPlayerPrioSpy.mockReturnValue(Promise.resolve([]));
+    replySpy = jest.spyOn(basicInteraction, "reply");
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    signupsCreateScrimSpy = jest.spyOn(signupsService, "createScrim");
+    signupsCreateScrimSpy.mockImplementation(() => {
+      return Promise.resolve("uuid-87623");
+    });
+    jest.useFakeTimers().setSystemTime(fakeDate);
   });
 
-  it("Should create scrim", async () => {});
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  beforeEach(() => {
+    replySpy.mockClear();
+    editReplySpy.mockClear();
+    signupsCreateScrimSpy.mockClear();
+    newChannelMessageSpy.mockClear();
+  });
+
+  it("Should create scrim", async () => {
+    newChannelMessageSpy.mockImplementationOnce((message: string) => {
+      expect(message.includes("<t:1731718800:t>")).toEqual(true);
+    });
+    await createScrimCommand.execute(basicInteraction);
+    expect(editReplySpy).toHaveBeenCalledWith(
+      "Scrim created. Channel: <#newly created channel id>",
+    );
+    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
+      "newly created channel id",
+      new Date("2024-11-15T20:00:00-05:00"),
+    );
+  });
 
   describe("errors", () => {
-    it("should not create scrim because there is no member", async () => {
-      setPlayerPrioSpy.mockClear();
-      replySpy = jest.spyOn(noMemberInteraction, "reply");
-      await createScrimCommand.execute(noMemberInteraction);
+    it("should not create scrim because there is no guild", async () => {
+      const noGuildInteraction = {
+        guild: null,
+        channel: {
+          parent: {
+            children: {
+              create: () => null,
+            },
+          },
+        },
+        reply: (message: string) => {
+          console.log("Replying to command with:", message);
+        },
+      } as unknown as ChatInputCommandInteraction;
+      replySpy = jest.spyOn(noGuildInteraction, "reply");
+      await createScrimCommand.execute(noGuildInteraction);
+      expect(replySpy).toHaveBeenCalledWith("Can't find server, contact admin");
+      expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not create scrim because there is no channel", async () => {
+      const noChannelInteraction = {
+        guild: {
+          channels: {
+            create: () => null,
+          },
+        },
+        channel: null,
+        reply: (message: string) => {
+          console.log("Replying to command with:", message);
+        },
+      } as unknown as ChatInputCommandInteraction;
+      replySpy = jest.spyOn(noChannelInteraction, "reply");
+      await createScrimCommand.execute(noChannelInteraction);
       expect(replySpy).toHaveBeenCalledWith(
-        "Can't find the member issuing the command or this is an api command, no command executed",
+        "Can't find channel command was sent from, contact admin",
       );
-      expect(setPlayerPrioSpy).not.toHaveBeenCalled();
+      expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
     });
   });
 });

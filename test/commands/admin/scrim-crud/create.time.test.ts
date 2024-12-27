@@ -16,8 +16,6 @@ import SpyInstance = jest.SpyInstance;
 const createScrimCommand = require("../../../../src/commands/admin/scrim-crud/create-scrim");
 
 describe("Create scrim", () => {
-  // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
-  const channelId = "some id" as unknown as Snowflake;
   let basicInteraction: ChatInputCommandInteraction;
   let member: GuildMember;
   let replySpy: SpyInstance<
@@ -101,20 +99,6 @@ describe("Create scrim", () => {
     editReplySpy.mockClear();
     signupsCreateScrimSpy.mockClear();
     newChannelMessageSpy.mockClear();
-  });
-
-  it("Should set scrim date normally", async () => {
-    newChannelMessageSpy.mockImplementationOnce((message: string) => {
-      expect(message.includes("<t:1731718800:t>")).toEqual(true);
-    });
-    await createScrimCommand.execute(basicInteraction);
-    expect(editReplySpy).toHaveBeenCalledWith(
-      "Scrim created. Channel: <#newly created channel id>",
-    );
-    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
-      "newly created channel id",
-      new Date("2024-11-15T20:00:00-05:00"),
-    );
   });
 
   it("Should set scrim date in January", async () => {
