@@ -173,7 +173,8 @@ const parseScrimDate = (monthDay: string, time: string) => {
   if (monthString === "01" && now.getMonth() >= 1) {
     calculatedYear++;
   }
-  const utcOffset = getUtcOffset();
+  const dateStringNoOffset = `${calculatedYear}-${monthString}-${dayString}`;
+  const utcOffset = getUtcOffset(new Date(dateStringNoOffset));
   const dateString = `${calculatedYear}-${monthString}-${dayString}T${timeString}${utcOffset}`;
   return new Date(dateString);
 };
@@ -229,7 +230,8 @@ const getTimeString = (time: string) => {
   return `${hourString}:${minuteString}:00`;
 };
 
-const getUtcOffset = () => {
-  const offsetHours = getTimezoneOffset("America/New_York") / 60 / 60 / 1000;
+const getUtcOffset = (date: Date) => {
+  const offsetHours =
+    getTimezoneOffset("America/New_York", date) / 60 / 60 / 1000;
   return `-${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
 };
