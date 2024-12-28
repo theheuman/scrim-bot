@@ -115,14 +115,16 @@ module.exports = {
         chosenChannelName,
       );
     } catch (error) {
-      await interaction.editReply("Scrim channel could not be created" + error);
+      await interaction.editReply(
+        "Scrim channel could not be created: " + error,
+      );
       return;
     }
 
     try {
       await signupsService.createScrim(createdChannel.id, scrimDate);
     } catch (error) {
-      await interaction.editReply("Scrim not created" + error);
+      await interaction.editReply("Scrim not created: " + error);
       return;
     }
 

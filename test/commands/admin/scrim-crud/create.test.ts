@@ -16,7 +16,6 @@ const createScrimCommand = require("../../../../src/commands/admin/scrim-crud/cr
 
 describe("Create scrim", () => {
   let basicInteraction: ChatInputCommandInteraction;
-  let noMemberInteraction: ChatInputCommandInteraction;
   let member: GuildMember;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
@@ -34,10 +33,6 @@ describe("Create scrim", () => {
     string
   >;
   const newChannelMessageSpy = jest.fn();
-  const theHeuman: User = {
-    displayName: "TheHeuman",
-    id: "2",
-  } as unknown as User;
 
   const fakeDate = new Date("2024-11-14");
 
@@ -157,6 +152,53 @@ describe("Create scrim", () => {
         "Can't find channel command was sent from, contact admin",
       );
       expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not create scrim because the bot is unable to create the channel", async () => {
+      const noPermissionsInteraction = {
+        guild: {
+          channels: {
+            create: () => {
+              throw Error("Permissions missing");
+            },
+          },
+        },
+        channel: {},
+        options: {
+          getString: (key: string) => {
+            if (key === "time") {
+              return "8 pm";
+            } else if (key === "date") {
+              return "11/15";
+            } else if (key === "name") {
+              return "open-edwe";
+            }
+          },
+        },
+        reply: (message: string) => {
+          console.log("Replying to command with:", message);
+        },
+        editReply: (message: string) => {
+          console.log("Editing reply message to:", message);
+        },
+      } as unknown as ChatInputCommandInteraction;
+      editReplySpy = jest.spyOn(noPermissionsInteraction, "editReply");
+      await createScrimCommand.execute(noPermissionsInteraction);
+      expect(editReplySpy).toHaveBeenCalledWith(
+        "Scrim channel could not be created: Error: Permissions missing",
+      );
+      expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not create scrim because the signup service had an error", async () => {
+      signupsCreateScrimSpy.mockImplementation(async () => {
+        throw Error("DB Failure");
+      });
+      editReplySpy = jest.spyOn(basicInteraction, "editReply");
+      await createScrimCommand.execute(basicInteraction);
+      expect(editReplySpy).toHaveBeenCalledWith(
+        "Scrim not created: Error: DB Failure",
+      );
     });
   });
 });
