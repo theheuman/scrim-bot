@@ -2,7 +2,7 @@ import { REST, Routes } from "discord.js";
 import fs from "node:fs";
 import path from "node:path";
 import { Command } from "./ExtendedClient"; // Adjust the import path as needed
-
+import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from "../node_modules/@discordjs/builders/node_modules/discord-api-types/rest/v10/interactions.d.ts";
 interface Config {
   clientId: string;
   guildId: string;
@@ -12,7 +12,7 @@ interface Config {
 import configJson from "../config.json";
 const config: Config = configJson as Config;
 
-const commands: {}[] = [];
+const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 // Grab all the command folders from the commands directory you created earlier
 const foldersPath = path.join(__dirname, "commands");
 const commandFolders = fs.readdirSync(foldersPath);
