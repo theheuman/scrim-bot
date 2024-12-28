@@ -9,6 +9,7 @@ const client = new ExtendedClient({ intents: [GatewayIntentBits.Guilds] });
 const foldersPath = path.join(__dirname, "commands");
 const commandFolders = fs.readdirSync(foldersPath);
 
+// TODO I'm glad I found this duplicated code, we need to consolidate it
 for (const folder of commandFolders) {
   const commandsPath = path.join(foldersPath, folder);
   const commandFiles = fs
