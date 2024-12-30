@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction } from "discord.js";
 import { prioService } from "../../../services";
-import { Command, parseDate } from "../../command";
+import { Command } from "../../command";
+import { CustomInteraction } from "../../interaction";
+import { format } from "date-fns";
 
 export class AddPrioCommand extends Command {
   constructor() {
@@ -17,31 +18,15 @@ export class AddPrioCommand extends Command {
     this.addStringInput("reason", "Reason fro prio", true);
   }
 
-  async run(interaction: ChatInputCommandInteraction) {
+  async run(interaction: CustomInteraction) {
     const user1 = interaction.options.getUser("user1", true);
     const user2 = interaction.options.getUser("user2");
     const user3 = interaction.options.getUser("user3");
     const amount = interaction.options.getNumber("amount", true);
     const reason = interaction.options.getString("reason", true);
-    const startDateString = interaction.options.getString("startDate");
-    const endDateString = interaction.options.getString("endDate", true);
-
-    let startDate = new Date();
-    try {
-      if (startDateString) {
-        startDate = parseDate(startDateString, "12 am");
-      }
-    } catch (e) {
-      await interaction.reply("Can't parse start date " + e);
-      return;
-    }
-    let endDate: Date;
-    try {
-      endDate = parseDate(endDateString, "11:59 pm");
-    } catch (e) {
-      await interaction.reply("Can't parse end date " + e);
-      return;
-    }
+    const startDate = interaction.options.getDate("startDate") ?? new Date();
+    const endDate = interaction.options.getDate("endDate", true);
+    endDate?.setHours(23, 59, 59);
 
     const users = [user1, user2, user3].filter((user) => !!user);
     let dbIds: string[];
@@ -63,7 +48,7 @@ export class AddPrioCommand extends Command {
       .join("; ");
     console.log(user1, user2, user3, users);
     await interaction.reply(
-      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${startDateString} to ${endDateString} because ${reason}. ${prioReasonString}`,
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${format(startDate, "M/dd hh:mm a")} to ${format(endDate, "M/dd hh:mm a")} because ${reason}. ${prioReasonString}`,
     );
   }
 }

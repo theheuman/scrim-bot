@@ -10,10 +10,11 @@ import { authService } from "../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { MockCommand } from "../mocks/command.mock";
 
-describe("Add prio", () => {
+describe("abstract command", () => {
   let basicInteraction: ChatInputCommandInteraction;
   let noMemberInteraction: ChatInputCommandInteraction;
   let unAuthorizedMemberInteraction: ChatInputCommandInteraction;
+
   let runSpy: SpyInstance<
     Promise<void>,
     [interaction: ChatInputCommandInteraction],
