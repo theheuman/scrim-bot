@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { GatewayIntentBits } from "discord.js";
 import config from "../config.json";
-import ExtendedClient, { Command } from "./ExtendedClient";
+import ExtendedClient from "./ExtendedClient";
+import { Command } from "./commands/command";
 
 const client = new ExtendedClient({ intents: [GatewayIntentBits.Guilds] });
 
@@ -20,7 +21,7 @@ for (const folder of commandFolders) {
     const command = require(filePath) as Command;
     // Set a new item in the Collection with the key as the command name and the value as the exported module
     if ("data" in command && "execute" in command) {
-      client.commands.set(command.data.name, command);
+      client.commands.set(command.name, command);
     } else {
       console.log(
         `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,

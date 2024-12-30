@@ -1,6 +1,5 @@
 import { DB } from "../db/db";
-import { GuildMember, User } from "discord.js";
-import { AuthService } from "./auth";
+import { User } from "discord.js";
 import { CacheService } from "./cache";
 import { Scrim, ScrimSignup } from "../models/Scrims";
 import { ExpungedPlayerPrio, PlayerMap, PlayerPrio } from "../models/Prio";
@@ -9,35 +8,20 @@ export class PrioService {
   constructor(
     private db: DB,
     private cache: CacheService,
-    private authService: AuthService,
   ) {}
 
   async setPlayerPrio(
-    memberUsingCommand: GuildMember,
     prioUsers: User[],
     startDate: Date,
     endDate: Date,
     amount: number,
     reason: string,
   ) {
-    const isAuthorized =
-      await this.authService.memberIsAdmin(memberUsingCommand);
-    if (!isAuthorized) {
-      throw Error("User not authorized");
-    }
     const playerIds = await this.getPlayerIds(prioUsers);
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
   }
 
-  async expungePlayerPrio(
-    memberUsingCommand: GuildMember,
-    prioIds: string[],
-  ): Promise<ExpungedPlayerPrio[]> {
-    const isAuthorized =
-      await this.authService.memberIsAdmin(memberUsingCommand);
-    if (!isAuthorized) {
-      throw Error("User not authorized");
-    }
+  async expungePlayerPrio(prioIds: string[]): Promise<ExpungedPlayerPrio[]> {
     return await this.db.expungePrio(prioIds);
   }
 

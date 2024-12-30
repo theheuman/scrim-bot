@@ -1,7 +1,6 @@
 import { REST, Routes } from "discord.js";
 import fs from "node:fs";
 import path from "node:path";
-import { Command } from "./ExtendedClient"; // Adjust the import path as needed
 import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from "../node_modules/@discordjs/builders/node_modules/discord-api-types/rest/v10/interactions.d.ts";
 interface Config {
   clientId: string;
@@ -10,6 +9,7 @@ interface Config {
 }
 
 import configJson from "../config.json";
+import { Command } from "./commands/command";
 const config: Config = configJson as Config;
 
 const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
@@ -35,8 +35,8 @@ for (const folder of commandFolders) {
     const command: Command = require(filePath) as Command;
 
     if ("data" in command && "execute" in command) {
-      commands.push(command.data.toJSON());
-      console.log(`Added command: ${command.data.name}`);
+      commands.push(command.toJSON());
+      console.log(`Added command: ${command.name}`);
     } else {
       console.log(
         `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,

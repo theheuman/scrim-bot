@@ -1,52 +1,69 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction } from "discord.js";
 import { prioService } from "../../../services";
-import { isGuildMember } from "../../../utility/utility";
+import { Command, parseDate } from "../../command";
 
-// TODO get dates, amount and reason. Probably change command to setPrio, or generate a second command with high prio
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("addprio")
-    .setDescription("Adds a prio entry for up to three players")
-    .addUserOption((option) =>
-      option.setName("user1").setDescription("First user").setRequired(true),
-    )
-    .addUserOption((option) =>
-      option.setName("user2").setDescription("Second user").setRequired(false),
-    )
-    .addUserOption((option) =>
-      option.setName("user3").setDescription("Third user").setRequired(false),
-    ),
+export class AddPrioCommand extends Command {
+  constructor() {
+    super("addprio", "Adds a prio entry for up to three players", true);
 
-  async execute(interaction: ChatInputCommandInteraction) {
-    if (!isGuildMember(interaction.member)) {
-      await interaction.reply(
-        "Can't find the member issuing the command or this is an api command, no command executed",
-      );
+    this.addUserInput("user1", "First user", true);
+    this.addUserInput("user2", "Second user");
+    this.addUserInput("user3", "Third user");
+    this.addNumberInput(
+      "amount",
+      "Amount of prio, negative for low prio",
+      true,
+    );
+    this.addStringInput("reason", "Reason fro prio", true);
+  }
+
+  async run(interaction: ChatInputCommandInteraction) {
+    const user1 = interaction.options.getUser("user1", true);
+    const user2 = interaction.options.getUser("user2");
+    const user3 = interaction.options.getUser("user3");
+    const amount = interaction.options.getNumber("amount", true);
+    const reason = interaction.options.getString("reason", true);
+    const startDateString = interaction.options.getString("startDate");
+    const endDateString = interaction.options.getString("endDate", true);
+
+    let startDate = new Date();
+    try {
+      if (startDateString) {
+        startDate = parseDate(startDateString, "12 am");
+      }
+    } catch (e) {
+      await interaction.reply("Can't parse start date " + e);
+      return;
+    }
+    let endDate: Date;
+    try {
+      endDate = parseDate(endDateString, "11:59 pm");
+    } catch (e) {
+      await interaction.reply("Can't parse end date " + e);
       return;
     }
 
-    const user1 = interaction.options.getUser("user1");
-    const user2 = interaction.options.getUser("user2");
-    const user3 = interaction.options.getUser("user3");
-
-    const users = [user1, user2, user3].filter((user) => user !== null);
-
+    const users = [user1, user2, user3].filter((user) => !!user);
+    let dbIds: string[];
     try {
-      await prioService.setPlayerPrio(
-        interaction.member,
+      dbIds = await prioService.setPlayerPrio(
         users,
-        new Date(),
-        new Date(),
-        -400,
-        "Prio reason",
+        startDate,
+        endDate,
+        amount,
+        reason,
       );
     } catch (e) {
-      await interaction.reply("Error while executing low prio: " + e);
+      await interaction.reply("Error while executing set prio: " + e);
+      return;
     }
 
-    // TODO reply with actual data
+    const prioReasonString = dbIds
+      .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
+      .join("; ");
+    console.log(user1, user2, user3, users);
     await interaction.reply(
-      "Added -400 prio to 3 players from 1/12/25 to 1/13/25 because Prio reason. Supreme added prio with id: db id; Supreme added prio with id: db id 2; Supreme added prio with id: db id 3",
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${startDateString} to ${endDateString} because ${reason}. ${prioReasonString}`,
     );
-  },
-};
+  }
+}

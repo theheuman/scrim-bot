@@ -15,23 +15,12 @@ describe("Prio", () => {
     [playerId: string, player: Player],
     string
   >;
-  let authCheckSpy: SpyInstance<
-    Promise<boolean>,
-    [member: GuildMember],
-    string
-  >;
   let dbMock: DbMock;
   const player: Player = {
     discordId: "discordId",
     displayName: "mockPlayer",
     id: "dbId",
   };
-  const unauthorizedMember: GuildMember = {
-    id: "unauthorized",
-  } as GuildMember;
-  const authorizedMember: GuildMember = {
-    id: "authorized",
-  } as GuildMember;
   const prioUserInCache: User = {
     id: "in cache",
   } as User;
@@ -43,17 +32,12 @@ describe("Prio", () => {
   beforeEach(() => {
     dbMock = new DbMock();
     const cacheMock = new CacheService();
-    const authServiceMock = new AuthService(dbMock, cacheMock);
-    authCheckSpy = jest.spyOn(authServiceMock, "memberIsAdmin");
-    authCheckSpy.mockImplementation((user) => {
-      return Promise.resolve(user.id === authorizedMember.id);
-    });
     getPlayerSpy = jest.spyOn(cacheMock, "getPlayer");
     getPlayerSpy.mockImplementation((id) => {
       return id === prioUserInCache.id ? player : undefined;
     });
     setPlayerSpy = jest.spyOn(cacheMock, "setPlayer");
-    prioService = new PrioService(dbMock, cacheMock, authServiceMock);
+    prioService = new PrioService(dbMock, cacheMock);
   });
 
   describe("setPlayerPrio()", () => {
@@ -90,7 +74,6 @@ describe("Prio", () => {
 
       it("should set prio for players in cache", async () => {
         await prioService.setPlayerPrio(
-          authorizedMember,
           [prioUserInCache],
           startDate,
           endDate,
@@ -110,7 +93,6 @@ describe("Prio", () => {
       it("should set prio for players NOT in cache", async () => {
         setPlayerSpy.mockClear();
         await prioService.setPlayerPrio(
-          authorizedMember,
           [prioUserNotCached],
           startDate,
           endDate,
@@ -133,7 +115,6 @@ describe("Prio", () => {
 
       it("should set prio for list of players some NOT in cache", async () => {
         await prioService.setPlayerPrio(
-          authorizedMember,
           [prioUserInCache, prioUserNotCached],
           startDate,
           endDate,
@@ -148,21 +129,6 @@ describe("Prio", () => {
           reason,
         );
       });
-    });
-
-    it("Should throw error if user not authorized", async () => {
-      const causeException = async () => {
-        await prioService.setPlayerPrio(
-          unauthorizedMember,
-          [prioUserInCache],
-          startDate,
-          endDate,
-          amount,
-          reason,
-        );
-      };
-      authCheckSpy.mockReturnValue(Promise.resolve(false));
-      await expect(causeException).rejects.toThrow("User not authorized");
     });
   });
 

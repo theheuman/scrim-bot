@@ -26,7 +26,7 @@ module.exports = {
       );
       return;
     }
-    await prioService.expungePlayerPrio(interaction.member, [user.id]);
+    await prioService.expungePlayerPrio([user.id]);
     await interaction.reply(
       `User ${user.username} has been removed from the low priority list.`,
     );
