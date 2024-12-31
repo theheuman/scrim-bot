@@ -1,20 +1,15 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { CustomInteraction } from "../interaction";
+import { Command } from "../command";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("changeteamname")
-    .setDescription("Change the name of a team")
-    .addStringOption((option) =>
-      option
-        .setName("old-team-name")
-        .setDescription("Old name")
-        .setRequired(true),
-    )
-    .addStringOption((option) =>
-      option.setName("new-name").setDescription("New name").setRequired(true),
-    ),
+export class ChangeTeamNameCommand extends Command {
+  constructor() {
+    super("changeteamname", "Change the name of a team");
+    this.addStringInput("old-team-name", "Old name", true);
+    this.addStringInput("new-name", "New name", true);
+  }
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async run(interaction: CustomInteraction) {
     await interaction.reply("Fetched all input and working on your request!");
-  },
-};
+    // TODO implementation
+  }
+}

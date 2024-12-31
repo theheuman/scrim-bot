@@ -1,52 +1,71 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { prioService } from "../../../services";
-import { isGuildMember } from "../../../utility/utility";
+import { Command } from "../../command";
+import { CustomInteraction } from "../../interaction";
+import { PrioService } from "../../../services/prio";
+import { setEasternHours } from "../../../utility/time";
 
-// TODO get dates, amount and reason. Probably change command to setPrio, or generate a second command with high prio
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("addprio")
-    .setDescription("Adds a prio entry for up to three players")
-    .addUserOption((option) =>
-      option.setName("user1").setDescription("First user").setRequired(true),
-    )
-    .addUserOption((option) =>
-      option.setName("user2").setDescription("Second user").setRequired(false),
-    )
-    .addUserOption((option) =>
-      option.setName("user3").setDescription("Third user").setRequired(false),
-    ),
+export class AddPrioCommand extends Command {
+  inputNames = {
+    user1: "user1",
+    user2: "user2",
+    user3: "user3",
+    amount: "amount",
+    reason: "reason",
+    startDate: "startdate",
+    endDate: "enddate",
+  };
 
-  async execute(interaction: ChatInputCommandInteraction) {
-    if (!isGuildMember(interaction.member)) {
-      await interaction.reply(
-        "Can't find the member issuing the command or this is an api command, no command executed",
+  constructor(private prioService: PrioService) {
+    super("addprio", "Adds a prio entry for up to three players", true);
+
+    this.addUserInput(this.inputNames.user1, "First user", true);
+    this.addUserInput(this.inputNames.user2, "Second user");
+    this.addUserInput(this.inputNames.user3, "Third user");
+    this.addNumberInput(
+      this.inputNames.amount,
+      "Amount of prio, negative for low prio",
+      true,
+    );
+    this.addStringInput(this.inputNames.reason, "Reason fro prio", true);
+    this.addStringInput(
+      this.inputNames.startDate,
+      "Optional start date, defaults to when command is called",
+      true,
+    );
+    this.addStringInput(this.inputNames.endDate, "End date", true);
+  }
+
+  async run(interaction: CustomInteraction) {
+    const user1 = interaction.options.getUser(this.inputNames.user1, true);
+    const user2 = interaction.options.getUser(this.inputNames.user2);
+    const user3 = interaction.options.getUser(this.inputNames.user3);
+    const amount = interaction.options.getNumber(this.inputNames.amount, true);
+    const reason = interaction.options.getString(this.inputNames.reason, true);
+    const startDate =
+      interaction.options.getDate(this.inputNames.startDate) ?? new Date();
+    let endDate = interaction.options.getDate(this.inputNames.endDate, true);
+    // end date is inclusive
+    endDate = setEasternHours(endDate, 23, 59, 59);
+
+    const users = [user1, user2, user3].filter((user) => !!user);
+    let dbIds: string[];
+    try {
+      dbIds = await this.prioService.setPlayerPrio(
+        users,
+        startDate,
+        endDate,
+        amount,
+        reason,
       );
+    } catch (e) {
+      await interaction.reply("Error while executing set prio: " + e);
       return;
     }
 
-    const user1 = interaction.options.getUser("user1");
-    const user2 = interaction.options.getUser("user2");
-    const user3 = interaction.options.getUser("user3");
-
-    const users = [user1, user2, user3].filter((user) => user !== null);
-
-    try {
-      await prioService.setPlayerPrio(
-        interaction.member,
-        users,
-        new Date(),
-        new Date(),
-        -400,
-        "Prio reason",
-      );
-    } catch (e) {
-      await interaction.reply("Error while executing low prio: " + e);
-    }
-
-    // TODO reply with actual data
+    const prioReasonString = dbIds
+      .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
+      .join("; ");
     await interaction.reply(
-      "Added -400 prio to 3 players from 1/12/25 to 1/13/25 because Prio reason. Supreme added prio with id: db id; Supreme added prio with id: db id 2; Supreme added prio with id: db id 3",
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)} because ${reason}. ${prioReasonString}`,
     );
-  },
-};
+  }
+}
