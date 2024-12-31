@@ -1,7 +1,7 @@
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { PrioService } from "../../../services/prio";
-import { setEasternHours } from "../../../utility/utility";
+import { setEasternHours } from "../../../utility/time";
 
 export class AddPrioCommand extends Command {
   inputNames = {
@@ -64,7 +64,6 @@ export class AddPrioCommand extends Command {
     const prioReasonString = dbIds
       .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
       .join("; ");
-    console.log(user1, user2, user3, users);
     await interaction.reply(
       `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)} because ${reason}. ${prioReasonString}`,
     );
