@@ -16,7 +16,6 @@ import { SignupCommand } from "./signup/sign-up";
 import { SubPlayerCommand } from "./signup/sub-player";
 import { prioService, rosterService, signupsService } from "../services";
 
-// TODO inject services to mock things even easier
 export const commands: Command[] = [
   // test commands
   new ServerInfoCommand(),
