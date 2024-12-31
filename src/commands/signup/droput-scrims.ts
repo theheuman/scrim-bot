@@ -1,21 +1,17 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { rosterService } from "../../services";
 import { isGuildMember } from "../../utility/utility";
+import { Command } from "../command";
+import { CustomInteraction } from "../interaction";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("dropout")
-    .setDescription("Drops a team from the signup list")
-    .addStringOption((option) =>
-      option
-        .setName("teamname")
-        .setDescription("Team name")
-        .setMinLength(1)
-        .setMaxLength(150)
-        .setRequired(true),
-    ),
+export class DropoutCommand extends Command {
+  constructor() {
+    super("dropout", "Drops a team from the signup list");
+    this.addStringInput("teamname", "Team name", true);
+    // .setMinLength(1)
+    // .setMaxLength(150)
+  }
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async run(interaction: CustomInteraction) {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname");
 
@@ -39,5 +35,5 @@ module.exports = {
       const error = e as Error;
       interaction.reply(`Did NOT remove team from scrim: ${error.message}`);
     }
-  },
-};
+  }
+}

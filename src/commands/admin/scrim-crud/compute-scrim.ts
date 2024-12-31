@@ -1,38 +1,21 @@
-import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChatInputCommandInteraction,
-} from "discord.js";
 import { signupsService } from "../../../services";
+import { Command } from "../../command";
+import { CustomInteraction } from "../../interaction";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("createscrimsignup") // Command name matching file name
-    .setDescription("Creates a new scrim signup text channel")
-    .addStringOption((option) =>
-      option
-        .setName("overstat-link")
-        .setDescription(
-          "Full length url of the completed scrim (not short url)",
-        )
-        .setMinLength(20)
-        .setMaxLength(150)
-        .setRequired(true),
-    )
-    .addNumberOption((option) =>
-      option.setName("skill").setDescription("Skill level of the lobby"),
-    )
-    // You will usually only want users that can create new channels to
-    // be able to use this command and this is what this line does.
-    // Feel free to remove it if you want to allow any users to
-    // create new channels
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
-    // It's impossible to create normal text channels inside DMs, so
-    // it's in your best interest in disabling this command through DMs
-    // as well. Threads, however, can be created in DMs, but we will see
-    // more about them later in this post
-    .setDMPermission(false),
-  async execute(interaction: ChatInputCommandInteraction) {
+export class ComputeScrimCommand extends Command {
+  constructor() {
+    super("compute-scrim", "Creates a new scrim signup text channel", true);
+    this.addStringInput(
+      "overstat-link",
+      "Full length url of the completed scrim (not short url)",
+      true,
+    );
+    // .setMinLength(20)
+    // .setMaxLength(150)
+    this.addNumberInput("skill", "Skill level of the lobby");
+  }
+
+  async run(interaction: CustomInteraction) {
     // Before executing any other code, we need to acknowledge the interaction.
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
@@ -52,5 +35,5 @@ module.exports = {
     await interaction.reply(
       "Scrim successfully computed, you can now compute another lobby or close the scrim",
     );
-  },
-};
+  }
+}

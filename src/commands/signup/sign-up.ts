@@ -1,29 +1,20 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { signupsService } from "../../services";
+import { Command } from "../command";
+import { CustomInteraction } from "../interaction";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("signup")
-    .setDescription("Creates a new scrim signup")
-    .addStringOption((option) =>
-      option
-        .setName("teamname")
-        .setDescription("Team name")
-        .setMinLength(1)
-        .setMaxLength(150)
-        .setRequired(true),
-    )
-    .addUserOption((option) =>
-      option.setName("player1").setDescription("@player1").setRequired(true),
-    )
-    .addUserOption((option) =>
-      option.setName("player2").setDescription("@player2").setRequired(true),
-    )
-    .addUserOption((option) =>
-      option.setName("player3").setDescription("@player3").setRequired(true),
-    ),
+export class SignupCommand extends Command {
+  constructor() {
+    super("signup", "Creates a new scrim signup");
+    this.addStringInput("teamname", "Team name", true);
+    //   .setMinLength(1)
+    // .setMaxLength(150)
 
-  async execute(interaction: ChatInputCommandInteraction) {
+    this.addUserInput("player1", "@player1", true);
+    this.addUserInput("player2", "@player2", true);
+    this.addUserInput("player3", "@player3", true);
+  }
+
+  async run(interaction: CustomInteraction) {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname");
     const signupPlayer = interaction.user;
@@ -62,5 +53,5 @@ module.exports = {
         "Associated scrim not found, team not created, this is probably a configuration error, contact admins",
       );
     }
-  },
-};
+  }
+}

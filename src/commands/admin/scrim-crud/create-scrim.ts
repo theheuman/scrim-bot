@@ -1,60 +1,19 @@
-// Importing SlashCommandBuilder is required for every slash command
-// We import PermissionFlagsBits so we can restrict this command usage
-// We also import ChannelType to define what kind of channel we are creating
-import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChannelType,
-  ChatInputCommandInteraction,
-  CategoryChannel,
-  SlashCommandStringOption,
-  TextChannel,
-} from "discord.js";
+import { ChannelType, CategoryChannel, TextChannel } from "discord.js";
 import { signupsService } from "../../../services";
+import { Command } from "../../command";
+import { CustomInteraction } from "../../interaction";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("createscrimsignup") // Command name matching file name
-    .setDescription("Creates a new scrim signup text channel")
-    // Text channel name
-    .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName("scrimdate") // option names need to always be lowercase and have no spaces
-        .setDescription("Choose date of the scrim")
-        .setMinLength(3) // A text channel needs to be named
-        .setMaxLength(5) // Discord will cut-off names past the 25 characters,
-        // so that's a good hard limit to set. You can manually increase this if you wish
-        .setRequired(true),
-    )
-    .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName("scrimtime") // option names need to always be lowercase and have no spaces
-        .setDescription("Choose the time of the scrim")
-        .setMinLength(3) // A text channel needs to be named
-        .setMaxLength(4) // Discord will cut-off names past the 25 characters,
-        // so that's a good hard limit to set. You can manually increase this if you wish
-        .setRequired(true),
-    )
-    .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName("scrimtype") // option names need to always be lowercase and have no spaces
-        .setDescription("Choose the type of scrim")
-        .setMinLength(1) // A text channel needs to be named
-        .setMaxLength(25) // Discord will cut-off names past the 25 characters,
-        // so that's a good hard limit to set. You can manually increase this if you wish
-        .setRequired(true),
-    )
-    // You will usually only want users that can create new channels to
-    // be able to use this command and this is what this line does.
-    // Feel free to remove it if you want to allow any users to
-    // create new channels
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
-    // It's impossible to create normal text channels inside DMs, so
-    // it's in your best interest in disabling this command through DMs
-    // as well. Threads, however, can be created in DMs, but we will see
-    // more about them later in this post
-    .setDMPermission(false),
-  async execute(interaction: ChatInputCommandInteraction) {
+export class CreateScrimCommand extends Command {
+  constructor() {
+    super("create-scrim", "Creates a new scrim signup text channel", true);
+    this.addStringInput("scrimdate", "Choose date of the scrim");
+    // .setMinLength(3) // A text channel needs to be named
+    // .setMaxLength(5)
+    this.addStringInput("time", "Choose the time of the scrim", true);
+    // .setMinLength(3) // A text channel needs to be named
+    // .setMaxLength(4) // Discord will cut-off names past the 25 characters,
+  }
+  async run(interaction: CustomInteraction) {
     /*
        TODO change variable names for date, time, type
        can we change so discord only accepts date times?
@@ -149,5 +108,5 @@ module.exports = {
         "Your channel could not be created! Please check if the bot has the necessary permissions!",
       );
     }
-  },
-};
+  }
+}
