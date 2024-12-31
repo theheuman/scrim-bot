@@ -1,70 +1,50 @@
-// Importing SlashCommandBuilder is required for every slash command
-// We import PermissionFlagsBits so we can restrict this command usage
-// We also import ChannelType to define what kind of channel we are creating
-import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChannelType,
-  ChatInputCommandInteraction,
-  CategoryChannel,
-  SlashCommandStringOption,
-  TextChannel,
-  Guild,
-} from "discord.js";
-import { signupsService } from "../../../services";
-import { format, getTimezoneOffset } from "date-fns-tz";
+import { ChannelType, CategoryChannel, TextChannel, Guild } from "discord.js";
+import { Command } from "../../command";
+import { CustomInteraction } from "../../interaction";
+import { ScrimSignups } from "../../../services/signups";
+import { parseDate } from "../../../utility/time";
+import { formatInTimeZone } from "date-fns-tz";
 
-const expectedDateFormat = "Expected MM/dd";
-const expectedTimeFormat = "Expected hh:mm pm";
+export class CreateScrimCommand extends Command {
+  expectedDateFormat = "Expected MM/dd";
+  expectedTimeFormat = "Expected hh:mm pm";
 
-const dateArg = "date";
-const timeArg = "time";
-const nameArg = "name";
+  inputNames = {
+    date: "date",
+    time: "time",
+    name: "name",
+  };
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("createscrim") // Command name matching file name
-    .setDescription("Creates a new scrim signup text channel")
-    // Text channel name
-    .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName(dateArg) // option names need to always be lowercase and have no spaces
-        .setDescription("Choose date of the scrim. " + expectedDateFormat)
-        .setMinLength(3) // A text channel needs to be named
-        .setMaxLength(5) // Discord will cut-off names past the 25 characters,
-        // so that's a good hard limit to set. You can manually increase this if you wish
-        .setRequired(true),
-    )
-    .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName(timeArg)
-        .setDescription(
-          "Choose the time of the scrim in eastern time include am or pm. " +
-            expectedTimeFormat,
-        )
-        .setMinLength(3)
-        .setMaxLength(4)
-        .setRequired(true),
-    )
-    .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName(nameArg)
-        .setDescription("The name of the scrim (open, tendies, etc...")
-        .setMinLength(1)
-        .setMaxLength(25)
-        .setRequired(true),
-    )
-    // You will usually only want users that can create new channels to
-    // be able to use this command and this is what this line does.
-    // Feel free to remove it if you want to allow any users to
-    // create new channels
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
-    // It's impossible to create normal text channels inside DMs, so
-    // it's in your best interest in disabling this command through DMs
-    // as well. Threads, however, can be created in DMs, but we will see
-    // more about them later in this post
-    .setDMPermission(false),
-  async execute(interaction: ChatInputCommandInteraction) {
+  constructor(private signupService: ScrimSignups) {
+    super(
+      "create-scrim",
+      "Creates a new scrim, including a new text channel and signup instructions",
+      true,
+    );
+    this.addStringInput(
+      this.inputNames.date,
+      "Choose date of the scrim. " + this.expectedDateFormat,
+      true,
+    );
+    // .setMinLength(3) // A text channel needs to be named
+    // .setMaxLength(5)
+    this.addStringInput(
+      this.inputNames.time,
+      "Choose the time of the scrim in eastern time include am or pm. " +
+        this.expectedTimeFormat,
+      true,
+    );
+    // .setMinLength(3) // A text channel needs to be named
+    // .setMaxLength(4) // Discord will cut-off names past the 25 characters,
+    this.addStringInput(
+      this.inputNames.name,
+      "The name of the scrim (open, tendies, etc...",
+    );
+    //.setMinLength(1)
+    //.setMaxLength(25)
+  }
+
+  async run(interaction: CustomInteraction) {
     if (!interaction.guild) {
       interaction.reply("Can't find server, contact admin");
       return;
@@ -76,16 +56,22 @@ module.exports = {
       return;
     }
 
-    const scrimDateString = interaction.options.getString(dateArg, true);
-    const scrimTimeString = interaction.options.getString(timeArg, true);
-    const scrimName = interaction.options.getString(nameArg, true);
+    const scrimDateString = interaction.options.getString(
+      this.inputNames.date,
+      true,
+    );
+    const scrimTimeString = interaction.options.getString(
+      this.inputNames.time,
+      true,
+    );
+    const scrimName = interaction.options.getString(this.inputNames.name, true);
 
     let scrimDate: Date;
     try {
-      scrimDate = parseScrimDate(scrimDateString, scrimTimeString);
+      scrimDate = parseDate(scrimDateString, scrimTimeString);
     } catch (e) {
       interaction.reply(
-        `Can't parse arguments: ${e}; please supply correct format ${expectedDateFormat} ${expectedTimeFormat}`,
+        `Can't parse arguments: ${e}; please supply correct format ${this.expectedDateFormat} ${this.expectedTimeFormat}`,
       );
       return;
     }
@@ -98,7 +84,7 @@ module.exports = {
 
     const dateStringForTitle = `${scrimDate.getMonth() + 1}-${scrimDate.getDate()}`;
     const controllerSpacer = `🎮┋`;
-    const chosenChannelName = `${controllerSpacer}${dateStringForTitle}-${format(scrimDate, "ha")}-eastern-${scrimName}-scrims`;
+    const chosenChannelName = `${controllerSpacer}${dateStringForTitle}-${formatInTimeZone(scrimDate, "America/New_York", "ha")}-eastern-${scrimName}-scrims`;
 
     // create channel in method
     // get channel or throw channel error
@@ -109,7 +95,7 @@ module.exports = {
 
     let createdChannel: TextChannel;
     try {
-      createdChannel = await createSignupChannel(
+      createdChannel = await this.createSignupChannel(
         interaction.guild,
         (interaction.channel as TextChannel).parent,
         chosenChannelName,
@@ -122,7 +108,7 @@ module.exports = {
     }
 
     try {
-      await signupsService.createScrim(createdChannel.id, scrimDate);
+      await this.signupService.createScrim(createdChannel.id, scrimDate);
     } catch (error) {
       await interaction.editReply("Scrim not created: " + error);
       return;
@@ -135,105 +121,32 @@ module.exports = {
     await interaction.editReply(
       `Scrim created. Channel: <#${createdChannel.id}>`,
     );
-  },
-};
-
-const createSignupChannel = (
-  guild: Guild,
-  category: CategoryChannel | null,
-  channelName: string,
-): Promise<TextChannel> => {
-  if (category) {
-    // If the channel where the command belongs to a category,
-    // create another channel in the same category.
-    return category.children.create({
-      name: channelName, // The name given to the channel by the user
-      type: ChannelType.GuildText, // The type of the channel created.
-      // Since "text" is the default channel created, this could be ommitted
-    });
-  } else {
-    // If the channel where the command was used is stray,
-    // create another stray channel in the server.
-    return guild.channels.create({
-      name: channelName, // The name given to the channel by the user
-      type: ChannelType.GuildText, // The type of the channel created.
-      // Since "text" is the default channel created, this could be ommitted
-    });
-    // Notice how we are creating a channel in the list of channels
-    // of the server. This will cause the channel to spawn at the top
-    // of the channels list, without belonging to any categories
-  }
-};
-
-// throws if unparseable
-const parseScrimDate = (monthDay: string, time: string) => {
-  const { monthString, dayString } = getMonthDayString(monthDay);
-  const timeString = getTimeString(time);
-  const now = new Date();
-  let calculatedYear = now.getFullYear();
-  // if we're in december setting up a january scrim use correct year
-  if (monthString === "01" && now.getMonth() >= 1) {
-    calculatedYear++;
-  }
-  const dateStringNoOffset = `${calculatedYear}-${monthString}-${dayString}`;
-  const utcOffset = getUtcOffset(new Date(dateStringNoOffset));
-  const dateString = `${calculatedYear}-${monthString}-${dayString}T${timeString}${utcOffset}`;
-  return new Date(dateString);
-};
-
-const getMonthDayString = (monthDay: string) => {
-  const monthDaySplit = monthDay.split("/");
-  const month = Number(monthDaySplit[0]);
-  const day = Number(monthDaySplit[1]);
-  if (month <= 0 || month > 12) {
-    throw Error("Month not parseable");
-  } else if (day <= 0 || day > 31) {
-    throw Error("Day not parseable");
-  }
-  const monthString = String(month).padStart(2, "0");
-  const dayString = String(day).padStart(2, "0");
-  return { monthString, dayString };
-};
-
-// expected format hh:mm am
-const getTimeString = (time: string) => {
-  const timeArray = time.trim().split(" ");
-  const hourMinuteString = timeArray[0];
-  const ampmLabel = timeArray[1].toLowerCase();
-  const hourMinuteArray = hourMinuteString.split(":");
-  const hour = Number(hourMinuteArray[0]);
-  let minute = Number(hourMinuteArray[1]);
-  if (hour <= 0 || hour > 12) {
-    throw Error("Hour not valid");
-  } else if (isNaN(minute)) {
-    minute = 0;
-  } else if (minute < 0 || minute > 59) {
-    throw Error("Minute not valid");
   }
 
-  let hourString;
-  if (ampmLabel === "am") {
-    if (hour == 12) {
-      hourString = "00";
+  createSignupChannel(
+    guild: Guild,
+    category: CategoryChannel | null,
+    channelName: string,
+  ): Promise<TextChannel> {
+    if (category) {
+      // If the channel where the command belongs to a category,
+      // create another channel in the same category.
+      return category.children.create({
+        name: channelName, // The name given to the channel by the user
+        type: ChannelType.GuildText, // The type of the channel created.
+        // Since "text" is the default channel created, this could be ommitted
+      });
     } else {
-      hourString = hour.toString().padStart(2, "0");
+      // If the channel where the command was used is stray,
+      // create another stray channel in the server.
+      return guild.channels.create({
+        name: channelName, // The name given to the channel by the user
+        type: ChannelType.GuildText, // The type of the channel created.
+        // Since "text" is the default channel created, this could be ommitted
+      });
+      // Notice how we are creating a channel in the list of channels
+      // of the server. This will cause the channel to spawn at the top
+      // of the channels list, without belonging to any categories
     }
-    // check if 12, else keep same
-  } else if (ampmLabel === "pm") {
-    if (hour == 12) {
-      hourString = "12";
-    } else {
-      hourString = (hour + 12).toString().padStart(2, "0");
-    }
-  } else {
-    throw Error("am/pm label is invalid");
   }
-  const minuteString = minute.toString().padStart(2, "0");
-  return `${hourString}:${minuteString}:00`;
-};
-
-const getUtcOffset = (date: Date) => {
-  const offsetHours =
-    getTimezoneOffset("America/New_York", date) / 60 / 60 / 1000;
-  return `-${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
-};
+}

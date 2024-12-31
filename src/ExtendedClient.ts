@@ -1,15 +1,5 @@
-import {
-  Client,
-  ClientOptions,
-  Collection,
-  CommandInteraction,
-  SlashCommandBuilder,
-} from "discord.js";
-
-export interface Command {
-  data: SlashCommandBuilder;
-  execute: (interaction: CommandInteraction) => Promise<void>;
-}
+import { Client, ClientOptions, Collection } from "discord.js";
+import { Command } from "./commands/command";
 
 class ExtendedClient extends Client {
   commands: Collection<string, Command>;

@@ -1,9 +1,12 @@
-import { SlashCommandBuilder, CommandInteraction } from "discord.js";
+import { CommandInteraction } from "discord.js";
+import { Command } from "../command";
 
-export const data = new SlashCommandBuilder()
-  .setName("ping")
-  .setDescription("Replies with Pong!");
+export class PingCommand extends Command {
+  constructor() {
+    super("ping", "Replies with Pong!");
+  }
 
-export async function execute(interaction: CommandInteraction): Promise<void> {
-  await interaction.reply("Pong!");
+  async run(interaction: CommandInteraction): Promise<void> {
+    await interaction.reply("Pong!");
+  }
 }

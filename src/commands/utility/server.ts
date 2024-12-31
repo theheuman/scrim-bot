@@ -1,19 +1,22 @@
-import { SlashCommandBuilder, CommandInteraction } from "discord.js";
+import { CommandInteraction } from "discord.js";
+import { Command } from "../command";
 
-export const data = new SlashCommandBuilder()
-  .setName("server")
-  .setDescription("Provides information about the server.");
+export class ServerInfoCommand extends Command {
+  constructor() {
+    super("server", "Provides information about the server.");
+  }
 
-export async function execute(interaction: CommandInteraction): Promise<void> {
-  const server = interaction.guild;
+  async run(interaction: CommandInteraction) {
+    const server = interaction.guild;
 
-  if (server) {
-    await interaction.reply(
-      `This server is ${server.name} and has ${server.memberCount} members.`,
-    );
-  } else {
-    await interaction.reply(
-      `I couldn't retrieve information about this server.`,
-    );
+    if (server) {
+      await interaction.reply(
+        `This server is ${server.name} and has ${server.memberCount} members.`,
+      );
+    } else {
+      await interaction.reply(
+        `I couldn't retrieve information about this server.`,
+      );
+    }
   }
 }

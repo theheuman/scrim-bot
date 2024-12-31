@@ -1,23 +1,15 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { Command } from "../command";
+import { CustomInteraction } from "../interaction";
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("subplayer")
-    .setDescription("Replace a player on a team")
-    .addUserOption((option) =>
-      option
-        .setName("remove-player")
-        .setDescription("Player to remove")
-        .setRequired(true),
-    )
-    .addUserOption((option) =>
-      option
-        .setName("add-player")
-        .setDescription("Player to add")
-        .setRequired(true),
-    ),
+export class SubPlayerCommand extends Command {
+  constructor() {
+    super("subplayer", "Replace a player on a team");
+    this.addUserInput("remove-player", "Player to remove", true);
+    this.addUserInput("add-player", "Player to add", true);
+  }
 
-  async execute(interaction: ChatInputCommandInteraction) {
+  async run(interaction: CustomInteraction) {
     await interaction.reply("Fetched all input and working on your request!");
-  },
-};
+    // TODO Implement
+  }
+}
