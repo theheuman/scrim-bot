@@ -14,6 +14,7 @@ import { ChangeTeamNameCommand } from "./signup/change-team-name";
 import { DropoutCommand } from "./signup/droput-scrims";
 import { SignupCommand } from "./signup/sign-up";
 import { SubPlayerCommand } from "./signup/sub-player";
+import { prioService, rosterService, signupsService } from "../services";
 
 // TODO inject services to mock things even easier
 export const commands: Command[] = [
@@ -23,19 +24,19 @@ export const commands: Command[] = [
   new UserCommand(),
 
   // custom commands
-  new AddPrioCommand(),
+  new AddPrioCommand(prioService),
   new ExpungePrioCommand(),
 
   new AddAdminRoleCommand(),
   new RemoveAdminRoleCommand(),
 
-  new CreateScrimCommand(),
-  new GetSignupsCommand(),
-  new ComputeScrimCommand(),
-  new CloseScrimCommand(),
+  new CreateScrimCommand(signupsService),
+  new GetSignupsCommand(signupsService),
+  new ComputeScrimCommand(signupsService),
+  new CloseScrimCommand(signupsService),
 
   new ChangeTeamNameCommand(),
-  new DropoutCommand(),
-  new SignupCommand(),
+  new DropoutCommand(rosterService),
+  new SignupCommand(signupsService),
   new SubPlayerCommand(),
 ];

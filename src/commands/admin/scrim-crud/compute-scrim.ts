@@ -1,9 +1,9 @@
-import { signupsService } from "../../../services";
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { ScrimSignups } from "../../../services/signups";
 
 export class ComputeScrimCommand extends Command {
-  constructor() {
+  constructor(private signupService: ScrimSignups) {
     super("compute-scrim", "Creates a new scrim signup text channel", true);
     this.addStringInput(
       "overstat-link",
@@ -27,7 +27,7 @@ export class ComputeScrimCommand extends Command {
     const skill = interaction.options.getNumber("skill", true);
 
     try {
-      await signupsService.computeScrim(channelId, overstatLink, skill);
+      await this.signupService.computeScrim(channelId, overstatLink, skill);
     } catch (error) {
       await interaction.reply(`Unable to complete request: ${error}`);
     }

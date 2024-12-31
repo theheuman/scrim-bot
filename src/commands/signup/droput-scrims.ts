@@ -1,10 +1,10 @@
-import { rosterService } from "../../services";
 import { isGuildMember } from "../../utility/utility";
 import { Command } from "../command";
 import { CustomInteraction } from "../interaction";
+import { RosterService } from "../../services/rosters";
 
 export class DropoutCommand extends Command {
-  constructor() {
+  constructor(private rosterService: RosterService) {
     super("dropout", "Drops a team from the signup list");
     this.addStringInput("teamname", "Team name", true);
     // .setMinLength(1)
@@ -25,7 +25,7 @@ export class DropoutCommand extends Command {
     }
 
     try {
-      await rosterService.removeSignup(
+      await this.rosterService.removeSignup(
         interaction.member,
         channelId as string,
         teamName as string,

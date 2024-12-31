@@ -1,9 +1,9 @@
-import { signupsService } from "../../services";
 import { Command } from "../command";
 import { CustomInteraction } from "../interaction";
+import { ScrimSignups } from "../../services/signups";
 
 export class SignupCommand extends Command {
-  constructor() {
+  constructor(private signupService: ScrimSignups) {
     super("signup", "Creates a new scrim signup");
     this.addStringInput("teamname", "Team name", true);
     //   .setMinLength(1)
@@ -33,10 +33,10 @@ export class SignupCommand extends Command {
     }
 
     // TODO move getting scrimId into signups.addTeam method
-    const scrimId = signupsService.getScrimId(channelId as string);
+    const scrimId = this.signupService.getScrimId(channelId as string);
     if (scrimId) {
       try {
-        const signupId = await signupsService.addTeam(
+        const signupId = await this.signupService.addTeam(
           scrimId,
           teamName,
           signupPlayer,

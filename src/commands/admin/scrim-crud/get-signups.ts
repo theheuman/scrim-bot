@@ -1,10 +1,10 @@
-import { signupsService } from "../../../services";
 import { ScrimSignup } from "../../../models/Scrims";
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { ScrimSignups } from "../../../services/signups";
 
 export class GetSignupsCommand extends Command {
-  constructor() {
+  constructor(private signupService: ScrimSignups) {
     super("get-signups", "Creates a new scrim signup text channel", true);
   }
 
@@ -18,7 +18,7 @@ export class GetSignupsCommand extends Command {
 
     let channelSignups: { mainList: ScrimSignup[]; waitList: ScrimSignup[] };
     try {
-      channelSignups = await signupsService.getSignups(channelId);
+      channelSignups = await this.signupService.getSignups(channelId);
     } catch (e) {
       await interaction.reply(`Could not fetch signups ${e}`);
       return;

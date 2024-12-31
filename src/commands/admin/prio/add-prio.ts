@@ -1,10 +1,10 @@
-import { prioService } from "../../../services";
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { format } from "date-fns";
+import { PrioService } from "../../../services/prio";
 
 export class AddPrioCommand extends Command {
-  constructor() {
+  constructor(private prioService: PrioService) {
     super("addprio", "Adds a prio entry for up to three players", true);
 
     this.addUserInput("user1", "First user", true);
@@ -31,7 +31,7 @@ export class AddPrioCommand extends Command {
     const users = [user1, user2, user3].filter((user) => !!user);
     let dbIds: string[];
     try {
-      dbIds = await prioService.setPlayerPrio(
+      dbIds = await this.prioService.setPlayerPrio(
         users,
         startDate,
         endDate,

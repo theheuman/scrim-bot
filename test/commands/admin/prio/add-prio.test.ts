@@ -39,7 +39,7 @@ describe("Add prio", () => {
   let command: AddPrioCommand;
 
   beforeAll(() => {
-    command = new AddPrioCommand();
+    command = new AddPrioCommand(prioService);
 
     member = {
       roles: {},

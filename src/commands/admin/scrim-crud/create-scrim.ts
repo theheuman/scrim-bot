@@ -1,10 +1,10 @@
 import { ChannelType, CategoryChannel, TextChannel } from "discord.js";
-import { signupsService } from "../../../services";
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { ScrimSignups } from "../../../services/signups";
 
 export class CreateScrimCommand extends Command {
-  constructor() {
+  constructor(private signupService: ScrimSignups) {
     super("create-scrim", "Creates a new scrim signup text channel", true);
     this.addStringInput("scrimdate", "Choose date of the scrim");
     // .setMinLength(3) // A text channel needs to be named
@@ -81,7 +81,7 @@ export class CreateScrimCommand extends Command {
       if (channelId) {
         const dateTime = `${channelDate} - ${channelTime}`;
         const scrimDate = new Date(dateTime);
-        signupsService.createScrim(channelId, scrimDate);
+        await this.signupService.createScrim(channelId, scrimDate);
         const channel: TextChannel =
           (await interaction.client.channels.cache.get(
             channelId,

@@ -1,9 +1,9 @@
-import { signupsService } from "../../../services";
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { ScrimSignups } from "../../../services/signups";
 
 export class CloseScrimCommand extends Command {
-  constructor() {
+  constructor(private signupService: ScrimSignups) {
     super("close-scrim", "Creates a new scrim signup text channel", true);
   }
 
@@ -16,7 +16,7 @@ export class CloseScrimCommand extends Command {
     });
     const channelId = interaction.channelId;
 
-    await signupsService.closeScrim(channelId);
+    await this.signupService.closeScrim(channelId);
 
     // TODO after closing the scrim delete the channel
   }
