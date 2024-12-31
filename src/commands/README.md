@@ -1,6 +1,17 @@
-# Adding a command
+# Commands
+## How commands work
+
+* All commands are imported and instantiated in the command array in the index.ts file
+* That array is imported in 
+  * deploy-commands
+    * use ./deploy-commands to deploy the commands to discord so it can correctly prompt users for parameters
+  * the main entry file
+    * takes an event and executes the correct command 
+
+## Adding a command
 
 * Each command has its own file so create a new one in an intuitive place, create new directories if necessary
+* Add your command to the command array in src/commands/index.ts
 * Each command must extend the Command class which provides some useful abstractions and methods to implement
 * in your constructor
   * inject services you intend to use
