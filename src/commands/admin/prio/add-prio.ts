@@ -1,6 +1,7 @@
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { PrioService } from "../../../services/prio";
+import { setEasternHours } from "../../../utility/utility";
 
 export class AddPrioCommand extends Command {
   inputNames = {
@@ -41,9 +42,9 @@ export class AddPrioCommand extends Command {
     const reason = interaction.options.getString(this.inputNames.reason, true);
     const startDate =
       interaction.options.getDate(this.inputNames.startDate) ?? new Date();
-    const endDate = interaction.options.getDate(this.inputNames.endDate, true);
+    let endDate = interaction.options.getDate(this.inputNames.endDate, true);
     // end date is inclusive
-    endDate?.setHours(23, 59, 59);
+    endDate = setEasternHours(endDate, 23, 59, 59);
 
     const users = [user1, user2, user3].filter((user) => !!user);
     let dbIds: string[];
