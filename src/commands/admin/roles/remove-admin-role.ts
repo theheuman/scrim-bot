@@ -7,9 +7,7 @@ export class RemoveAdminRoleCommand extends Command {
       "removeadminrole",
       "Removes a role from performing scrim admin actions",
     );
-    this.addRoleOption((option) =>
-      option.setName("role").setDescription("Role to add").setRequired(true),
-    );
+    this.addRoleInput("role", "Role to remove", true);
   }
 
   async run(interaction: CustomInteraction) {

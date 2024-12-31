@@ -4,9 +4,7 @@ import { CustomInteraction } from "../../interaction";
 export class AddAdminRoleCommand extends Command {
   constructor() {
     super("addadminrole", "Adds a role that can perform scrim admin actions");
-    this.addRoleOption((option) =>
-      option.setName("role").setDescription("Role to add").setRequired(true),
-    );
+    this.addRoleInput("role", "Role to add", true);
   }
 
   async run(interaction: CustomInteraction) {

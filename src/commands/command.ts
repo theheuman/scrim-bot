@@ -43,6 +43,19 @@ export abstract class Command extends SlashCommandBuilder {
     );
   }
 
+  addRoleInput(name: string, description: string, isRequired: boolean = false) {
+    this.addRoleOption((option) =>
+      option.setName(name).setDescription(description).setRequired(isRequired),
+    );
+  }
+
+  // at some point discord might actually implement this, for now just use string
+  addDateInput(name: string, description: string, isRequired: boolean = false) {
+    this.addStringOption((option) =>
+      option.setName(name).setDescription(description).setRequired(isRequired),
+    );
+  }
+
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     if (this.isAdmin) {
       if (!isGuildMember(interaction.member)) {

@@ -56,9 +56,9 @@ describe("Add prio", () => {
           }
         },
         getDate: (key: string) => {
-          if (key === "startDate") {
+          if (key === "startdate") {
             return new Date("1/12");
-          } else if (key === "endDate") {
+          } else if (key === "enddate") {
             return new Date("1/13");
           }
         },
@@ -85,9 +85,9 @@ describe("Add prio", () => {
           }
         },
         getDate: (key: string) => {
-          if (key === "startDate") {
+          if (key === "startdate") {
             return null;
-          } else if (key === "endDate") {
+          } else if (key === "enddate") {
             return new Date("1/13");
           }
         },
