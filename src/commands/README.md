@@ -6,7 +6,7 @@
   * deploy-commands
     * use ./deploy-commands to deploy the commands to discord so it can correctly prompt users for parameters
   * the main entry file
-    * takes an event and executes the correct command 
+    * takes an event and executes the correct commands run method with the interaction discord recorded
 
 ## Adding a command
 

@@ -57,9 +57,9 @@ describe("Add prio", () => {
         },
         getDate: (key: string) => {
           if (key === "startdate") {
-            return new Date("1/12");
+            return new Date("2025-01-12T00:00:00-05:00");
           } else if (key === "enddate") {
-            return new Date("1/13");
+            return new Date("2025-01-13T00:00:00-05:00");
           }
         },
         getNumber: () => -400,
@@ -88,7 +88,7 @@ describe("Add prio", () => {
           if (key === "startdate") {
             return null;
           } else if (key === "enddate") {
-            return new Date("1/13");
+            return new Date("2025-01-13T00:00:00-05:00");
           }
         },
         getNumber: () => -400,
@@ -129,9 +129,9 @@ describe("Add prio", () => {
     replySpy = jest.spyOn(singleUserInteraction, "reply");
     await command.run(singleUserInteraction);
     expect(replySpy).toHaveBeenCalledWith(
-      "Added -400 prio to 1 player from 12/14 10:30 PM to 1/13 11:59 PM because Prio reason. Supreme prio id: db id",
+      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f> because Prio reason. Supreme prio id: db id`,
     );
-    // if this is failing, and you haven't changed the amount of assertions take, a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
+    // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);
     jest.setSystemTime(jest.getRealSystemTime());
   });
@@ -155,7 +155,7 @@ describe("Add prio", () => {
     replySpy = jest.spyOn(basicInteraction, "reply");
     await command.run(basicInteraction);
     expect(replySpy).toHaveBeenCalledWith(
-      "Added -400 prio to 3 players from 1/12 12:00 AM to 1/13 11:59 PM because Prio reason. Supreme prio id: db id; Supreme prio id: db id 2; Supreme prio id: db id 3",
+      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))} because Prio reason. Supreme prio id: db id; Supreme prio id: db id 2; Supreme prio id: db id 3`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);

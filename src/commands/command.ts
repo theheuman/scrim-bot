@@ -56,6 +56,10 @@ export abstract class Command extends SlashCommandBuilder {
     );
   }
 
+  formatDate(date: Date) {
+    return `<t:${Math.floor(date.valueOf() / 1000)}:f>`;
+  }
+
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     if (this.isAdmin) {
       if (!isGuildMember(interaction.member)) {

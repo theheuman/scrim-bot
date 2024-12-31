@@ -1,6 +1,5 @@
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
-import { format } from "date-fns";
 import { PrioService } from "../../../services/prio";
 
 export class AddPrioCommand extends Command {
@@ -66,7 +65,7 @@ export class AddPrioCommand extends Command {
       .join("; ");
     console.log(user1, user2, user3, users);
     await interaction.reply(
-      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${format(startDate, "M/dd hh:mm a")} to ${format(endDate, "M/dd hh:mm a")} because ${reason}. ${prioReasonString}`,
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)} because ${reason}. ${prioReasonString}`,
     );
   }
 }
