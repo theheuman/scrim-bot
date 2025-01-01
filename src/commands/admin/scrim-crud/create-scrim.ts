@@ -43,7 +43,6 @@ export class CreateScrimCommand extends Command {
       this.inputNames.date,
       true,
     );
-    console.log(scrimDate);
     const scrimName = interaction.options.getString(this.inputNames.name, true);
 
     // Discord only gives us 3 seconds to acknowledge an interaction before
