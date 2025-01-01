@@ -2,8 +2,24 @@ import {
   CacheType,
   ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
+  SlashCommandNumberOption,
+  SlashCommandRoleOption,
+  SlashCommandStringOption,
+  SlashCommandUserOption,
 } from "discord.js";
 import { parseDate } from "../utility/time";
+
+export type SlashCommandOption =
+  | SlashCommandStringOption
+  | SlashCommandNumberOption
+  | SlashCommandRoleOption
+  | SlashCommandUserOption;
+
+export interface OptionConfig {
+  isRequired?: boolean;
+  minLength?: number;
+  maxLength?: number;
+}
 
 type ExtendedCommandInteractionOptionResolver = Omit<
   CommandInteractionOptionResolver<CacheType>,

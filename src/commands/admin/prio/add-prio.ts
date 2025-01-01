@@ -25,13 +25,15 @@ export class AddPrioCommand extends Command {
       "Amount of prio, negative for low prio",
       true,
     );
-    this.addStringInput(this.inputNames.reason, "Reason fro prio", true);
-    this.addStringInput(
+    this.addStringInput(this.inputNames.reason, "Reason fro prio", {
+      isRequired: true,
+    });
+    this.addDateInput(
       this.inputNames.startDate,
       "Optional start date, defaults to when command is called",
       true,
     );
-    this.addStringInput(this.inputNames.endDate, "End date", true);
+    this.addDateInput(this.inputNames.endDate, "End date", true);
   }
 
   async run(interaction: CustomInteraction) {

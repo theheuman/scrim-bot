@@ -5,9 +5,11 @@ import { ScrimSignups } from "../../services/signups";
 export class SignupCommand extends Command {
   constructor(private signupService: ScrimSignups) {
     super("signup", "Creates a new scrim signup");
-    this.addStringInput("teamname", "Team name", true);
-    //   .setMinLength(1)
-    // .setMaxLength(150)
+    this.addStringInput("teamname", "Team name", {
+      isRequired: true,
+      minLength: 1,
+      maxLength: 25,
+    });
 
     this.addUserInput("player1", "@player1", true);
     this.addUserInput("player2", "@player2", true);

@@ -1,7 +1,12 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { isGuildMember } from "../utility/utility";
 import { authService } from "../services";
-import { CustomInteraction, getCustomOptions } from "./interaction";
+import {
+  CustomInteraction,
+  getCustomOptions,
+  OptionConfig,
+  SlashCommandOption,
+} from "./interaction";
 
 export abstract class Command extends SlashCommandBuilder {
   isAdmin: boolean;
@@ -19,18 +24,26 @@ export abstract class Command extends SlashCommandBuilder {
 
   addUserInput(name: string, description: string, isRequired: boolean = false) {
     this.addUserOption((option) =>
-      option.setName(name).setDescription(description).setRequired(isRequired),
+      this.addOption(option, name, description, isRequired),
     );
   }
 
-  addStringInput(
-    name: string,
-    description: string,
-    isRequired: boolean = false,
-  ) {
-    this.addStringOption((option) =>
-      option.setName(name).setDescription(description).setRequired(isRequired),
-    );
+  addStringInput(name: string, description: string, config?: OptionConfig) {
+    this.addStringOption((baseOption) => {
+      const option = this.addOption(
+        baseOption,
+        name,
+        description,
+        config?.isRequired ?? false,
+      );
+      if (config?.minLength) {
+        option.setMinLength(config.minLength);
+      }
+      if (config?.maxLength) {
+        option.setMaxLength(config.maxLength);
+      }
+      return option;
+    });
   }
 
   addNumberInput(
@@ -39,21 +52,35 @@ export abstract class Command extends SlashCommandBuilder {
     isRequired: boolean = false,
   ) {
     this.addNumberOption((option) =>
-      option.setName(name).setDescription(description).setRequired(isRequired),
+      this.addOption(option, name, description, isRequired),
     );
   }
 
   addRoleInput(name: string, description: string, isRequired: boolean = false) {
     this.addRoleOption((option) =>
-      option.setName(name).setDescription(description).setRequired(isRequired),
+      this.addOption(option, name, description, isRequired),
     );
   }
 
   // at some point discord might actually implement this, for now just use string
   addDateInput(name: string, description: string, isRequired: boolean = false) {
     this.addStringOption((option) =>
-      option.setName(name).setDescription(description).setRequired(isRequired),
+      this.addOption(option, name, description, isRequired)
+        .setMinLength(3)
+        .setMaxLength(17),
     );
+  }
+
+  addOption<T extends SlashCommandOption>(
+    option: T,
+    name: string,
+    description: string,
+    isRequired: boolean,
+  ): T {
+    return option
+      .setName(name)
+      .setDescription(description)
+      .setRequired(isRequired) as T;
   }
 
   formatDate(date: Date) {

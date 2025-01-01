@@ -17,14 +17,14 @@ export class CreateScrimCommand extends Command {
       true,
     );
     this.addDateInput(this.inputNames.date, "Choose date of the scrim. ", true);
-    // .setMinLength(3) // A text channel needs to be named
-    // .setMaxLength(17)
     this.addStringInput(
       this.inputNames.name,
       "The name of the scrim (open, tendies, etc...)",
+      {
+        minLength: 1,
+        maxLength: 25,
+      },
     );
-    //.setMinLength(1)
-    //.setMaxLength(25)
   }
 
   async run(interaction: CustomInteraction) {

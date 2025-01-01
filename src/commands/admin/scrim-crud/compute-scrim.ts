@@ -8,10 +8,11 @@ export class ComputeScrimCommand extends Command {
     this.addStringInput(
       "overstat-link",
       "Full length url of the completed scrim (not short url)",
-      true,
+      {
+        isRequired: true,
+        minLength: 30,
+      },
     );
-    // .setMinLength(20)
-    // .setMaxLength(150)
     this.addNumberInput("skill", "Skill level of the lobby");
   }
 
