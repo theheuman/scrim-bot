@@ -25,13 +25,15 @@ export class AddPrioCommand extends Command {
       "Amount of prio, negative for low prio",
       true,
     );
-    this.addStringInput(this.inputNames.reason, "Reason fro prio", true);
-    this.addStringInput(
+    this.addStringInput(this.inputNames.reason, "Reason fro prio", {
+      isRequired: true,
+    });
+    this.addDateInput(
       this.inputNames.startDate,
       "Optional start date, defaults to when command is called",
       true,
     );
-    this.addStringInput(this.inputNames.endDate, "End date", true);
+    this.addDateInput(this.inputNames.endDate, "End date", true);
   }
 
   async run(interaction: CustomInteraction) {
@@ -41,8 +43,11 @@ export class AddPrioCommand extends Command {
     const amount = interaction.options.getNumber(this.inputNames.amount, true);
     const reason = interaction.options.getString(this.inputNames.reason, true);
     const startDate =
-      interaction.options.getDate(this.inputNames.startDate) ?? new Date();
-    let endDate = interaction.options.getDate(this.inputNames.endDate, true);
+      interaction.options.getDateTime(this.inputNames.startDate) ?? new Date();
+    let endDate = interaction.options.getDateTime(
+      this.inputNames.endDate,
+      true,
+    );
     // end date is inclusive
     endDate = setEasternHours(endDate, 23, 59, 59);
 

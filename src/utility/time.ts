@@ -20,36 +20,46 @@ export const setEasternHours = (
   return zonedDate;
 };
 
-export const parseDate = (monthDay: string, time: string) => {
-  const { monthString, dayString } = getMonthDayString(monthDay);
-  const timeString = getTimeString(time);
-  const now = new Date();
-  let calculatedYear = now.getFullYear();
-  // if we're in december setting up a january scrim use correct year
-  if (monthString === "01" && now.getMonth() >= 1) {
-    calculatedYear++;
+export const parseDate = (dateTimeString: string) => {
+  const firstSpaceIndex = dateTimeString.indexOf(" ");
+  let dateString = dateTimeString.substring(0, firstSpaceIndex);
+  let timeString = dateTimeString.substring(firstSpaceIndex + 1);
+  if (firstSpaceIndex === -1) {
+    dateString = dateTimeString;
+    timeString = "12 am";
   }
-  const dateStringNoOffset = `${calculatedYear}-${monthString}-${dayString}`;
-  const utcOffset = getUtcOffset(new Date(dateStringNoOffset));
-  const dateString = `${calculatedYear}-${monthString}-${dayString}T${timeString}${utcOffset}`;
-  return new Date(dateString);
+  const formattedDateString = getDateString(dateString);
+  const formattedTimeString = getTimeString(timeString);
+  const utcOffset = getUtcOffset(new Date(formattedDateString));
+  const formattedDateTimeString = `${formattedDateString}T${formattedTimeString}${utcOffset}`;
+  return new Date(formattedDateTimeString);
 };
 
-const getMonthDayString = (monthDay: string) => {
+const getDateString = (monthDay: string): string => {
   const monthDaySplit = monthDay.split("/");
   const month = Number(monthDaySplit[0]);
   const day = Number(monthDaySplit[1]);
+  let year = Number(monthDaySplit[2]);
   if (isNaN(month) || month <= 0 || month > 12) {
-    throw Error("Month not parseable");
+    throw Error("Month not valid");
   } else if (isNaN(day) || day <= 0 || day > 31) {
-    throw Error("Day not parseable");
+    throw Error("Day not valid");
+  } else if (isNaN(year)) {
+    const now = new Date();
+    year = now.getFullYear();
+    // if we're likely to be trying to set up a date in the next year use it.
+    if (month === 1 && now.getMonth() >= 4) {
+      year++;
+    }
+  } else if (year) {
+    // yes this is disgusting but also there's no way this code is being used in 75 years
+    year += 2000;
   }
   const monthString = String(month).padStart(2, "0");
   const dayString = String(day).padStart(2, "0");
-  return { monthString, dayString };
+  return `${year}-${monthString}-${dayString}`;
 };
 
-// expected format hh:mm am
 const getTimeString = (time: string) => {
   const timeArray = time.trim().split(" ");
   const hourMinuteString = timeArray[0];
@@ -80,7 +90,7 @@ const getTimeString = (time: string) => {
       hourString = (hour + 12).toString().padStart(2, "0");
     }
   } else {
-    throw Error("am/pm label is invalid");
+    throw Error("am/pm label not valid");
   }
   const minuteString = minute.toString().padStart(2, "0");
   return `${hourString}:${minuteString}:00`;

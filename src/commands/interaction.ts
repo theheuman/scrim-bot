@@ -2,16 +2,32 @@ import {
   CacheType,
   ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
+  SlashCommandNumberOption,
+  SlashCommandRoleOption,
+  SlashCommandStringOption,
+  SlashCommandUserOption,
 } from "discord.js";
 import { parseDate } from "../utility/time";
+
+export type SlashCommandOption =
+  | SlashCommandStringOption
+  | SlashCommandNumberOption
+  | SlashCommandRoleOption
+  | SlashCommandUserOption;
+
+export interface OptionConfig {
+  isRequired?: boolean;
+  minLength?: number;
+  maxLength?: number;
+}
 
 type ExtendedCommandInteractionOptionResolver = Omit<
   CommandInteractionOptionResolver<CacheType>,
   "getMessage" | "getFocused"
 > & {
-  getDate(key: string, required?: boolean): Date | null;
+  getDateTime(key: string, required?: boolean): Date | null;
   // if date can't be parsed,
-  getDate(key: string, required: true): Date;
+  getDateTime(key: string, required: true): Date;
 };
 
 export const getCustomOptions = (
@@ -19,15 +35,15 @@ export const getCustomOptions = (
 ): ExtendedCommandInteractionOptionResolver => {
   return {
     ...interaction.options,
-    getDate: (key: string, required?: boolean): Date => {
-      const dateString = interaction.options.getString(key);
+    getDateTime: (key: string, required?: boolean): Date => {
+      const dateTimeString = interaction.options.getString(key);
       try {
-        if (dateString) {
-          return parseDate(dateString, "12 am");
+        if (dateTimeString) {
+          return parseDate(dateTimeString);
         }
       } catch (e) {
         interaction.reply(
-          `Can't parse ${key}. Required: ${required ?? false}. ${e}`,
+          `Can't parse ${key}. ${required ? "Required. " : ""}${e}; Expected format: mm/dd/yy hh:mm pm`,
         );
         throw Error(
           "Unable to parse a date argument that was " +
