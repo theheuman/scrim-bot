@@ -41,8 +41,11 @@ export class AddPrioCommand extends Command {
     const amount = interaction.options.getNumber(this.inputNames.amount, true);
     const reason = interaction.options.getString(this.inputNames.reason, true);
     const startDate =
-      interaction.options.getDate(this.inputNames.startDate) ?? new Date();
-    let endDate = interaction.options.getDate(this.inputNames.endDate, true);
+      interaction.options.getDateTime(this.inputNames.startDate) ?? new Date();
+    let endDate = interaction.options.getDateTime(
+      this.inputNames.endDate,
+      true,
+    );
     // end date is inclusive
     endDate = setEasternHours(endDate, 23, 59, 59);
 

@@ -1,21 +1,18 @@
 import {
-  ChatInputCommandInteraction,
   GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
   InteractionResponse,
   Message,
   MessagePayload,
-  User,
 } from "discord.js";
 import { signupsService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const createScrimCommand = require("../../../../src/commands/admin/scrim-crud/create-scrim");
+import { CustomInteraction } from "../../../../src/commands/interaction";
+import { CreateScrimCommand } from "../../../../src/commands/admin/scrim-crud/create-scrim";
 
 describe("Create scrim", () => {
-  let basicInteraction: ChatInputCommandInteraction;
+  let basicInteraction: CustomInteraction;
   let member: GuildMember;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
@@ -34,7 +31,11 @@ describe("Create scrim", () => {
   >;
   const newChannelMessageSpy = jest.fn();
 
-  const fakeDate = new Date("2024-11-14");
+  const fakeCurrentDate = new Date("2024-11-14");
+
+  const fakeScrimDate = new Date("2024-11-15T20:00:00-05:00");
+
+  let command: CreateScrimCommand;
 
   beforeAll(() => {
     member = {
@@ -55,13 +56,12 @@ describe("Create scrim", () => {
       },
       options: {
         getString: (key: string) => {
-          if (key === "time") {
-            return "8 pm";
-          } else if (key === "date") {
-            return "11/15";
-          } else if (key === "name") {
+          if (key === "name") {
             return "open-edwe";
           }
+        },
+        getDateTime: () => {
+          return fakeScrimDate;
         },
       },
       reply: (message: string) => {
@@ -78,14 +78,14 @@ describe("Create scrim", () => {
         },
       },
       member,
-    } as unknown as ChatInputCommandInteraction;
+    } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     signupsCreateScrimSpy = jest.spyOn(signupsService, "createScrim");
     signupsCreateScrimSpy.mockImplementation(() => {
       return Promise.resolve("uuid-87623");
     });
-    jest.useFakeTimers().setSystemTime(fakeDate);
+    jest.useFakeTimers().setSystemTime(fakeCurrentDate);
   });
 
   afterAll(() => {
@@ -97,19 +97,21 @@ describe("Create scrim", () => {
     editReplySpy.mockClear();
     signupsCreateScrimSpy.mockClear();
     newChannelMessageSpy.mockClear();
+    // TODO mock signup service
+    command = new CreateScrimCommand(signupsService);
   });
 
   it("Should create scrim", async () => {
     newChannelMessageSpy.mockImplementationOnce((message: string) => {
       expect(message.includes("<t:1731718800:t>")).toEqual(true);
     });
-    await createScrimCommand.execute(basicInteraction);
+    await command.run(basicInteraction);
     expect(editReplySpy).toHaveBeenCalledWith(
       "Scrim created. Channel: <#newly created channel id>",
     );
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "newly created channel id",
-      new Date("2024-11-15T20:00:00-05:00"),
+      fakeScrimDate,
     );
   });
 
@@ -127,9 +129,9 @@ describe("Create scrim", () => {
         reply: (message: string) => {
           console.log("Replying to command with:", message);
         },
-      } as unknown as ChatInputCommandInteraction;
+      } as unknown as CustomInteraction;
       replySpy = jest.spyOn(noGuildInteraction, "reply");
-      await createScrimCommand.execute(noGuildInteraction);
+      await command.run(noGuildInteraction);
       expect(replySpy).toHaveBeenCalledWith("Can't find server, contact admin");
       expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
     });
@@ -145,9 +147,9 @@ describe("Create scrim", () => {
         reply: (message: string) => {
           console.log("Replying to command with:", message);
         },
-      } as unknown as ChatInputCommandInteraction;
+      } as unknown as CustomInteraction;
       replySpy = jest.spyOn(noChannelInteraction, "reply");
-      await createScrimCommand.execute(noChannelInteraction);
+      await command.run(noChannelInteraction);
       expect(replySpy).toHaveBeenCalledWith(
         "Can't find channel command was sent from, contact admin",
       );
@@ -166,13 +168,12 @@ describe("Create scrim", () => {
         channel: {},
         options: {
           getString: (key: string) => {
-            if (key === "time") {
-              return "8 pm";
-            } else if (key === "date") {
-              return "11/15";
-            } else if (key === "name") {
+            if (key === "name") {
               return "open-edwe";
             }
+          },
+          getDateTime: () => {
+            return fakeScrimDate;
           },
         },
         reply: (message: string) => {
@@ -181,9 +182,9 @@ describe("Create scrim", () => {
         editReply: (message: string) => {
           console.log("Editing reply message to:", message);
         },
-      } as unknown as ChatInputCommandInteraction;
+      } as unknown as CustomInteraction;
       editReplySpy = jest.spyOn(noPermissionsInteraction, "editReply");
-      await createScrimCommand.execute(noPermissionsInteraction);
+      await command.run(noPermissionsInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
         "Scrim channel could not be created: Error: Permissions missing",
       );
@@ -195,7 +196,7 @@ describe("Create scrim", () => {
         throw Error("DB Failure");
       });
       editReplySpy = jest.spyOn(basicInteraction, "editReply");
-      await createScrimCommand.execute(basicInteraction);
+      await command.run(basicInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
         "Scrim not created: Error: DB Failure",
       );

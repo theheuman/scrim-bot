@@ -2,16 +2,11 @@ import { ChannelType, CategoryChannel, TextChannel, Guild } from "discord.js";
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
-import { parseDate } from "../../../utility/time";
 import { formatInTimeZone } from "date-fns-tz";
 
 export class CreateScrimCommand extends Command {
-  expectedDateFormat = "Expected MM/dd";
-  expectedTimeFormat = "Expected hh:mm pm";
-
   inputNames = {
     date: "date",
-    time: "time",
     name: "name",
   };
 
@@ -21,24 +16,12 @@ export class CreateScrimCommand extends Command {
       "Creates a new scrim, including a new text channel and signup instructions",
       true,
     );
-    this.addStringInput(
-      this.inputNames.date,
-      "Choose date of the scrim. " + this.expectedDateFormat,
-      true,
-    );
+    this.addDateInput(this.inputNames.date, "Choose date of the scrim. ", true);
     // .setMinLength(3) // A text channel needs to be named
-    // .setMaxLength(5)
-    this.addStringInput(
-      this.inputNames.time,
-      "Choose the time of the scrim in eastern time include am or pm. " +
-        this.expectedTimeFormat,
-      true,
-    );
-    // .setMinLength(3) // A text channel needs to be named
-    // .setMaxLength(4) // Discord will cut-off names past the 25 characters,
+    // .setMaxLength(17)
     this.addStringInput(
       this.inputNames.name,
-      "The name of the scrim (open, tendies, etc...",
+      "The name of the scrim (open, tendies, etc...)",
     );
     //.setMinLength(1)
     //.setMaxLength(25)
@@ -56,25 +39,12 @@ export class CreateScrimCommand extends Command {
       return;
     }
 
-    const scrimDateString = interaction.options.getString(
+    const scrimDate = interaction.options.getDateTime(
       this.inputNames.date,
       true,
     );
-    const scrimTimeString = interaction.options.getString(
-      this.inputNames.time,
-      true,
-    );
+    console.log(scrimDate);
     const scrimName = interaction.options.getString(this.inputNames.name, true);
-
-    let scrimDate: Date;
-    try {
-      scrimDate = parseDate(scrimDateString, scrimTimeString);
-    } catch (e) {
-      interaction.reply(
-        `Can't parse arguments: ${e}; please supply correct format ${this.expectedDateFormat} ${this.expectedTimeFormat}`,
-      );
-      return;
-    }
 
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
@@ -82,9 +52,8 @@ export class CreateScrimCommand extends Command {
       content: "Fetched all input and working on your request!",
     });
 
-    const dateStringForTitle = `${scrimDate.getMonth() + 1}-${scrimDate.getDate()}`;
     const controllerSpacer = `🎮┋`;
-    const chosenChannelName = `${controllerSpacer}${dateStringForTitle}-${formatInTimeZone(scrimDate, "America/New_York", "ha")}-eastern-${scrimName}-scrims`;
+    const chosenChannelName = `${controllerSpacer}${formatInTimeZone(scrimDate, "America/New_York", "mm-dd-ha")}-eastern-${scrimName}-scrims`;
 
     // create channel in method
     // get channel or throw channel error

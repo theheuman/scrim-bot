@@ -55,7 +55,7 @@ describe("Add prio", () => {
             return "Prio reason";
           }
         },
-        getDate: (key: string) => {
+        getDateTime: (key: string) => {
           if (key === "startdate") {
             return new Date("2025-01-12T00:00:00-05:00");
           } else if (key === "enddate") {
@@ -84,7 +84,7 @@ describe("Add prio", () => {
             return "Prio reason";
           }
         },
-        getDate: (key: string) => {
+        getDateTime: (key: string) => {
           if (key === "startdate") {
             return null;
           } else if (key === "enddate") {
