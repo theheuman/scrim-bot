@@ -6,9 +6,11 @@ import { RosterService } from "../../services/rosters";
 export class DropoutCommand extends Command {
   constructor(private rosterService: RosterService) {
     super("dropout", "Drops a team from the signup list");
-    this.addStringInput("teamname", "Team name", true);
-    // .setMinLength(1)
-    // .setMaxLength(150)
+    this.addStringInput("teamname", "Team name", {
+      isRequired: true,
+      minLength: 1,
+      maxLength: 25,
+    });
   }
 
   async run(interaction: CustomInteraction) {

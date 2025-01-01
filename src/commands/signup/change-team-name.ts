@@ -4,8 +4,16 @@ import { Command } from "../command";
 export class ChangeTeamNameCommand extends Command {
   constructor() {
     super("changeteamname", "Change the name of a team");
-    this.addStringInput("old-team-name", "Old name", true);
-    this.addStringInput("new-name", "New name", true);
+    this.addStringInput("old-team-name", "Old name", {
+      isRequired: true,
+      minLength: 1,
+      maxLength: 25,
+    });
+    this.addStringInput("new-name", "New name", {
+      isRequired: true,
+      minLength: 1,
+      maxLength: 25,
+    });
   }
 
   async run(interaction: CustomInteraction) {

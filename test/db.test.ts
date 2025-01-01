@@ -104,7 +104,6 @@ describe("DB connection", () => {
 
       const data = await nhostDb.get(
         "players",
-
         {
           operator: "and",
           expressions: [
