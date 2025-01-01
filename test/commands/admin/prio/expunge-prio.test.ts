@@ -1,5 +1,4 @@
 import {
-  ChatInputCommandInteraction,
   GuildMember,
   InteractionReplyOptions,
   InteractionResponse,
