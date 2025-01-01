@@ -12,7 +12,6 @@ import { ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { mockOverstatResponse } from "../mocks/overstat-response.mock";
 import { PrioService } from "../../src/services/prio";
-import { AuthService } from "../../src/services/auth";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
 describe("Signups", () => {
@@ -26,11 +25,7 @@ describe("Signups", () => {
     dbMock = new DbMock();
     cache = new CacheService();
     overstatService = new OverstatService();
-    prioService = new PrioService(
-      dbMock,
-      cache,
-      new AuthService(dbMock, cache),
-    );
+    prioService = new PrioService(dbMock, cache);
     signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
   });
 

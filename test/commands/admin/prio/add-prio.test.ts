@@ -1,5 +1,4 @@
 import {
-  ChatInputCommandInteraction,
   GuildMember,
   InteractionReplyOptions,
   InteractionResponse,
@@ -9,19 +8,18 @@ import {
 } from "discord.js";
 import { prioService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const addPrioCommand = require("../../../../src/commands/admin/prio/add-prio");
+import { AddPrioCommand } from "../../../../src/commands/admin/prio/add-prio";
+import { CustomInteraction } from "../../../../src/commands/interaction";
 
 describe("Add prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
   const channelId = "some id" as unknown as Snowflake;
-  let basicInteraction: ChatInputCommandInteraction;
-  let noMemberInteraction: ChatInputCommandInteraction;
+  let basicInteraction: CustomInteraction;
+  let singleUserInteraction: CustomInteraction;
+
   let setPlayerPrioSpy: SpyInstance<
     Promise<string[]>,
     [
-      memberUsingCommand: GuildMember,
       prioUsers: User[],
       startDate: Date,
       endDate: Date,
@@ -32,62 +30,121 @@ describe("Add prio", () => {
   >;
   let member: GuildMember;
   const supreme: User = { displayName: "Supreme", id: "1" } as unknown as User;
-  const theHeuman: User = {
-    displayName: "TheHeuman",
-    id: "2",
-  } as unknown as User;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
     [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
 
+  let command: AddPrioCommand;
+
   beforeAll(() => {
+    command = new AddPrioCommand(prioService);
+
     member = {
       roles: {},
     } as GuildMember;
+
+    let singleUserInteractionGetUserCount = 0;
+
     basicInteraction = {
       options: {
         getUser: () => supreme,
+        getString: (key: string) => {
+          if (key === "reason") {
+            return "Prio reason";
+          }
+        },
+        getDate: (key: string) => {
+          if (key === "startdate") {
+            return new Date("2025-01-12T00:00:00-05:00");
+          } else if (key === "enddate") {
+            return new Date("2025-01-13T00:00:00-05:00");
+          }
+        },
+        getNumber: () => -400,
       },
       reply: (message: string) => {
         console.log("Replying to command with:", message);
       },
       channelId,
       member,
-    } as unknown as ChatInputCommandInteraction;
-    noMemberInteraction = {
+    } as unknown as CustomInteraction;
+
+    singleUserInteraction = {
       options: {
-        getUser: () => theHeuman,
+        getUser: () => {
+          if (singleUserInteractionGetUserCount === 0) {
+            singleUserInteractionGetUserCount++;
+            return supreme;
+          }
+        },
         getString: (key: string) => {
           if (key === "reason") {
             return "Prio reason";
-          } else if (key === "amount") {
-            return "-400";
           }
         },
+        getDate: (key: string) => {
+          if (key === "startdate") {
+            return null;
+          } else if (key === "enddate") {
+            return new Date("2025-01-13T00:00:00-05:00");
+          }
+        },
+        getNumber: () => -400,
       },
       reply: (message: string) => {
         console.log("Replying to command with:", message);
       },
       channelId,
-    } as unknown as ChatInputCommandInteraction;
+      member,
+    } as unknown as CustomInteraction;
+
     setPlayerPrioSpy = jest.spyOn(prioService, "setPlayerPrio");
     setPlayerPrioSpy.mockClear();
     setPlayerPrioSpy.mockReturnValue(Promise.resolve([]));
   });
 
-  it("Should add prio", async () => {
+  it("Should add prio to 1 user", async () => {
+    const fakeDate = new Date("2024-12-14T22:30:00-05:00");
+    console.log("System time", fakeDate);
+    jest.useFakeTimers();
+    jest.setSystemTime(fakeDate);
+
     setPlayerPrioSpy.mockImplementation(
       (
-        memberUsingCommand: GuildMember,
         prioUsers: User[],
         _: Date,
         __: Date,
         amount: number,
         reason: string,
       ) => {
-        expect(memberUsingCommand).toEqual(member);
+        expect(prioUsers).toEqual([supreme]);
+        expect(amount).toEqual(-400);
+        expect(reason).toEqual("Prio reason");
+        return Promise.resolve(["db id"]);
+      },
+    );
+
+    replySpy = jest.spyOn(singleUserInteraction, "reply");
+    await command.run(singleUserInteraction);
+    expect(replySpy).toHaveBeenCalledWith(
+      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f> because Prio reason. Supreme prio id: db id`,
+    );
+    // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
+    expect.assertions(4);
+    jest.setSystemTime(jest.getRealSystemTime());
+  });
+
+  it("Should add prio to multiple users", async () => {
+    setPlayerPrioSpy.mockImplementation(
+      (
+        prioUsers: User[],
+        _: Date,
+        __: Date,
+        amount: number,
+        reason: string,
+      ) => {
         expect(prioUsers).toEqual([supreme, supreme, supreme]);
         expect(amount).toEqual(-400);
         expect(reason).toEqual("Prio reason");
@@ -96,23 +153,23 @@ describe("Add prio", () => {
     );
 
     replySpy = jest.spyOn(basicInteraction, "reply");
-    await addPrioCommand.execute(basicInteraction);
+    await command.run(basicInteraction);
     expect(replySpy).toHaveBeenCalledWith(
-      "Added -400 prio to 3 players from 1/12/25 to 1/13/25 because Prio reason. Supreme added prio with id: db id; Supreme added prio with id: db id 2; Supreme added prio with id: db id 3",
+      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))} because Prio reason. Supreme prio id: db id; Supreme prio id: db id 2; Supreme prio id: db id 3`,
     );
-    // if this is failing, and you haven't changed the amount of assertions take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
-    expect.assertions(5);
+    // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
+    expect.assertions(4);
   });
 
-  describe("errors", () => {
-    it("should not add prio because there is no member", async () => {
-      setPlayerPrioSpy.mockClear();
-      replySpy = jest.spyOn(noMemberInteraction, "reply");
-      await addPrioCommand.execute(noMemberInteraction);
-      expect(replySpy).toHaveBeenCalledWith(
-        "Can't find the member issuing the command or this is an api command, no command executed",
-      );
-      expect(setPlayerPrioSpy).not.toHaveBeenCalled();
+  it("Should reply with an error if setPrio fails", async () => {
+    setPlayerPrioSpy.mockImplementation(() => {
+      return Promise.reject("The database fell asleep");
     });
+
+    replySpy = jest.spyOn(basicInteraction, "reply");
+    await command.run(basicInteraction);
+    expect(replySpy).toHaveBeenCalledWith(
+      "Error while executing set prio: The database fell asleep",
+    );
   });
 });

@@ -1,8 +1,5 @@
 import { REST, Routes } from "discord.js";
-import fs from "node:fs";
-import path from "node:path";
-import { Command } from "./ExtendedClient"; // Adjust the import path as needed
-
+import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from "../node_modules/@discordjs/builders/node_modules/discord-api-types/rest/v10/interactions.d.ts";
 interface Config {
   clientId: string;
   guildId: string;
@@ -10,42 +7,16 @@ interface Config {
 }
 
 import configJson from "../config.json";
+import { commands } from "./commands";
 const config: Config = configJson as Config;
 
-const commands: {}[] = [];
-// Grab all the command folders from the commands directory you created earlier
-const foldersPath = path.join(__dirname, "commands");
-const commandFolders = fs.readdirSync(foldersPath);
+const restCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
-console.log(`Found command folders: ${commandFolders}`);
-
-// TODO update to recursively search folders. Don't think admin commands will come with in this implementation
-for (const folder of commandFolders) {
-  // Grab all the command files from the commands directory you created earlier
-  const commandsPath = path.join(foldersPath, folder);
-  const commandFiles = fs
-    .readdirSync(commandsPath)
-    .filter((file) => file.endsWith(".ts") || file.endsWith(".js"));
-
-  console.log(`Found command files in ${folder}: ${commandFiles}`);
-
-  // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-  for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command: Command = require(filePath) as Command;
-
-    if ("data" in command && "execute" in command) {
-      commands.push(command.data.toJSON());
-      console.log(`Added command: ${command.data.name}`);
-    } else {
-      console.log(
-        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
-      );
-    }
-  }
+for (const command of commands) {
+  restCommands.push(command.toJSON());
 }
 
-console.log(`Total commands to deploy: ${commands.length}`);
+console.log(`Total commands to deploy: ${restCommands.length}`);
 
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(config.token);
@@ -54,7 +25,7 @@ const rest = new REST().setToken(config.token);
 (async () => {
   try {
     console.log(
-      `Started refreshing ${commands.length} application (/) commands.`,
+      `Started refreshing ${restCommands.length} application (/) commands.`,
     );
 
     // The put method is used to fully refresh all commands in the guild with the current set
@@ -62,7 +33,7 @@ const rest = new REST().setToken(config.token);
 
     data = await rest.put(
       Routes.applicationGuildCommands(config.clientId, config.guildId),
-      { body: commands },
+      { body: restCommands },
     );
 
     console.log(
