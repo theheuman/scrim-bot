@@ -9,12 +9,11 @@ export class ExpungePrioCommand extends Command {
 
   async run(interaction: CustomInteraction) {
     await interaction.reply("Fetched all input and working on your request!");
-    // check if member issuing the command is an admin
 
     // get prio id from interaction
 
-    // in a catch try block
-    // send prio id to prioService
+    // in a try catch block
+    // send prio id to prioService.expungePrio method
     // reply to interaction that command is successful
     // in catch block reply to interaction that command was unsuccessful
   }
