@@ -21,7 +21,6 @@ export class CreateScrimCommand extends Command {
       this.inputNames.name,
       "The name of the scrim (open, tendies, etc...)",
       {
-        minLength: 1,
         maxLength: 25,
       },
     );
@@ -82,9 +81,8 @@ export class CreateScrimCommand extends Command {
       return;
     }
 
-    const discordTimeString = `<t:${Math.floor(scrimDate.valueOf() / 1000)}:t>`;
     await createdChannel.send(
-      `Scrims will begin at ${discordTimeString} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`,
+      `Scrims will begin at ${this.formatTime(scrimDate)} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`,
     );
     await interaction.editReply(
       `Scrim created. Channel: <#${createdChannel.id}>`,
