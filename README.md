@@ -3,14 +3,12 @@ A multipurpose bot to track scrim signups, low prio and player performance among
 
 ## Contributing
 ### Setup
-This bot makes use of the npm package discord.js.
-
-make sure to run
+Install dependencies
 ```sh
 npm install
 ```
 
-To run the bot, you'll need to add a config.json file to the root directory.
+To run the tests, you'll need to add a config.json file to the root directory.
 
 The file should contain:
 ```json
@@ -50,13 +48,27 @@ You can create a template config file by running
 npm run create-config
 `
 
+Then you can run tests with 
+
+`npm run test` or `npm run test:watch`
 ### Commands
 All commands are in the commands directory and further information can be found in the README in that directory
 
+They depend on services in the services/ directory that use the 
 ## Deploying
-In order to deploy any new commands you have added please utilize:
+
+### Test commands on a server
+Before deploying test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info. 
+
+Deploy commands to your private server with `npm run deploy-commands`
+
+The bot can use hot reloads `npm run start:watch` or you can run it normally from the dist folder with `npm run start` (make sure to build first)
+
+### Deploy to prod
+After you verify everything is in working order you can run the prod deploy and start scripts
+
 ```sh
-npm run deploy-commands
+npm run deploy-commands:prod
 ```
 
 Then you can run the production script with 
