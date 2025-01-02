@@ -1,9 +1,11 @@
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { AuthService } from "../../../services/auth";
 
-export class RemoveAdminRoleCommand extends Command {
-  constructor() {
+export class RemoveAdminRoleCommand extends AdminCommand {
+  constructor(authService: AuthService) {
     super(
+      authService,
       "removeadminrole",
       "Removes a role from performing scrim admin actions",
     );

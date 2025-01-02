@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
-import { Command } from "../command";
+import { MemberCommand } from "../command";
 
-export class ServerInfoCommand extends Command {
+export class ServerInfoCommand extends MemberCommand {
   constructor() {
     super("server", "Provides information about the server.");
   }

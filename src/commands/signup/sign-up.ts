@@ -1,8 +1,8 @@
-import { Command } from "../command";
+import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { ScrimSignups } from "../../services/signups";
 
-export class SignupCommand extends Command {
+export class SignupCommand extends MemberCommand {
   constructor(private signupService: ScrimSignups) {
     super("signup", "Creates a new scrim signup");
     this.addStringInput("teamname", "Team name", {

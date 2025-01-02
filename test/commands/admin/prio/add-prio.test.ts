@@ -6,7 +6,7 @@ import {
   Snowflake,
   User,
 } from "discord.js";
-import { prioService } from "../../../../src/services";
+import { authService, prioService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { AddPrioCommand } from "../../../../src/commands/admin/prio/add-prio";
 import { CustomInteraction } from "../../../../src/commands/interaction";
@@ -39,7 +39,7 @@ describe("Add prio", () => {
   let command: AddPrioCommand;
 
   beforeAll(() => {
-    command = new AddPrioCommand(prioService);
+    command = new AddPrioCommand(authService, prioService);
 
     member = {
       roles: {},

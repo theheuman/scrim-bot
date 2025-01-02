@@ -6,7 +6,7 @@ import {
   Message,
   MessagePayload,
 } from "discord.js";
-import { signupsService } from "../../../../src/services";
+import { authService, signupsService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { CreateScrimCommand } from "../../../../src/commands/admin/scrim-crud/create-scrim";
@@ -98,7 +98,7 @@ describe("Create scrim", () => {
     signupsCreateScrimSpy.mockClear();
     newChannelMessageSpy.mockClear();
     // TODO mock signup service
-    command = new CreateScrimCommand(signupsService);
+    command = new CreateScrimCommand(authService, signupsService);
   });
 
   it("Should create scrim", async () => {

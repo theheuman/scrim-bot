@@ -1,20 +1,24 @@
 import { ChannelType, CategoryChannel, TextChannel, Guild } from "discord.js";
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
 import { formatInTimeZone } from "date-fns-tz";
+import { AuthService } from "../../../services/auth";
 
-export class CreateScrimCommand extends Command {
+export class CreateScrimCommand extends AdminCommand {
   inputNames = {
     date: "date",
     name: "name",
   };
 
-  constructor(private signupService: ScrimSignups) {
+  constructor(
+    authService: AuthService,
+    private signupService: ScrimSignups,
+  ) {
     super(
+      authService,
       "create-scrim",
       "Creates a new scrim, including a new text channel and signup instructions",
-      true,
     );
     this.addDateInput(this.inputNames.date, "Choose date of the scrim. ", true);
     this.addStringInput(

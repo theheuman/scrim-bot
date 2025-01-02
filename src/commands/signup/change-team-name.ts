@@ -1,7 +1,7 @@
 import { CustomInteraction } from "../interaction";
-import { Command } from "../command";
+import { MemberCommand } from "../command";
 
-export class ChangeTeamNameCommand extends Command {
+export class ChangeTeamNameCommand extends MemberCommand {
   constructor() {
     super("changeteamname", "Change the name of a team");
     this.addStringInput("old-team-name", "Old name", {
