@@ -1,5 +1,7 @@
-## Welcome to the Void scrim bot
+#  Void scrim bot
+A multipurpose bot to track scrim signups, low prio and player performance among other things
 
+## Contributing
 ### Setup
 This bot makes use of the npm package discord.js.
 
@@ -13,13 +15,29 @@ To run the bot, you'll need to add a config.json file to the root directory.
 The file should contain:
 ```json
 {
-  "token": "BOT_TOKEN",
-  "clientId": "DISCORD_CLIENT_ID",
-  "guildId": "DISCORD_GUILD_ID",
-  "nhost": {
-    "adminSecret": "ADMIN_SECRET",
-    "subdomain": "subdomain",
-    "region": "region"
+  "dev": {
+    "discord": {
+      "token": "BOT_TOKEN",
+      "clientId": "DEV_DISCORD_CLIENT_ID",
+      "guildId": "DEV_DISCORD_GUILD_ID"  
+    },
+    "nhost": {
+      "adminSecret": "LOCAL_ADMIN_SECRET",
+      "subdomain": "local_subdomain",
+      "region": "local_region"
+    }
+  },
+  "prod": {
+    "discord": {
+      "token": "BOT_TOKEN",
+      "clientId": "DISCORD_CLIENT_ID",
+      "guildId": "DISCORD_GUILD_ID"
+    },
+    "nhost": {
+      "adminSecret": "ADMIN_SECRET",
+      "subdomain": "subdomain",
+      "region": "region"
+    }
   }
 }
 ```
@@ -32,11 +50,17 @@ You can create a template config file by running
 npm run create-config
 `
 
-The bot currently makes use of hot reloads for saving while running the application. Please run with
+### Commands
+All commands are in the commands directory and further information can be found in the README in that directory
+
+## Deploying
+In order to deploy any new commands you have added please utilize:
 ```sh
-npm run dev
+npm run deploy-commands
 ```
-In order to add a new command to the bot please utilize:
+
+Then you can run the production script with 
 ```sh
-node deploy-commands.js
+npm run start:prod
 ```
+

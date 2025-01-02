@@ -4,36 +4,36 @@
 * All commands are imported and instantiated in the command array in the index.ts file
 * That array is imported in 
   * deploy-commands
-    * use ./deploy-commands to deploy the commands to discord so it can correctly prompt users for parameters
+    * use `npm run deploy-commands` to deploy the commands to discord so it can correctly prompt users for parameters
   * the main entry file
-    * takes an event and executes the correct commands run method with the interaction discord recorded
+    * takes an event and executes the correct commands `run` method with the interaction discord recorded
 
 ## Adding a command
 
 * Each command has its own file so create a new one in an intuitive place, create new directories if necessary
 * Add your command to the command array in src/commands/index.ts
-* Each command must extend the Command class which provides some useful abstractions and methods to implement
+* Each command must extend the AdminCommand or MemberCommand class which provides some useful abstractions and methods to implement
 * in your constructor
-  * inject services you intend to use
-  * call the super constructor with your name, description and if your command is one that should only be used by admins
-  * add all the inputs necessary for your command by using the applicable Command methods or by adding new Command methods where necessary
+  * inject services you intend to use (authService is required if AdminCommand)
+  * call the super constructor with your name and description
+  * add all the inputs necessary for your command by using the applicable parent methods or by adding new parent methods where necessary
 * in your run method you must reply within 3 seconds so discord doesn't trash your interaction
   * if you're doing async work you should reply with a generic message saying "working on your request" or something of the like
 
-example: 
+admin command example: 
 ```
 import { Command } from "../../command";
 import { CustomInteraction } from "../../interaction";
 
-export class NameOfYourCommand extends Command {
+export class NameOfYourCommand extends AdminCommand {
   inputNames = {
     user: "userinput",
     string: "stringinput",
     number: "numberinput",
   };
 
-  constructor(private service: ServiceToInject) {
-    super("command-name", "command description", optionalIsAdminBoolean);
+  constructor(authService: AuthService, private service: ServiceToInject) {
+    super(authService, "command-name", "command description");
     this.addUserInput(this.inputNames.user, "Input a user", optionalRequiredBoolean);
     this.addStringInput(this.inputNames.string, "Input a string");
     this.addNumberInput(
