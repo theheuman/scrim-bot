@@ -6,7 +6,7 @@ cat > $file_location <<EOF
     "discord": {
       "token": "BOT_TOKEN",
       "clientId": "DISCORD_CLIENT_ID",
-      "guildId": "DISCORD_GUILD_ID",
+      "guildId": "DISCORD_GUILD_ID"
     },
     "nhost": {
       "adminSecret": "nhost admin secret",
@@ -18,7 +18,7 @@ cat > $file_location <<EOF
     "discord": {
       "token": "BOT_TOKEN",
       "clientId": "DISCORD_CLIENT_ID",
-      "guildId": "DISCORD_GUILD_ID",
+      "guildId": "DISCORD_GUILD_ID"
     },
     "nhost": {
       "adminSecret": "nhost admin secret",
