@@ -55,7 +55,7 @@ export class CreateScrimCommand extends AdminCommand {
     });
 
     const controllerSpacer = `🎮┋`;
-    const chosenChannelName = `${controllerSpacer}${formatInTimeZone(scrimDate, "America/New_York", "mm-dd-ha")}-eastern-${scrimName}-scrims`;
+    const chosenChannelName = `${controllerSpacer}${formatInTimeZone(scrimDate, "America/New_York", "M-d-haaa")}-eastern-${scrimName}-scrims`;
 
     // create channel in method
     // get channel or throw channel error

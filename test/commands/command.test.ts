@@ -47,6 +47,7 @@ describe("abstract command", () => {
       reply: (message: string) => {
         console.log("Basic replying to command with:", message);
       },
+      options: {},
       member,
     } as unknown as ChatInputCommandInteraction;
     noMemberInteraction = {
@@ -68,6 +69,7 @@ describe("abstract command", () => {
       reply: (message: string) => {
         console.log("Unauthorized replying to command with:", message);
       },
+      options: {},
       member: {
         id: "unauthorized",
         roles: {},

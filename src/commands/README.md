@@ -17,6 +17,7 @@
   * inject services you intend to use (authService is required if AdminCommand)
   * call the super constructor with your name and description
   * add all the inputs necessary for your command by using the applicable parent methods or by adding new parent methods where necessary
+    * required inputs must be added first
 * in your run method you must reply within 3 seconds so discord doesn't trash your interaction
   * if you're doing async work you should reply with a generic message saying "working on your request" or something of the like
 

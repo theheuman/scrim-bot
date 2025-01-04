@@ -22,8 +22,7 @@ export class AddPrioCommand extends AdminCommand {
     super(authService, "addprio", "Adds a prio entry for up to three players");
 
     this.addUserInput(this.inputNames.user1, "First user", true);
-    this.addUserInput(this.inputNames.user2, "Second user");
-    this.addUserInput(this.inputNames.user3, "Third user");
+    this.addDateInput(this.inputNames.endDate, "End date", true);
     this.addNumberInput(
       this.inputNames.amount,
       "Amount of prio, negative for low prio",
@@ -32,12 +31,12 @@ export class AddPrioCommand extends AdminCommand {
     this.addStringInput(this.inputNames.reason, "Reason fro prio", {
       isRequired: true,
     });
+    this.addUserInput(this.inputNames.user2, "Second user");
+    this.addUserInput(this.inputNames.user3, "Third user");
     this.addDateInput(
       this.inputNames.startDate,
       "Optional start date, defaults to when command is called",
-      true,
     );
-    this.addDateInput(this.inputNames.endDate, "End date", true);
   }
 
   async run(interaction: CustomInteraction) {

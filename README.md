@@ -51,14 +51,22 @@ npm run create-config
 Then you can run tests with 
 
 `npm run test` or `npm run test:watch`
+
 ### Commands
 All commands are in the commands directory and further information can be found in the README in that directory
 
-They depend on services in the services/ directory that use the 
+They depend on services in the services/ directory that use the
+
 ## Deploying
 
 ### Test commands on a server
-Before deploying test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info. 
+
+Install additional nhost server dependencies to run a local version of the database.
+https://docs.nhost.io/development/cli/getting-started
+
+Start nhost by going to the nhost/ directory and running `nhost up`, you can then navigate to the dashboard link the command gives you to see that its running correctly
+
+Before deploying test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info.
 
 Deploy commands to your private server with `npm run deploy-commands`
 
