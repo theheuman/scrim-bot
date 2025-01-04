@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
@@ -6,10 +7,11 @@ import {
   Message,
   MessagePayload,
 } from "discord.js";
-import { signupsService } from "../../../../src/services";
+import { authService, signupsService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { CreateScrimCommand } from "../../../../src/commands/admin/scrim-crud/create-scrim";
+import Mock = jest.Mock;
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -30,6 +32,7 @@ describe("Create scrim", () => {
     string
   >;
   const newChannelMessageSpy = jest.fn();
+  const channelCreatedSpy = jest.fn();
 
   const fakeCurrentDate = new Date("2024-11-14");
 
@@ -43,6 +46,7 @@ describe("Create scrim", () => {
     } as GuildMember;
     const createChannelMethod = (options: { name: string; type: string }) => {
       console.log("Creating channel", options.name, options.type);
+      channelCreatedSpy(options.name);
       return {
         send: newChannelMessageSpy,
         id: "newly created channel id",
@@ -97,8 +101,8 @@ describe("Create scrim", () => {
     editReplySpy.mockClear();
     signupsCreateScrimSpy.mockClear();
     newChannelMessageSpy.mockClear();
-    // TODO mock signup service
-    command = new CreateScrimCommand(signupsService);
+    // TODO mock services
+    command = new CreateScrimCommand(authService, signupsService);
   });
 
   it("Should create scrim", async () => {
@@ -108,6 +112,9 @@ describe("Create scrim", () => {
     await command.run(basicInteraction);
     expect(editReplySpy).toHaveBeenCalledWith(
       "Scrim created. Channel: <#newly created channel id>",
+    );
+    expect(channelCreatedSpy).toHaveBeenCalledWith(
+      "🎮┋11-15-8pm-eastern-open-edwe-scrims",
     );
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "newly created channel id",

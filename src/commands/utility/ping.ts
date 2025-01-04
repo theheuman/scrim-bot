@@ -1,7 +1,7 @@
 import { CommandInteraction } from "discord.js";
-import { Command } from "../command";
+import { MemberCommand } from "../command";
 
-export class PingCommand extends Command {
+export class PingCommand extends MemberCommand {
   constructor() {
     super("ping", "Replies with Pong!");
   }

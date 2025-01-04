@@ -12,6 +12,7 @@ export class AuthService {
   async memberIsAdmin(member: GuildMember): Promise<boolean> {
     const memberRoleIds = member.roles.cache.map((role) => role.id);
     const adminRoleSet = await this.getAdminRoleSet();
+    console.log(adminRoleSet);
     return this.hasAdminRole(memberRoleIds, adminRoleSet);
   }
 

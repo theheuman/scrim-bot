@@ -14,7 +14,12 @@ import { ChangeTeamNameCommand } from "./signup/change-team-name";
 import { DropoutCommand } from "./signup/droput-scrims";
 import { SignupCommand } from "./signup/sign-up";
 import { SubPlayerCommand } from "./signup/sub-player";
-import { prioService, rosterService, signupsService } from "../services";
+import {
+  authService,
+  prioService,
+  rosterService,
+  signupsService,
+} from "../services";
 
 export const commands: Command[] = [
   // test commands
@@ -23,16 +28,16 @@ export const commands: Command[] = [
   new UserCommand(),
 
   // custom commands
-  new AddPrioCommand(prioService),
-  new ExpungePrioCommand(),
+  new AddPrioCommand(authService, prioService),
+  new ExpungePrioCommand(authService),
 
-  new AddAdminRoleCommand(),
-  new RemoveAdminRoleCommand(),
+  new AddAdminRoleCommand(authService),
+  new RemoveAdminRoleCommand(authService),
 
-  new CreateScrimCommand(signupsService),
-  new GetSignupsCommand(signupsService),
-  new ComputeScrimCommand(signupsService),
-  new CloseScrimCommand(signupsService),
+  new CreateScrimCommand(authService, signupsService),
+  new GetSignupsCommand(authService, signupsService),
+  new ComputeScrimCommand(authService, signupsService),
+  new CloseScrimCommand(authService, signupsService),
 
   new ChangeTeamNameCommand(),
   new DropoutCommand(rosterService),

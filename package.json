@@ -1,8 +1,11 @@
 {
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "NODE_ENV=dev node dist/index.js",
+    "start:prod": "NODE_ENV=prod node dist/index.js",
+    "deploy-commands": "NODE_ENV=dev node dist/deploy-commands.js",
+    "deploy-commands:prod": "NODE_ENV=prod node dist/deploy-commands.js",
+    "start:watch": "nodemon --exec \"npm run build && npm run start\" -e ts --ignore dist/",
     "build": "tsc -p tsconfig.build.json",
-    "dev": "tsc-watch --onSuccess \"nodemon dist/index.js\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 import { authService } from "../../src/services";
 import SpyInstance = jest.SpyInstance;
-import { MockCommand } from "../mocks/command.mock";
+import { MockAdminCommand, MockMemberCommand } from "../mocks/command.mock";
 
 describe("abstract command", () => {
   let basicInteraction: ChatInputCommandInteraction;
@@ -31,10 +31,12 @@ describe("abstract command", () => {
     string
   >;
 
-  let command: MockCommand;
+  let adminCommand: MockAdminCommand;
+  let memberCommand: MockMemberCommand;
 
   beforeAll(() => {
-    command = new MockCommand(true);
+    adminCommand = new MockAdminCommand(authService);
+    memberCommand = new MockMemberCommand();
 
     member = {
       id: "authorized",
@@ -45,6 +47,7 @@ describe("abstract command", () => {
       reply: (message: string) => {
         console.log("Basic replying to command with:", message);
       },
+      options: {},
       member,
     } as unknown as ChatInputCommandInteraction;
     noMemberInteraction = {
@@ -66,6 +69,7 @@ describe("abstract command", () => {
       reply: (message: string) => {
         console.log("Unauthorized replying to command with:", message);
       },
+      options: {},
       member: {
         id: "unauthorized",
         roles: {},
@@ -74,7 +78,7 @@ describe("abstract command", () => {
   });
 
   beforeEach(() => {
-    runSpy = jest.spyOn(command, "run");
+    runSpy = jest.spyOn(adminCommand, "run");
 
     jest
       .spyOn(authService, "memberIsAdmin")
@@ -86,26 +90,25 @@ describe("abstract command", () => {
   it("Should call child class run command because member is authorized", async () => {
     runSpy.mockClear();
     replySpy = jest.spyOn(basicInteraction, "reply");
-    await command.execute(basicInteraction);
+    await adminCommand.execute(basicInteraction);
     expect(runSpy).toHaveBeenCalledWith(basicInteraction);
     expect(replySpy).not.toHaveBeenCalled();
   });
 
   it("Should call child class run command because member does not need to be authorized", async () => {
-    command.isAdmin = false;
+    runSpy = jest.spyOn(memberCommand, "run");
     runSpy.mockClear();
     replySpy = jest.spyOn(noMemberInteraction, "reply");
-    await command.execute(noMemberInteraction);
+    await memberCommand.execute(noMemberInteraction);
     expect(runSpy).toHaveBeenCalledWith(noMemberInteraction);
     expect(replySpy).not.toHaveBeenCalled();
-    command.isAdmin = true;
   });
 
   describe("errors", () => {
     it("should not call run command because there is no member", async () => {
       runSpy.mockClear();
       replySpy = jest.spyOn(noMemberInteraction, "reply");
-      await command.execute(noMemberInteraction);
+      await adminCommand.execute(noMemberInteraction);
       expect(replySpy).toHaveBeenCalledWith(
         "Can't find the member issuing the command or this is an api command, no command executed",
       );
@@ -115,7 +118,7 @@ describe("abstract command", () => {
     it("should not call run command because member is not authorized", async () => {
       runSpy.mockClear();
       replySpy = jest.spyOn(unAuthorizedMemberInteraction, "reply");
-      await command.execute(unAuthorizedMemberInteraction);
+      await adminCommand.execute(unAuthorizedMemberInteraction);
       expect(replySpy).toHaveBeenCalledWith(
         "User calling command is not authorized",
       );

@@ -1,0 +1,3 @@
+table:
+  name: dummy_scrim_signups_with_players
+  schema: public

@@ -33,27 +33,31 @@ type ExtendedCommandInteractionOptionResolver = Omit<
 export const getCustomOptions = (
   interaction: ChatInputCommandInteraction,
 ): ExtendedCommandInteractionOptionResolver => {
-  return {
-    ...interaction.options,
-    getDateTime: (key: string, required?: boolean): Date => {
-      const dateTimeString = interaction.options.getString(key);
-      try {
-        if (dateTimeString) {
-          return parseDate(dateTimeString);
-        }
-      } catch (e) {
-        interaction.reply(
-          `Can't parse ${key}. ${required ? "Required. " : ""}${e}; Expected format: mm/dd/yy hh:mm pm`,
-        );
-        throw Error(
-          "Unable to parse a date argument that was " +
-            (required ? "required" : "supplied"),
-        );
+  const extendedInteraction: ExtendedCommandInteractionOptionResolver =
+    interaction.options as ExtendedCommandInteractionOptionResolver;
+
+  extendedInteraction["getDateTime"] = (
+    key: string,
+    required?: boolean,
+  ): Date => {
+    const dateTimeString = interaction.options.getString(key);
+    try {
+      if (dateTimeString) {
+        return parseDate(dateTimeString);
       }
-      // get around typescript expecting a date here, technically we are supplying the getDate(): Date | null function here
-      return null as unknown as Date;
-    },
+    } catch (e) {
+      interaction.reply(
+        `Can't parse ${key}. ${required ? "Required. " : ""}${e}; Expected format: mm/dd/yy hh:mm pm`,
+      );
+      throw Error(
+        "Unable to parse a date argument that was " +
+          (required ? "required" : "supplied"),
+      );
+    }
+    // get around typescript expecting a date here, technically we are supplying the getDate(): Date | null function here
+    return null as unknown as Date;
   };
+  return extendedInteraction;
 };
 
 export interface CustomInteraction extends ChatInputCommandInteraction {

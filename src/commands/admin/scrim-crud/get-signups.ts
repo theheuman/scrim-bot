@@ -1,11 +1,19 @@
 import { ScrimSignup } from "../../../models/Scrims";
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
+import { AuthService } from "../../../services/auth";
 
-export class GetSignupsCommand extends Command {
-  constructor(private signupService: ScrimSignups) {
-    super("get-signups", "Creates a new scrim signup text channel", true);
+export class GetSignupsCommand extends AdminCommand {
+  constructor(
+    authService: AuthService,
+    private signupService: ScrimSignups,
+  ) {
+    super(
+      authService,
+      "get-signups",
+      "Creates a new scrim signup text channel",
+    );
   }
 
   async run(interaction: CustomInteraction) {

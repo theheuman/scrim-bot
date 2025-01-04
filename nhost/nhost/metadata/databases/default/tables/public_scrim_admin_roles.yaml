@@ -1,0 +1,3 @@
+table:
+  name: scrim_admin_roles
+  schema: public

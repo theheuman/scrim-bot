@@ -1,25 +1,18 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { isGuildMember } from "../utility/utility";
-import { authService } from "../services";
 import {
   CustomInteraction,
   getCustomOptions,
   OptionConfig,
   SlashCommandOption,
 } from "./interaction";
+import { AuthService } from "../services/auth";
 
 export abstract class Command extends SlashCommandBuilder {
-  isAdmin: boolean;
-
-  protected constructor(
-    name: string,
-    description: string,
-    isAdmin: boolean = false,
-  ) {
+  protected constructor(name: string, description: string) {
     super();
     this.setName(name);
     this.setDescription(description);
-    this.isAdmin = isAdmin ?? false;
   }
 
   addUserInput(name: string, description: string, isRequired: boolean = false) {
@@ -92,19 +85,45 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    if (this.isAdmin) {
-      if (!isGuildMember(interaction.member)) {
-        await interaction.reply(
-          "Can't find the member issuing the command or this is an api command, no command executed",
-        );
-        return;
-      } else if (!(await authService.memberIsAdmin(interaction.member))) {
-        await interaction.reply("User calling command is not authorized");
-        return;
-      }
-    }
     interaction.options = getCustomOptions(interaction);
-    return this.run(interaction as CustomInteraction);
+    return this.childExecute(interaction as CustomInteraction);
+  }
+
+  abstract childExecute(interaction: CustomInteraction): Promise<void>;
+}
+
+export abstract class AdminCommand extends Command {
+  constructor(
+    private authService: AuthService,
+    name: string,
+    description: string,
+  ) {
+    super(name, description);
+  }
+
+  async childExecute(interaction: CustomInteraction) {
+    if (!isGuildMember(interaction.member)) {
+      await interaction.reply(
+        "Can't find the member issuing the command or this is an api command, no command executed",
+      );
+      return;
+    } else if (!(await this.authService.memberIsAdmin(interaction.member))) {
+      await interaction.reply("User calling command is not authorized");
+      return;
+    }
+    return this.run(interaction);
+  }
+
+  abstract run(interaction: CustomInteraction): Promise<void>;
+}
+
+export abstract class MemberCommand extends Command {
+  constructor(name: string, description: string) {
+    super(name, description);
+  }
+
+  async childExecute(interaction: CustomInteraction) {
+    return this.run(interaction);
   }
 
   abstract run(interaction: CustomInteraction): Promise<void>;
