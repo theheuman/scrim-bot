@@ -69,11 +69,11 @@ export class AddPrioCommand extends AdminCommand {
       return;
     }
 
-    const prioReasonString = dbIds
+    const prioIdString = dbIds
       .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
-      .join("; ");
+      .join("\n");
     await interaction.reply(
-      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)} because ${reason}. ${prioReasonString}`,
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}`,
     );
   }
 }
