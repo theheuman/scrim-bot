@@ -49,12 +49,20 @@ describe("Custom interaction", () => {
     expect(date).toEqual(new Date("2024-11-15T00:00:00-05:00"));
   });
 
-  it("Should return a correct date for january while in january", async () => {
-    dateTimeString = "1/4 8 pm";
+  it("Should return a correct date when no space between time and pm", async () => {
+    dateTimeString = "1/4 8pm";
     jest.setSystemTime(new Date("2025-01-03"));
     const customOptions = getCustomOptions(basicInteraction);
     const date = customOptions.getDateTime("date");
     expect(date).toEqual(new Date("2025-01-04T20:00:00-05:00"));
+  });
+
+  it("Should return a correct date when no space between time with minutes and am", async () => {
+    dateTimeString = "1/4 8:30am";
+    jest.setSystemTime(new Date("2025-01-03"));
+    const customOptions = getCustomOptions(basicInteraction);
+    const date = customOptions.getDateTime("date");
+    expect(date).toEqual(new Date("2025-01-04T08:30:00-05:00"));
   });
 
   it("should return null when date is not required and string does not exist", async () => {

@@ -16,7 +16,7 @@ export class PrioService {
     endDate: Date,
     amount: number,
     reason: string,
-  ) {
+  ): Promise<string[]> {
     const playerIds = await this.getPlayerIds(prioUsers);
     return await this.db.setPrio(playerIds, startDate, endDate, amount, reason);
   }
@@ -26,7 +26,10 @@ export class PrioService {
   }
 
   // changes teams in place and returns the teams, does NOT sort
-  async getTeamPrioForScrim(scrim: Scrim, teams: ScrimSignup[]) {
+  async getTeamPrioForScrim(
+    scrim: Scrim,
+    teams: ScrimSignup[],
+  ): Promise<ScrimSignup[]> {
     const playersIdsWithPrio = await this.db.getPrio(scrim.dateTime);
     const playerMap = this.generatePlayerMap(playersIdsWithPrio);
     this.setTeamPrioFromPlayerPrio(teams, playerMap);

@@ -6,10 +6,13 @@ import {
   Snowflake,
   User,
 } from "discord.js";
-import { authService, prioService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { AddPrioCommand } from "../../../../src/commands/admin/prio/add-prio";
 import { CustomInteraction } from "../../../../src/commands/interaction";
+import { AuthMock } from "../../../mocks/auth.mock";
+import { AuthService } from "../../../../src/services/auth";
+import { PrioServiceMock } from "../../../mocks/prio.mock";
+import { PrioService } from "../../../../src/services/prio";
 
 describe("Add prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -36,10 +39,15 @@ describe("Add prio", () => {
     string
   >;
 
+  const mockPrioService = new PrioServiceMock();
+
   let command: AddPrioCommand;
 
   beforeAll(() => {
-    command = new AddPrioCommand(authService, prioService);
+    command = new AddPrioCommand(
+      new AuthMock() as AuthService,
+      mockPrioService as PrioService,
+    );
 
     member = {
       roles: {},
@@ -100,7 +108,7 @@ describe("Add prio", () => {
       member,
     } as unknown as CustomInteraction;
 
-    setPlayerPrioSpy = jest.spyOn(prioService, "setPlayerPrio");
+    setPlayerPrioSpy = jest.spyOn(mockPrioService, "setPlayerPrio");
     setPlayerPrioSpy.mockClear();
     setPlayerPrioSpy.mockReturnValue(Promise.resolve([]));
   });
