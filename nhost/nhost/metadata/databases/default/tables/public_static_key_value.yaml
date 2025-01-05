@@ -1,0 +1,3 @@
+table:
+  name: static_key_value
+  schema: public

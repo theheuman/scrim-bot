@@ -19,6 +19,7 @@ import {
   prioService,
   rosterService,
   signupsService,
+  staticValueService,
 } from "../services";
 
 export const commands: Command[] = [
@@ -34,7 +35,7 @@ export const commands: Command[] = [
   new AddAdminRoleCommand(authService),
   new RemoveAdminRoleCommand(authService),
 
-  new CreateScrimCommand(authService, signupsService),
+  new CreateScrimCommand(authService, signupsService, staticValueService),
   new GetSignupsCommand(authService, signupsService),
   new ComputeScrimCommand(authService, signupsService),
   new CloseScrimCommand(authService, signupsService),

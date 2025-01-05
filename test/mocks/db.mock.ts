@@ -32,12 +32,14 @@ export class DbMock extends DB {
     return Promise.resolve(this.deleteResponse);
   }
 
-  get(
+  get<K extends string>(
     tableName: string,
     fieldsToSearch: LogicalExpression,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue> {
-    return Promise.resolve(this.getResponse);
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>> {
+    return Promise.resolve([{ id: "" }] as unknown as Array<
+      Record<K, DbValue>
+    >);
   }
 
   post(tableName: string, data: Record<string, DbValue>[]): Promise<string[]> {
@@ -69,12 +71,14 @@ export class DbMock extends DB {
     return Promise.resolve(this.insertPlayersResponse);
   }
 
-  override getActiveScrims(): Promise<{
-    scrims: { discord_channel: string; id: string; date_time_field: string }[];
-  }> {
-    return Promise.resolve({
-      scrims: [],
-    });
+  override getActiveScrims(): Promise<
+    {
+      discord_channel: string;
+      id: string;
+      date_time_field: string;
+    }[]
+  > {
+    return Promise.resolve([]);
   }
 
   override async getScrimSignupsWithPlayers(

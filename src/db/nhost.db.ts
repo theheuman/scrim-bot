@@ -52,11 +52,11 @@ class NhostDb extends DB {
     return "";
   }
 
-  async get(
+  async get<K extends string>(
     tableName: string,
     logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
-  ): Promise<JSONValue> {
+  ): Promise<Array<Record<K, DbValue>>> {
     let searchString = this.generateWhereClause(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
@@ -76,7 +76,8 @@ class NhostDb extends DB {
     if (!result.data || result.error) {
       throw Error("Graph ql error: " + result.error);
     }
-    return result.data;
+    const dataArray = result.data as Record<string, Array<Record<K, DbValue>>>;
+    return dataArray[tableName] as Array<Record<K, DbValue>>;
   }
 
   async post(
