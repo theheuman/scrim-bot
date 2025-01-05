@@ -6,14 +6,16 @@ import {
   MessagePayload,
   User,
 } from "discord.js";
-import { authService } from "../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { MockAdminCommand, MockMemberCommand } from "../mocks/command.mock";
+import { AuthMock } from "../mocks/auth.mock";
+import { AuthService } from "../../src/services/auth";
 
 describe("abstract command", () => {
   let basicInteraction: ChatInputCommandInteraction;
   let noMemberInteraction: ChatInputCommandInteraction;
   let unAuthorizedMemberInteraction: ChatInputCommandInteraction;
+  const authMock = new AuthMock() as AuthService;
 
   let runSpy: SpyInstance<
     Promise<void>,
@@ -35,7 +37,7 @@ describe("abstract command", () => {
   let memberCommand: MockMemberCommand;
 
   beforeAll(() => {
-    adminCommand = new MockAdminCommand(authService);
+    adminCommand = new MockAdminCommand(authMock);
     memberCommand = new MockMemberCommand();
 
     member = {
@@ -81,7 +83,7 @@ describe("abstract command", () => {
     runSpy = jest.spyOn(adminCommand, "run");
 
     jest
-      .spyOn(authService, "memberIsAdmin")
+      .spyOn(authMock, "memberIsAdmin")
       .mockImplementation((member) =>
         Promise.resolve(member.id === "authorized"),
       );

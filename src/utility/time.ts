@@ -61,10 +61,22 @@ const getDateString = (monthDay: string): string => {
 };
 
 const getTimeString = (time: string) => {
-  const timeArray = time.trim().split(" ");
-  const hourMinuteString = timeArray[0];
-  const ampmLabel = timeArray[1].toLowerCase();
-  const hourMinuteArray = hourMinuteString.split(":");
+  let timeString = "";
+  let ampmLabelString = "";
+  let labelFlag = false;
+  for (const char of time.toLowerCase()) {
+    if (char === " " || char === "a" || char === "p") {
+      labelFlag = true;
+    }
+    if (!labelFlag) {
+      timeString += char;
+    } else {
+      ampmLabelString += char;
+    }
+  }
+  const ampmLabel = ampmLabelString.trim().toLowerCase();
+
+  const hourMinuteArray = timeString.split(":");
   const hour = Number(hourMinuteArray[0]);
   let minute = Number(hourMinuteArray[1]);
   if (isNaN(hour) || hour <= 0 || hour > 12) {

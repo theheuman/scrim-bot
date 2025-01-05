@@ -1,5 +1,4 @@
 import {
-  ChannelType,
   GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
@@ -7,11 +6,13 @@ import {
   Message,
   MessagePayload,
 } from "discord.js";
-import { authService, signupsService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { CreateScrimCommand } from "../../../../src/commands/admin/scrim-crud/create-scrim";
-import Mock = jest.Mock;
+import { AuthMock } from "../../../mocks/auth.mock";
+import { AuthService } from "../../../../src/services/auth";
+import { ScrimSignupMock } from "../../../mocks/signups.mock";
+import { ScrimSignups } from "../../../../src/services/signups";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -39,6 +40,8 @@ describe("Create scrim", () => {
   const fakeScrimDate = new Date("2024-11-15T20:00:00-05:00");
 
   let command: CreateScrimCommand;
+
+  const scrimSignupsMock = new ScrimSignupMock();
 
   beforeAll(() => {
     member = {
@@ -85,7 +88,7 @@ describe("Create scrim", () => {
     } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
-    signupsCreateScrimSpy = jest.spyOn(signupsService, "createScrim");
+    signupsCreateScrimSpy = jest.spyOn(scrimSignupsMock, "createScrim");
     signupsCreateScrimSpy.mockImplementation(() => {
       return Promise.resolve("uuid-87623");
     });
@@ -102,7 +105,10 @@ describe("Create scrim", () => {
     signupsCreateScrimSpy.mockClear();
     newChannelMessageSpy.mockClear();
     // TODO mock services
-    command = new CreateScrimCommand(authService, signupsService);
+    command = new CreateScrimCommand(
+      new AuthMock() as AuthService,
+      scrimSignupsMock as unknown as ScrimSignups,
+    );
   });
 
   it("Should create scrim", async () => {
