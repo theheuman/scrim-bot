@@ -1,10 +1,18 @@
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
+import { AuthService } from "../../../services/auth";
 
-export class ComputeScrimCommand extends Command {
-  constructor(private signupService: ScrimSignups) {
-    super("compute-scrim", "Creates a new scrim signup text channel", true);
+export class ComputeScrimCommand extends AdminCommand {
+  constructor(
+    authService: AuthService,
+    private signupService: ScrimSignups,
+  ) {
+    super(
+      authService,
+      "compute-scrim",
+      "Creates a new scrim signup text channel",
+    );
     this.addStringInput(
       "overstat-link",
       "Full length url of the completed scrim (not short url)",

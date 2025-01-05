@@ -1,9 +1,9 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { GatewayIntentBits } from "discord.js";
-import config from "../config.json";
 import ExtendedClient from "./ExtendedClient";
 import { commands } from "./commands";
+import { appConfig } from "./config";
 
 const client = new ExtendedClient({ intents: [GatewayIntentBits.Guilds] });
 
@@ -26,4 +26,4 @@ for (const file of eventFiles) {
   }
 }
 
-client.login(config.token);
+client.login(appConfig.discord.token);

@@ -1,10 +1,18 @@
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
+import { AuthService } from "../../../services/auth";
 
-export class CloseScrimCommand extends Command {
-  constructor(private signupService: ScrimSignups) {
-    super("close-scrim", "Creates a new scrim signup text channel", true);
+export class CloseScrimCommand extends AdminCommand {
+  constructor(
+    authService: AuthService,
+    private signupService: ScrimSignups,
+  ) {
+    super(
+      authService,
+      "close-scrim",
+      "Creates a new scrim signup text channel",
+    );
   }
 
   async run(interaction: CustomInteraction) {

@@ -1,0 +1,37 @@
+table:
+  name: players
+  schema: public
+array_relationships:
+  - name: low_prio
+    using:
+      foreign_key_constraint_on:
+        column: player_id
+        table:
+          name: prio
+          schema: public
+  - name: prio
+    using:
+      foreign_key_constraint_on:
+        column: player_id
+        table:
+          name: prio
+          schema: public
+  - name: scrim_player_stats
+    using:
+      foreign_key_constraint_on:
+        column: player_id
+        table:
+          name: scrim_player_stats
+          schema: public
+select_permissions:
+  - role: public
+    permission:
+      columns:
+        - id
+        - display_name
+        - discord_id
+        - overstat_id
+        - elo
+      filter: {}
+      limit: 10
+      allow_aggregations: true

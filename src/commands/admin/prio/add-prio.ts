@@ -1,9 +1,10 @@
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { PrioService } from "../../../services/prio";
 import { setEasternHours } from "../../../utility/time";
+import { AuthService } from "../../../services/auth";
 
-export class AddPrioCommand extends Command {
+export class AddPrioCommand extends AdminCommand {
   inputNames = {
     user1: "user1",
     user2: "user2",
@@ -14,12 +15,14 @@ export class AddPrioCommand extends Command {
     endDate: "enddate",
   };
 
-  constructor(private prioService: PrioService) {
-    super("addprio", "Adds a prio entry for up to three players", true);
+  constructor(
+    authService: AuthService,
+    private prioService: PrioService,
+  ) {
+    super(authService, "addprio", "Adds a prio entry for up to three players");
 
     this.addUserInput(this.inputNames.user1, "First user", true);
-    this.addUserInput(this.inputNames.user2, "Second user");
-    this.addUserInput(this.inputNames.user3, "Third user");
+    this.addDateInput(this.inputNames.endDate, "End date", true);
     this.addNumberInput(
       this.inputNames.amount,
       "Amount of prio, negative for low prio",
@@ -28,12 +31,12 @@ export class AddPrioCommand extends Command {
     this.addStringInput(this.inputNames.reason, "Reason fro prio", {
       isRequired: true,
     });
+    this.addUserInput(this.inputNames.user2, "Second user");
+    this.addUserInput(this.inputNames.user3, "Third user");
     this.addDateInput(
       this.inputNames.startDate,
       "Optional start date, defaults to when command is called",
-      true,
     );
-    this.addDateInput(this.inputNames.endDate, "End date", true);
   }
 
   async run(interaction: CustomInteraction) {
@@ -66,11 +69,11 @@ export class AddPrioCommand extends Command {
       return;
     }
 
-    const prioReasonString = dbIds
+    const prioIdString = dbIds
       .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
-      .join("; ");
+      .join("\n");
     await interaction.reply(
-      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)} because ${reason}. ${prioReasonString}`,
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}`,
     );
   }
 }

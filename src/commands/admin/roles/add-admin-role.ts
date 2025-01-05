@@ -1,9 +1,14 @@
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { AuthService } from "../../../services/auth";
 
-export class AddAdminRoleCommand extends Command {
-  constructor() {
-    super("addadminrole", "Adds a role that can perform scrim admin actions");
+export class AddAdminRoleCommand extends AdminCommand {
+  constructor(authService: AuthService) {
+    super(
+      authService,
+      "addadminrole",
+      "Adds a role that can perform scrim admin actions",
+    );
     this.addRoleInput("role", "Role to add", true);
   }
 

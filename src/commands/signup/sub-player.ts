@@ -1,7 +1,7 @@
-import { Command } from "../command";
+import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 
-export class SubPlayerCommand extends Command {
+export class SubPlayerCommand extends MemberCommand {
   constructor() {
     super("subplayer", "Replace a player on a team");
     this.addUserInput("remove-player", "Player to remove", true);

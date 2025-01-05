@@ -1,0 +1,13 @@
+table:
+  name: scrim_signups
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          signup_player_id: id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public

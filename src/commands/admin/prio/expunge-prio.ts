@@ -1,8 +1,9 @@
-import { Command } from "../../command";
+import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
+import { AuthService } from "../../../services/auth";
 
-export class ExpungePrioCommand extends Command {
-  constructor() {
+export class ExpungePrioCommand extends AdminCommand {
+  constructor(authService: AuthService) {
     // call super here with the name of the command
     // add any inputs you need after calling super()
   }

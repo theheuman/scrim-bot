@@ -6,16 +6,10 @@ import {
   JSONValue,
   LogicalExpression,
 } from "./types";
-import configJson from "../../config.json";
 import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
 import { ExpungedPlayerPrio } from "../models/Prio";
-
-const config: {
-  nhost: { adminSecret: string; subdomain: string; region: string };
-} = configJson as {
-  nhost: { adminSecret: string; subdomain: string; region: string };
-};
+import { appConfig } from "../config";
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
@@ -522,7 +516,7 @@ class NhostDb extends DB {
   }
 }
 export const nhostDb = new NhostDb(
-  config.nhost.adminSecret,
-  config.nhost.region,
-  config.nhost.subdomain,
+  appConfig.nhost.adminSecret,
+  appConfig.nhost.region,
+  appConfig.nhost.subdomain,
 );

@@ -1,14 +1,8 @@
 import { REST, Routes } from "discord.js";
 import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from "../node_modules/@discordjs/builders/node_modules/discord-api-types/rest/v10/interactions.d.ts";
-interface Config {
-  clientId: string;
-  guildId: string;
-  token: string;
-}
 
-import configJson from "../config.json";
 import { commands } from "./commands";
-const config: Config = configJson as Config;
+import { appConfig } from "./config";
 
 const restCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
@@ -18,8 +12,9 @@ for (const command of commands) {
 
 console.log(`Total commands to deploy: ${restCommands.length}`);
 
+const discordConfig = appConfig.discord;
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(config.token);
+const rest = new REST().setToken(discordConfig.token);
 
 // and deploy your commands!
 (async () => {
@@ -32,7 +27,10 @@ const rest = new REST().setToken(config.token);
     var data: any;
 
     data = await rest.put(
-      Routes.applicationGuildCommands(config.clientId, config.guildId),
+      Routes.applicationGuildCommands(
+        discordConfig.clientId,
+        discordConfig.guildId,
+      ),
       { body: restCommands },
     );
 
