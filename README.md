@@ -64,9 +64,9 @@ They depend on services in the services/ directory that use the
 Install additional nhost server dependencies to run a local version of the database.
 https://docs.nhost.io/development/cli/getting-started
 
-Start nhost by going to the nhost/ directory and running `nhost up`, you can then navigate to the dashboard link the command gives you to see that its running correctly
+Start nhost by going to the nhost/ directory and running `nhost up --apply-seeds`, you can then navigate to the dashboard link the command gives you to see that its running correctly
 
-Before deploying test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info.
+Before deploying test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info and insert necessary date into nhost (scrim_admin_roles and static_key_values.signup_channel).
 
 Deploy commands to your private server with `npm run deploy-commands`
 
