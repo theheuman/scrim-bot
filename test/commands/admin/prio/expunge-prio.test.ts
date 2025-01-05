@@ -5,11 +5,14 @@ import {
   MessagePayload,
   Snowflake,
 } from "discord.js";
-import { prioService } from "../../../../src/services";
 import SpyInstance = jest.SpyInstance;
 import { ExpungedPlayerPrio } from "../../../../src/models/Prio";
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { ExpungePrioCommand } from "../../../../src/commands/admin/prio/expunge-prio";
+import { PrioServiceMock } from "../../../mocks/prio.mock";
+import { PrioService } from "../../../../src/services/prio";
+import { AuthMock } from "../../../mocks/auth.mock";
+import { AuthService } from "../../../../src/services/auth";
 
 describe("Expunge prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -29,6 +32,9 @@ describe("Expunge prio", () => {
   >;
   let command: ExpungePrioCommand;
 
+  const mockPrioService = new PrioServiceMock() as PrioService;
+  const mockAuth = new AuthMock() as AuthService;
+
   beforeAll(() => {
     member = {
       roles: {},
@@ -43,10 +49,10 @@ describe("Expunge prio", () => {
       channelId,
       member,
     } as unknown as CustomInteraction;
-    expungePrioSpy = jest.spyOn(prioService, "expungePlayerPrio");
+    expungePrioSpy = jest.spyOn(mockPrioService, "expungePlayerPrio");
     expungePrioSpy.mockClear();
     expungePrioSpy.mockReturnValue(Promise.resolve([]));
-    command = new ExpungePrioCommand(prioService);
+    command = new ExpungePrioCommand(mockAuth, mockPrioService);
   });
 
   it("Should expunge prio", async () => {
