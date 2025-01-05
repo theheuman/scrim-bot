@@ -119,7 +119,7 @@ describe("Create scrim", () => {
     );
     expect(channelCreatedSpy).toHaveBeenCalledWith(
       "11/15 8pm open-edwe",
-      "Scrim date: <t:1731718800:t>\nscrim signup instruction text",
+      "Scrim date: <t:1731718800:t>\nDraft time: <t:1731717600:t>\nLobby post time: <t:1731711600:t>\nLow prio time: <t:1731713400:t>\nscrim signup instruction text",
     );
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "forum thread id",
