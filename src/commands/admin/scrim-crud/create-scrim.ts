@@ -1,10 +1,4 @@
-import {
-  Snowflake,
-  Channel,
-  ForumChannel,
-  PublicThreadChannel,
-  Collection,
-} from "discord.js";
+import { ForumChannel, PublicThreadChannel } from "discord.js";
 import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
@@ -12,11 +6,14 @@ import { formatInTimeZone } from "date-fns-tz";
 import { AuthService } from "../../../services/auth";
 import { StaticValueService } from "../../../services/static-values";
 import { ForumThreadChannel } from "discord.js/typings";
+import { ChannelType } from "discord-api-types/v10";
+import { isForumChannel } from "../../../utility/utility";
 
 export class CreateScrimCommand extends AdminCommand {
   inputNames = {
     date: "date",
     name: "name",
+    channel: "forum-channel",
   };
 
   constructor(
@@ -30,6 +27,10 @@ export class CreateScrimCommand extends AdminCommand {
       "Creates a new scrim, including a new text channel and signup instructions",
     );
     this.addDateInput(this.inputNames.date, "Choose date of the scrim. ", true);
+    this.addChannelInput(this.inputNames.channel, "Forum to post in", {
+      isRequired: true,
+      channelTypes: [ChannelType.GuildForum],
+    });
     this.addStringInput(
       this.inputNames.name,
       "The name of the scrim (open, tendies, etc...)",
@@ -45,6 +46,18 @@ export class CreateScrimCommand extends AdminCommand {
       true,
     );
     const scrimName = interaction.options.getString(this.inputNames.name, true);
+    const channel = interaction.options.getChannel(
+      this.inputNames.channel,
+      true,
+      [ChannelType.GuildForum],
+    );
+    // just to triple check
+    if (!isForumChannel(channel)) {
+      await interaction.reply(
+        "Scrim post could not be created. Channel provided is not a forum channel",
+      );
+      return;
+    }
 
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
@@ -52,41 +65,38 @@ export class CreateScrimCommand extends AdminCommand {
       content: "Fetched all input and working on your request!",
     });
 
-    let createdChannel: PublicThreadChannel;
+    let createdThread: PublicThreadChannel;
     try {
-      createdChannel = await this.createSignupPost(
-        interaction,
+      createdThread = await this.createSignupPost(
+        channel,
         scrimDate,
         scrimName,
       );
     } catch (error) {
-      await interaction.editReply(
-        "Scrim channel could not be created. " + error,
-      );
+      await interaction.editReply("Scrim post could not be created. " + error);
       return;
     }
 
     try {
-      await this.signupService.createScrim(createdChannel.id, scrimDate);
+      await this.signupService.createScrim(createdThread.id, scrimDate);
     } catch (error) {
+      // TODO delete the channel once we figure out how to do that in the delete command
       await interaction.editReply("Scrim not created: " + error);
       return;
     }
 
     await interaction.editReply(
-      `Scrim created. Channel: <#${createdChannel.id}>`,
+      `Scrim created. Channel: <#${createdThread.id}>`,
     );
   }
 
   private async createSignupPost(
-    interaction: CustomInteraction,
+    forumChannel: ForumChannel,
     scrimDate: Date,
     scrimName: string,
   ): Promise<ForumThreadChannel> {
-    const forumChannel = await this.getSignupsForum(
-      interaction.client.channels.cache,
-    );
     const introMessage = await this.getIntroMessage(scrimDate);
+    console.log(introMessage);
 
     const postName = `${formatInTimeZone(scrimDate, "America/New_York", "M/d haaa")} ${scrimName}`;
 
@@ -96,22 +106,6 @@ export class CreateScrimCommand extends AdminCommand {
         content: introMessage,
       },
     });
-  }
-
-  private async getSignupsForum(
-    channels: Collection<Snowflake, Channel>,
-  ): Promise<ForumChannel> {
-    const channelId = await this.staticValueService.getSignupsChannelId();
-    if (!channelId) {
-      throw Error("Can't get signups forum channel id from db");
-    }
-    const channel = channels.get(channelId) as ForumChannel | undefined;
-    if (!channel) {
-      throw Error(
-        "Can't find forum channel in server, looking for id: " + channelId,
-      );
-    }
-    return channel;
   }
 
   private async getIntroMessage(scrimDate: Date): Promise<string> {
@@ -138,6 +132,7 @@ export class CreateScrimCommand extends AdminCommand {
       .replace("${scrimTime}", this.formatTime(scrimDate))
       .replace("${draftTime}", draftTime)
       .replace("${lobbyPostTime}", lobbyPostTime)
-      .replace("${lowPrioTime}", lowPrioTime);
+      .replace("${lowPrioTime}", lowPrioTime)
+      .replace(/\\n/g, "\n");
   }
 }

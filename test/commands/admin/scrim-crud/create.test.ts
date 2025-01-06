@@ -15,6 +15,7 @@ import { ScrimSignupMock } from "../../../mocks/signups.mock";
 import { ScrimSignups } from "../../../../src/services/signups";
 import { StaticValueServiceMock } from "../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../src/services/static-values";
+import { ChannelType } from "discord-api-types/v10";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -61,15 +62,9 @@ describe("Create scrim", () => {
           return { id: "forum thread id" };
         },
       },
+      type: ChannelType.GuildForum,
     };
     basicInteraction = {
-      client: {
-        channels: {
-          cache: {
-            get: () => forumChannel,
-          },
-        },
-      },
       options: {
         getString: (key: string) => {
           if (key === "name") {
@@ -79,6 +74,7 @@ describe("Create scrim", () => {
         getDateTime: () => {
           return fakeScrimDate;
         },
+        getChannel: () => forumChannel,
       },
       reply: (message: string) => {
         console.log("Replying to command with:", message);
@@ -128,15 +124,8 @@ describe("Create scrim", () => {
   });
 
   describe("errors", () => {
-    it("should not create scrim because it can't find the forum channel", async () => {
+    it("should not create scrim because the channel provided is not a forum channel", async () => {
       const noChannelInteraction = {
-        client: {
-          channels: {
-            cache: {
-              get: () => undefined,
-            },
-          },
-        },
         options: {
           getString: (key: string) => {
             if (key === "name") {
@@ -146,18 +135,16 @@ describe("Create scrim", () => {
           getDateTime: () => {
             return fakeScrimDate;
           },
+          getChannel: () => ({ type: ChannelType.GuildText }),
         },
         reply: (message: string) => {
           console.log("Replying to command with:", message);
         },
-        editReply: (message: string) => {
-          console.log("Editing reply to:", message);
-        },
       } as unknown as CustomInteraction;
-      editReplySpy = jest.spyOn(noChannelInteraction, "editReply");
+      replySpy = jest.spyOn(noChannelInteraction, "reply");
       await command.run(noChannelInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
-        "Scrim channel could not be created. Error: Can't find forum channel in server, looking for id: discord forum id",
+      expect(replySpy).toHaveBeenCalledWith(
+        "Scrim post could not be created. Channel provided is not a forum channel",
       );
       expect(signupsCreateScrimSpy).not.toHaveBeenCalled();
     });
@@ -173,17 +160,6 @@ describe("Create scrim", () => {
       );
     });
 
-    it("should not create scrim because the static value service couldn't fetch the channel id", async () => {
-      jest
-        .spyOn(mockStaticValueService, "getSignupsChannelId")
-        .mockReturnValueOnce(Promise.resolve(undefined));
-      editReplySpy = jest.spyOn(basicInteraction, "editReply");
-      await command.run(basicInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
-        "Scrim channel could not be created. Error: Can't get signups forum channel id from db",
-      );
-    });
-
     it("should not create scrim because the static value service couldn't fetch the intro message", async () => {
       jest
         .spyOn(mockStaticValueService, "getInstructionText")
@@ -191,7 +167,7 @@ describe("Create scrim", () => {
       editReplySpy = jest.spyOn(basicInteraction, "editReply");
       await command.run(basicInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
-        "Scrim channel could not be created. Error: Can't get instruction text from db",
+        "Scrim post could not be created. Error: Can't get instruction text from db",
       );
     });
   });
