@@ -19,7 +19,7 @@ export class ScrimSignups {
 
   async updateActiveScrims(log?: boolean) {
     const activeScrims = await this.db.getActiveScrims();
-    for (const scrim of activeScrims.scrims) {
+    for (const scrim of activeScrims) {
       if (scrim.id && scrim.discord_channel) {
         const mappedScrim: Scrim = {
           active: true,

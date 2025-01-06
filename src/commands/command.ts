@@ -7,6 +7,7 @@ import {
   SlashCommandOption,
 } from "./interaction";
 import { AuthService } from "../services/auth";
+import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
 
 export abstract class Command extends SlashCommandBuilder {
   protected constructor(name: string, description: string) {
@@ -53,6 +54,24 @@ export abstract class Command extends SlashCommandBuilder {
     this.addRoleOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
+  }
+
+  addChannelInput(
+    name: string,
+    description: string,
+    config: {
+      isRequired: boolean;
+      channelTypes: ApplicationCommandOptionAllowedChannelTypes[];
+    },
+  ) {
+    this.addChannelOption((option) => {
+      return this.addOption(
+        option,
+        name,
+        description,
+        config.isRequired ?? false,
+      ).addChannelTypes(config.channelTypes);
+    });
   }
 
   // at some point discord might actually implement this, for now just use string

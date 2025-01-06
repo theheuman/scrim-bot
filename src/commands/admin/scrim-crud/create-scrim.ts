@@ -1,19 +1,25 @@
-import { ChannelType, CategoryChannel, TextChannel, Guild } from "discord.js";
+import { ForumChannel, PublicThreadChannel } from "discord.js";
 import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
 import { formatInTimeZone } from "date-fns-tz";
 import { AuthService } from "../../../services/auth";
+import { StaticValueService } from "../../../services/static-values";
+import { ForumThreadChannel } from "discord.js/typings";
+import { ChannelType } from "discord-api-types/v10";
+import { isForumChannel } from "../../../utility/utility";
 
 export class CreateScrimCommand extends AdminCommand {
   inputNames = {
     date: "date",
     name: "name",
+    channel: "forum-channel",
   };
 
   constructor(
     authService: AuthService,
     private signupService: ScrimSignups,
+    private staticValueService: StaticValueService,
   ) {
     super(
       authService,
@@ -21,6 +27,10 @@ export class CreateScrimCommand extends AdminCommand {
       "Creates a new scrim, including a new text channel and signup instructions",
     );
     this.addDateInput(this.inputNames.date, "Choose date of the scrim. ", true);
+    this.addChannelInput(this.inputNames.channel, "Forum to post in", {
+      isRequired: true,
+      channelTypes: [ChannelType.GuildForum],
+    });
     this.addStringInput(
       this.inputNames.name,
       "The name of the scrim (open, tendies, etc...)",
@@ -31,22 +41,23 @@ export class CreateScrimCommand extends AdminCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    if (!interaction.guild) {
-      interaction.reply("Can't find server, contact admin");
-      return;
-    }
-    if (!interaction.channel) {
-      interaction.reply(
-        "Can't find channel command was sent from, contact admin",
-      );
-      return;
-    }
-
     const scrimDate = interaction.options.getDateTime(
       this.inputNames.date,
       true,
     );
     const scrimName = interaction.options.getString(this.inputNames.name, true);
+    const channel = interaction.options.getChannel(
+      this.inputNames.channel,
+      true,
+      [ChannelType.GuildForum],
+    );
+    // just to triple check
+    if (!isForumChannel(channel)) {
+      await interaction.reply(
+        "Scrim post could not be created. Channel provided is not a forum channel",
+      );
+      return;
+    }
 
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
@@ -54,69 +65,74 @@ export class CreateScrimCommand extends AdminCommand {
       content: "Fetched all input and working on your request!",
     });
 
-    const controllerSpacer = `🎮┋`;
-    const chosenChannelName = `${controllerSpacer}${formatInTimeZone(scrimDate, "America/New_York", "M-d-haaa")}-eastern-${scrimName}-scrims`;
-
-    // create channel in method
-    // get channel or throw channel error
-    // create scrim
-    // if scrim not created delete channel and throw db error
-    // send message in channel, let user know if fails but don't throw error
-    // reply everything created
-
-    let createdChannel: TextChannel;
+    let createdThread: PublicThreadChannel;
     try {
-      createdChannel = await this.createSignupChannel(
-        interaction.guild,
-        (interaction.channel as TextChannel).parent,
-        chosenChannelName,
+      createdThread = await this.createSignupPost(
+        channel,
+        scrimDate,
+        scrimName,
       );
     } catch (error) {
-      await interaction.editReply(
-        "Scrim channel could not be created: " + error,
-      );
+      await interaction.editReply("Scrim post could not be created. " + error);
       return;
     }
 
     try {
-      await this.signupService.createScrim(createdChannel.id, scrimDate);
+      await this.signupService.createScrim(createdThread.id, scrimDate);
     } catch (error) {
+      // TODO delete the channel once we figure out how to do that in the delete command
       await interaction.editReply("Scrim not created: " + error);
       return;
     }
 
-    await createdChannel.send(
-      `Scrims will begin at ${this.formatTime(scrimDate)} Eastern on the posted date. If there are fewer than 20 sign ups by 3:00pm on that day then scrims will be cancelled.\n\nWhen signing up please sign up with the format " Team Name - @ Player 1 @ Player 2 @ Player 3" If you use @TBD or a duplicate name you will lose your spot in the scrim. POI Draft will take place one hour before match start in DRAFT 1.\n\nIf we have enough teams for multiple lobbies, seeding will be announced before draft and additional drafts will happen in DRAFT 2, etc.\n\nLook in <#1267487335956746310> and this channel for codes and all necessary information, to be released the day of scrims`,
-    );
     await interaction.editReply(
-      `Scrim created. Channel: <#${createdChannel.id}>`,
+      `Scrim created. Channel: <#${createdThread.id}>`,
     );
   }
 
-  createSignupChannel(
-    guild: Guild,
-    category: CategoryChannel | null,
-    channelName: string,
-  ): Promise<TextChannel> {
-    if (category) {
-      // If the channel where the command belongs to a category,
-      // create another channel in the same category.
-      return category.children.create({
-        name: channelName, // The name given to the channel by the user
-        type: ChannelType.GuildText, // The type of the channel created.
-        // Since "text" is the default channel created, this could be ommitted
-      });
-    } else {
-      // If the channel where the command was used is stray,
-      // create another stray channel in the server.
-      return guild.channels.create({
-        name: channelName, // The name given to the channel by the user
-        type: ChannelType.GuildText, // The type of the channel created.
-        // Since "text" is the default channel created, this could be ommitted
-      });
-      // Notice how we are creating a channel in the list of channels
-      // of the server. This will cause the channel to spawn at the top
-      // of the channels list, without belonging to any categories
+  private async createSignupPost(
+    forumChannel: ForumChannel,
+    scrimDate: Date,
+    scrimName: string,
+  ): Promise<ForumThreadChannel> {
+    const introMessage = await this.getIntroMessage(scrimDate);
+    console.log(introMessage);
+
+    const postName = `${formatInTimeZone(scrimDate, "America/New_York", "M/d haaa")} ${scrimName}`;
+
+    return forumChannel.threads.create({
+      name: postName,
+      message: {
+        content: introMessage,
+      },
+    });
+  }
+
+  private async getIntroMessage(scrimDate: Date): Promise<string> {
+    const instructionText = await this.staticValueService.getInstructionText();
+    if (!instructionText) {
+      throw Error("Can't get instruction text from db");
     }
+    const lobbyPostDate = new Date(scrimDate.valueOf());
+    // 2 hours before
+    lobbyPostDate.setTime(lobbyPostDate.valueOf() - 2 * 60 * 60 * 1000);
+    const lobbyPostTime = this.formatTime(lobbyPostDate);
+
+    const lowPrioDate = new Date(scrimDate.valueOf());
+    // 1.5 hours before
+    lowPrioDate.setTime(lowPrioDate.valueOf() - 1.5 * 60 * 60 * 1000);
+    const lowPrioTime = this.formatTime(lowPrioDate);
+
+    const draftDate = new Date(scrimDate.valueOf());
+    // 20 minutes before
+    draftDate.setTime(draftDate.valueOf() - 20 * 60 * 1000);
+    const draftTime = this.formatTime(draftDate);
+
+    return instructionText
+      .replace("${scrimTime}", this.formatTime(scrimDate))
+      .replace("${draftTime}", draftTime)
+      .replace("${lobbyPostTime}", lobbyPostTime)
+      .replace("${lowPrioTime}", lowPrioTime)
+      .replace(/\\n/g, "\n");
   }
 }

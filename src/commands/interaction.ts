@@ -2,6 +2,7 @@ import {
   CacheType,
   ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
+  SlashCommandChannelOption,
   SlashCommandNumberOption,
   SlashCommandRoleOption,
   SlashCommandStringOption,
@@ -13,7 +14,8 @@ export type SlashCommandOption =
   | SlashCommandStringOption
   | SlashCommandNumberOption
   | SlashCommandRoleOption
-  | SlashCommandUserOption;
+  | SlashCommandUserOption
+  | SlashCommandChannelOption;
 
 export interface OptionConfig {
   isRequired?: boolean;

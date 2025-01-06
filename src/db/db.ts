@@ -5,11 +5,11 @@ import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
 
 export abstract class DB {
-  abstract get(
+  abstract get<K extends string>(
     tableName: DbTable,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue>;
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>>;
   abstract update(
     tableName: DbTable,
     logicalExpression: LogicalExpression,
@@ -242,20 +242,20 @@ export abstract class DB {
     return returnedData.insert_players.returning.map((entry) => entry.id);
   }
 
-  getActiveScrims(): Promise<{
-    scrims: { discord_channel: string; id: string; date_time_field: string }[];
-  }> {
+  getActiveScrims(): Promise<
+    { discord_channel: string; id: string; date_time_field: string }[]
+  > {
     return this.get(
       DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
       ["discord_channel", "id", "date_time_field"],
-    ) as Promise<{
-      scrims: {
+    ) as Promise<
+      {
         discord_channel: string;
         id: string;
         date_time_field: string;
-      }[];
-    }>;
+      }[]
+    >;
   }
 
   async getScrimSignupsWithPlayers(
@@ -356,7 +356,7 @@ export abstract class DB {
   async getPrio(
     date: Date,
   ): Promise<{ id: string; amount: number; reason: string }[]> {
-    const dbData = (await this.get(
+    const dbData = await this.get(
       DbTable.prio,
       {
         operator: "and",
@@ -374,30 +374,22 @@ export abstract class DB {
         ],
       },
       ["player_id", "amount", "reason"],
-    )) as {
-      prio: {
-        player_id: string;
-        amount: number;
-        reason: string;
-      }[];
-    };
-    return dbData.prio.map(({ player_id, amount, reason }) => ({
-      id: player_id,
-      amount,
-      reason,
+    );
+    return dbData.map(({ player_id, amount, reason }) => ({
+      id: player_id as string,
+      amount: amount as number,
+      reason: reason as string,
     }));
   }
 
   async getAdminRoles(): Promise<DiscordRole[]> {
-    const results = (await this.get(DbTable.scrimAdminRoles, undefined, [
+    const results = await this.get(DbTable.scrimAdminRoles, undefined, [
       "discord_role_id",
       "role_name",
-    ])) as {
-      scrim_admin_roles: { discord_role_id: string; role_name: string }[];
-    };
-    return results.scrim_admin_roles.map((role) => ({
-      discordRoleId: role.discord_role_id,
-      roleName: role.role_name,
+    ]);
+    return results.map((role) => ({
+      discordRoleId: role.discord_role_id as string,
+      roleName: role.role_name as string,
     }));
   }
 

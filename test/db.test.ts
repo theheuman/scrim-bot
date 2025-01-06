@@ -121,16 +121,13 @@ describe("DB connection", () => {
         },
         ["id", "display_name", "overstat_link"],
       );
-      expect(data).toEqual({
-        players: [
-          {
-            id: "f272a11e-5b30-4aea-b596-af2464de59ba",
-            display_name: "TheHeuman",
-            overstat_link:
-              "https://overstat.gg/player/357606.TheHeuman/overview",
-          },
-        ],
-      });
+      expect(data).toEqual([
+        {
+          id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+          display_name: "TheHeuman",
+          overstat_link: "https://overstat.gg/player/357606.TheHeuman/overview",
+        },
+      ]);
       expect.assertions(2);
     });
 
@@ -204,20 +201,18 @@ describe("DB connection", () => {
 
         ["id", "display_name", "overstat_id"],
       );
-      expect(data).toEqual({
-        players: [
-          {
-            id: "106ea7fa-47c8-4f4e-a6ca-3fdd92401ebd",
-            display_name: "Revy",
-            overstat_id: null,
-          },
-          {
-            id: "f272a11e-5b30-4aea-b596-af2464de59ba",
-            display_name: "TheHeuman",
-            overstat_id: "357606",
-          },
-        ],
-      });
+      expect(data).toEqual([
+        {
+          id: "106ea7fa-47c8-4f4e-a6ca-3fdd92401ebd",
+          display_name: "Revy",
+          overstat_id: null,
+        },
+        {
+          id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+          display_name: "TheHeuman",
+          overstat_id: "357606",
+        },
+      ]);
       expect.assertions(2);
     });
 
@@ -253,15 +248,13 @@ describe("DB connection", () => {
         },
 
         ["discord_channel", "id"],
-      )) as { scrims: Partial<Scrims>[] };
-      expect(scrims).toEqual({
-        scrims: [
-          {
-            discord_channel: "something",
-            id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-          },
-        ],
-      });
+      )) as Partial<Scrims>[];
+      expect(scrims).toEqual([
+        {
+          discord_channel: "something",
+          id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        },
+      ]);
       expect.assertions(2);
     });
   });

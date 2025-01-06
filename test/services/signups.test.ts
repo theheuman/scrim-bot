@@ -304,15 +304,13 @@ describe("Signups", () => {
       });
       cache.setSignups("ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", []);
       jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
-        return Promise.resolve({
-          scrims: [
-            {
-              id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-              discord_channel: "something",
-              date_time_field: "2024-10-14T20:10:35.706+00:00",
-            },
-          ],
-        });
+        return Promise.resolve([
+          {
+            id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+            discord_channel: "something",
+            date_time_field: "2024-10-14T20:10:35.706+00:00",
+          },
+        ]);
       });
 
       await signups.updateActiveScrims();
