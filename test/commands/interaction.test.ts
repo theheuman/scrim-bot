@@ -25,9 +25,7 @@ describe("Custom interaction", () => {
           return dateTimeString;
         },
       },
-      reply: (message: string) => {
-        console.log("Basic replying to command with:", message);
-      },
+      reply: jest.fn(),
     } as unknown as ChatInputCommandInteraction;
 
     replySpy = jest.spyOn(basicInteraction, "reply");
