@@ -41,6 +41,7 @@ export class CacheService {
   getSignups(scrimId: string): ScrimSignup[] | undefined {
     return this.activeScrimSignups.get(scrimId);
   }
+
   setSignups(scrimId: string, teams: ScrimSignup[]) {
     this.activeScrimSignups.set(scrimId, teams);
   }

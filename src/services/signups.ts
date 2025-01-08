@@ -97,15 +97,16 @@ export class ScrimSignups {
   }
 
   async addTeam(
-    scrimId: string,
+    discordChannelID: string,
     teamName: string,
     commandUser: User,
     players: User[],
   ): Promise<string> {
-    const scrim = this.cache.getSignups(scrimId);
+    const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
-      throw Error("No active scrim with that scrim id");
-    } else if (players.length !== 3) {
+      throw Error("No scrim found for that channel");
+    }
+    if (players.length !== 3) {
       throw Error("Exactly three players must be provided");
     } else if (
       players[0].id === players[1].id ||
@@ -114,8 +115,10 @@ export class ScrimSignups {
     ) {
       throw Error("Duplicate player");
     }
+
+    const scrimSignups = this.cache.getSignups(scrim.id) ?? [];
     // yes this is a three deep for loop, this is a cry for help, please optimize this
-    for (const team of scrim) {
+    for (const team of scrimSignups) {
       if (team.teamName === teamName) {
         throw Error("Duplicate team name");
       }
@@ -140,7 +143,7 @@ export class ScrimSignups {
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,
-      scrimId,
+      scrim.id,
       playerIds[0],
       playerIds[1],
       playerIds[2],
@@ -154,13 +157,14 @@ export class ScrimSignups {
       overstatLink: player.overstatId,
       elo: player.elo,
     }));
-    scrim.push({
+    scrimSignups.push({
       teamName: teamName,
       players: mappedPlayers.slice(1),
       signupPlayer: mappedPlayers[0],
       signupId,
       date: signupDate,
     });
+    this.cache.setSignups(scrim.id, scrimSignups);
     return signupId;
   }
 
@@ -181,10 +185,6 @@ export class ScrimSignups {
     const prioTeams = await this.prioService.getTeamPrioForScrim(scrim, teams);
     this.cache.setSignups(scrim.id, prioTeams);
     return this.sortTeams(teams);
-  }
-
-  getScrimId(discordChannel: string): string | undefined {
-    return this.cache.getScrim(discordChannel)?.id;
   }
 
   private sortTeams(teams: ScrimSignup[]): {
