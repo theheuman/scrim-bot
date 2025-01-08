@@ -76,12 +76,8 @@ describe("Create scrim", () => {
         },
         getChannel: () => forumChannel,
       },
-      reply: (message: string) => {
-        console.log("Replying to command with:", message);
-      },
-      editReply: (message: string) => {
-        console.log("Editing reply to:", message);
-      },
+      reply: jest.fn(),
+      editReply: jest.fn(),
       member,
     } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "reply");
@@ -137,9 +133,7 @@ describe("Create scrim", () => {
           },
           getChannel: () => ({ type: ChannelType.GuildText }),
         },
-        reply: (message: string) => {
-          console.log("Replying to command with:", message);
-        },
+        reply: jest.fn(),
       } as unknown as CustomInteraction;
       replySpy = jest.spyOn(noChannelInteraction, "reply");
       await command.run(noChannelInteraction);

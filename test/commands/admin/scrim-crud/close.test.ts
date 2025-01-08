@@ -8,19 +8,20 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
-import { CreateScrimCommand } from "../../../../src/commands/admin/scrim-crud/create-scrim";
 import { AuthMock } from "../../../mocks/auth.mock";
 import { AuthService } from "../../../../src/services/auth";
 import { ScrimSignupMock } from "../../../mocks/signups.mock";
 import { ScrimSignups } from "../../../../src/services/signups";
-import { StaticValueServiceMock } from "../../../mocks/static-values.mock";
-import { StaticValueService } from "../../../../src/services/static-values";
-import { ChannelType } from "discord-api-types/v10";
 import { CloseScrimCommand } from "../../../../src/commands/admin/scrim-crud/close-scrim";
 
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
   let member: GuildMember;
+  let replySpy: SpyInstance<
+    Promise<InteractionResponse<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
+    string
+  >;
   let editReplySpy: SpyInstance<
     Promise<Message<boolean>>,
     [options: string | InteractionEditReplyOptions | MessagePayload],
@@ -49,14 +50,11 @@ describe("Close scrim", () => {
         delete: channelDeletedSpy,
         id: "forum thread id",
       },
-      reply: (message: string) => {
-        console.log("Replying to command with:", message);
-      },
-      editReply: (message: string) => {
-        console.log("Editing reply to:", message);
-      },
+      reply: jest.fn(),
+      editReply: jest.fn(),
       member,
     } as unknown as CustomInteraction;
+    replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     signupCloseScrimSpy = jest.spyOn(mockScrimSignups, "closeScrim");
     signupCloseScrimSpy.mockImplementation(() => {
@@ -65,6 +63,7 @@ describe("Close scrim", () => {
   });
 
   beforeEach(() => {
+    replySpy.mockClear();
     editReplySpy.mockClear();
     signupCloseScrimSpy.mockClear();
     channelDeletedSpy.mockClear();
@@ -87,6 +86,20 @@ describe("Close scrim", () => {
   });
 
   describe("errors", () => {
+    it("should not close scrim because the channel provided is null", async () => {
+      const badInteraction = {
+        channel: null,
+        reply: jest.fn(),
+      } as unknown as CustomInteraction;
+      replySpy = jest.spyOn(badInteraction, "reply");
+      await command.run(badInteraction);
+      expect(replySpy).toHaveBeenCalledWith(
+        "Scrim not closed. Could not get channel this command was sent in. null",
+      );
+      expect(signupCloseScrimSpy).not.toHaveBeenCalled();
+      expect(channelDeletedSpy).not.toHaveBeenCalled();
+    });
+
     it("should not close scrim because the channel provided is not a valid scrim", async () => {
       signupCloseScrimSpy.mockImplementation(() => {
         throw Error("No scrim found for that channel");

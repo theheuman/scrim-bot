@@ -45,12 +45,13 @@ export class CreateScrimCommand extends AdminCommand {
       this.inputNames.date,
       true,
     );
-    const scrimName = interaction.options.getString(this.inputNames.name, true);
     const channel = interaction.options.getChannel(
       this.inputNames.channel,
       true,
       [ChannelType.GuildForum],
     );
+    const scrimName = interaction.options.getString(this.inputNames.name) ?? "";
+
     // just to triple check
     if (!isForumChannel(channel)) {
       await interaction.reply(
@@ -96,7 +97,6 @@ export class CreateScrimCommand extends AdminCommand {
     scrimName: string,
   ): Promise<ForumThreadChannel> {
     const introMessage = await this.getIntroMessage(scrimDate);
-    console.log(introMessage);
 
     const postName = `${formatInTimeZone(scrimDate, "America/New_York", "M/d haaa")} ${scrimName}`;
 

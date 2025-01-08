@@ -101,9 +101,7 @@ describe("Add prio", () => {
         },
         getNumber: () => -400,
       },
-      reply: (message: string) => {
-        console.log("Replying to command with:", message);
-      },
+      reply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
