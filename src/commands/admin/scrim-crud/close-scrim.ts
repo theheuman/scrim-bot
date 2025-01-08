@@ -2,6 +2,7 @@ import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
 import { AuthService } from "../../../services/auth";
+import { ForumThreadChannel } from "discord.js/typings";
 
 export class CloseScrimCommand extends AdminCommand {
   constructor(
@@ -22,10 +23,18 @@ export class CloseScrimCommand extends AdminCommand {
     await interaction.reply({
       content: "Fetched all input and working on your request!",
     });
-    const channelId = interaction.channelId;
+    const channel = interaction.channel as ForumThreadChannel;
 
-    await this.signupService.closeScrim(channelId);
+    try {
+      await this.signupService.closeScrim(channel.id);
+    } catch (error) {
+      interaction.editReply("Scrim not closed. " + error);
+      return;
+    }
 
-    // TODO after closing the scrim delete the channel
+    interaction.editReply("Scrim closed. Deleting this channel in 5 seconds");
+    setTimeout(() => {
+      channel.delete("Scrim closed by " + interaction.member?.user.username);
+    }, 5000);
   }
 }
