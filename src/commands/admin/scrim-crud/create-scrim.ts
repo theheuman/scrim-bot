@@ -60,8 +60,6 @@ export class CreateScrimCommand extends AdminCommand {
       return;
     }
 
-    // Discord only gives us 3 seconds to acknowledge an interaction before
-    // the interaction gets voided and can't be used anymore.
     await interaction.reply({
       content: "Fetched all input and working on your request!",
     });
@@ -81,7 +79,15 @@ export class CreateScrimCommand extends AdminCommand {
     try {
       await this.signupService.createScrim(createdThread.id, scrimDate);
     } catch (error) {
-      // TODO delete the channel once we figure out how to do that in the delete command
+      try {
+        await createdThread.delete("Scrim not created correctly in db");
+      } catch (e) {
+        console.debug(e);
+        await interaction.editReply(
+          `Scrim not created: ${error}.\n\nPlease delete signup post <#${createdThread.id}>`,
+        );
+        return;
+      }
       await interaction.editReply("Scrim not created: " + error);
       return;
     }
