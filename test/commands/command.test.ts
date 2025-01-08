@@ -46,9 +46,7 @@ describe("abstract command", () => {
     } as GuildMember;
 
     basicInteraction = {
-      reply: (message: string) => {
-        console.log("Basic replying to command with:", message);
-      },
+      reply: jest.fn(),
       options: {},
       member,
     } as unknown as ChatInputCommandInteraction;
@@ -63,14 +61,10 @@ describe("abstract command", () => {
           }
         },
       },
-      reply: (message: string) => {
-        console.log("NoMember replying to command with:", message);
-      },
+      reply: jest.fn(),
     } as unknown as ChatInputCommandInteraction;
     unAuthorizedMemberInteraction = {
-      reply: (message: string) => {
-        console.log("Unauthorized replying to command with:", message);
-      },
+      reply: jest.fn(),
       options: {},
       member: {
         id: "unauthorized",

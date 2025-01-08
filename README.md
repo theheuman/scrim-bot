@@ -84,3 +84,6 @@ Then you can run the production script with
 npm run start:prod
 ```
 
+## Install on discord server:
+
+bot permission integers: 395405503504

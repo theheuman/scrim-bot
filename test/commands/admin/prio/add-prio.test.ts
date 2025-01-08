@@ -72,9 +72,7 @@ describe("Add prio", () => {
         },
         getNumber: () => -400,
       },
-      reply: (message: string) => {
-        console.log("Replying to command with:", message);
-      },
+      reply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
@@ -101,9 +99,7 @@ describe("Add prio", () => {
         },
         getNumber: () => -400,
       },
-      reply: (message: string) => {
-        console.log("Replying to command with:", message);
-      },
+      reply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
@@ -115,7 +111,6 @@ describe("Add prio", () => {
 
   it("Should add prio to 1 user", async () => {
     const fakeDate = new Date("2024-12-14T22:30:00-05:00");
-    console.log("System time", fakeDate);
     jest.useFakeTimers();
     jest.setSystemTime(fakeDate);
 

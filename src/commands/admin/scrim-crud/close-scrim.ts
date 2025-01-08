@@ -16,16 +16,37 @@ export class CloseScrimCommand extends AdminCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    // Before executing any other code, we need to acknowledge the interaction.
-    // Discord only gives us 3 seconds to acknowledge an interaction before
-    // the interaction gets voided and can't be used anymore.
+    const channel = interaction.channel;
+    if (!channel) {
+      interaction.reply(
+        "Scrim not closed. Could not get channel this command was sent in. " +
+          channel,
+      );
+      return;
+    }
     await interaction.reply({
       content: "Fetched all input and working on your request!",
     });
-    const channelId = interaction.channelId;
 
-    await this.signupService.closeScrim(channelId);
+    try {
+      await this.signupService.closeScrim(channel.id);
+    } catch (error) {
+      interaction.editReply("Scrim not closed. " + error);
+      return;
+    }
 
-    // TODO after closing the scrim delete the channel
+    interaction.editReply("Scrim closed. Deleting this channel in 5 seconds");
+    setTimeout(async () => {
+      try {
+        await channel.delete(
+          "Scrim closed by " + interaction.member?.user.username,
+        );
+      } catch (error) {
+        interaction.editReply(
+          "Scrim closed but channel could not be deleted. " + error,
+        );
+        return;
+      }
+    }, 5000);
   }
 }
