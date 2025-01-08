@@ -25,9 +25,6 @@ export class ComputeScrimCommand extends AdminCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    // Before executing any other code, we need to acknowledge the interaction.
-    // Discord only gives us 3 seconds to acknowledge an interaction before
-    // the interaction gets voided and can't be used anymore.
     await interaction.reply({
       content: "Fetched all input and working on your request!",
     });
@@ -38,11 +35,11 @@ export class ComputeScrimCommand extends AdminCommand {
     try {
       await this.signupService.computeScrim(channelId, overstatLink, skill);
     } catch (error) {
-      await interaction.reply(`Unable to complete request: ${error}`);
+      await interaction.editReply(`Scrim not computed. ${error}`);
     }
 
-    await interaction.reply(
-      "Scrim successfully computed, you can now compute another lobby or close the scrim",
+    await interaction.editReply(
+      "Scrim lobby successfully computed, you can now compute another lobby or close the scrim",
     );
   }
 }
