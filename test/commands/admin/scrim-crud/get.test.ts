@@ -1,7 +1,5 @@
 import {
-  GuildMember,
   InteractionEditReplyOptions,
-  InteractionReplyOptions,
   InteractionResponse,
   Message,
   MessagePayload,
@@ -12,16 +10,14 @@ import { AuthMock } from "../../../mocks/auth.mock";
 import { AuthService } from "../../../../src/services/auth";
 import { ScrimSignupMock } from "../../../mocks/signups.mock";
 import { ScrimSignups } from "../../../../src/services/signups";
-import { CloseScrimCommand } from "../../../../src/commands/admin/scrim-crud/close-scrim";
 import { GetSignupsCommand } from "../../../../src/commands/admin/scrim-crud/get-signups";
 import { ScrimSignup } from "../../../../src/models/Scrims";
 
 describe("Get signups", () => {
   let basicInteraction: CustomInteraction;
-  let member: GuildMember;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
+    [reply: string],
     string
   >;
   let editReplySpy: SpyInstance<
@@ -93,10 +89,10 @@ describe("Get signups", () => {
   beforeAll(() => {
     basicInteraction = {
       channelId: "forum thread id",
-      reply: jest.fn(),
+      invisibleReply: jest.fn(),
       editReply: jest.fn(),
     } as unknown as CustomInteraction;
-    replySpy = jest.spyOn(basicInteraction, "reply");
+    replySpy = jest.spyOn(basicInteraction, "invisibleReply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     getSignupsSpy = jest.spyOn(mockScrimSignups, "getSignups");
     getSignupsSpy.mockImplementation(() => {

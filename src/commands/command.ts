@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { isGuildMember } from "../utility/utility";
 import {
   CustomInteraction,
-  getCustomOptions,
+  getCustomInteraction,
   OptionConfig,
   SlashCommandOption,
 } from "./interaction";
@@ -122,8 +122,8 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    interaction.options = getCustomOptions(interaction);
-    return this.childExecute(interaction as CustomInteraction);
+    const customInteraction = getCustomInteraction(interaction);
+    return this.childExecute(customInteraction);
   }
 
   abstract childExecute(interaction: CustomInteraction): Promise<void>;
