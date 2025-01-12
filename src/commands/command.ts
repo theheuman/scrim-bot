@@ -8,6 +8,8 @@ import {
 } from "./interaction";
 import { AuthService } from "../services/auth";
 import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
+import { ScrimSignup } from "../models/Scrims";
+import { Player } from "../models/Player";
 
 export abstract class Command extends SlashCommandBuilder {
   protected constructor(name: string, description: string) {
@@ -101,6 +103,22 @@ export abstract class Command extends SlashCommandBuilder {
 
   formatTime(date: Date) {
     return `<t:${Math.floor(date.valueOf() / 1000)}:t>`;
+  }
+
+  formatTeam(team: ScrimSignup) {
+    const playerString = team.players
+      .map((player) => this.formatPlayer(player))
+      .join(" ");
+    const teamString = `__${team.teamName}__. Signed up by: ${this.formatPlayer(team.signupPlayer)}. Players: ${playerString}.`;
+    const prioString =
+      team.prio && team.prio.reasons
+        ? ` Prio: ${team.prio.amount}. ${team.prio.reasons}.`
+        : "";
+    return teamString + prioString;
+  }
+
+  formatPlayer(player: Player) {
+    return `<@${player.discordId}>`;
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {

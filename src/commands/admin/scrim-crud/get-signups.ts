@@ -3,7 +3,6 @@ import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
 import { AuthService } from "../../../services/auth";
-import { Player } from "../../../models/Player";
 
 export class GetSignupsCommand extends AdminCommand {
   constructor(
@@ -35,26 +34,16 @@ export class GetSignupsCommand extends AdminCommand {
 
     const { mainList, waitList } = channelSignups;
 
-    const message = `Main list.\n${this.formatTeams(mainList)}\n\n\nWait list.\n${this.formatTeams(waitList)}`;
+    const mainListString = `Main list.\n${this.formatTeams(mainList)}`;
+    const waitListString =
+      waitList.length > 0
+        ? `\n\n\nWait list.\n${this.formatTeams(waitList)}`
+        : "";
+    const message = mainListString + waitListString;
     await interaction.editReply(message);
   }
 
   formatTeams(teams: ScrimSignup[]) {
     return teams.map((team) => this.formatTeam(team)).join("\n");
-  }
-
-  formatTeam(team: ScrimSignup) {
-    const playerString = team.players
-      .map((player) => this.formatPlayer(player))
-      .join(" ");
-    const teamString = `${team.teamName}. Signed up by: ${this.formatPlayer(team.signupPlayer)}. Players: ${playerString}.`;
-    const prioString = team.prio
-      ? ` Prio: ${team.prio.amount}. ${team.prio.reasons}.`
-      : "";
-    return teamString + prioString;
-  }
-
-  formatPlayer(player: Player) {
-    return `<@${player.id}>`;
   }
 }

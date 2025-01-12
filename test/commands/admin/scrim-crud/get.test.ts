@@ -39,7 +39,7 @@ describe("Get signups", () => {
 
   const teamCaptain1 = {
     id: "teamCap1",
-    discordId: "teamCap1DiscordId",
+    discordId: "teamCapDiscordId1",
     displayName: "Team Captain 1",
   };
 
@@ -121,7 +121,7 @@ describe("Get signups", () => {
     jest.useFakeTimers();
     await command.run(basicInteraction);
     expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id");
-    const expectedString = `Main list.\nMain list team. Signed up by: <@teamCap1>. Players: <@teamCap1> <@teamCap1>. Prio: 1. League prio.\nMain list team 2. Signed up by: <@teamCap2>. Players: .\n\n\nWait list.\nWait list team. Signed up by: <@teamCap3>. Players: . Prio: -1. Team captain is a known inter.`;
+    const expectedString = `Main list.\n__Main list team__. Signed up by: <@teamCapDiscordId1>. Players: <@teamCapDiscordId1> <@teamCapDiscordId1>. Prio: 1. League prio.\n__Main list team 2__. Signed up by: <@teamCapDiscordId2>. Players: .\n\n\nWait list.\n__Wait list team__. Signed up by: <@teamCapDiscordId3>. Players: . Prio: -1. Team captain is a known inter.`;
     expect(editReplySpy).toHaveBeenCalledWith(expectedString);
     jest.runAllTimers();
     jest.useRealTimers();
