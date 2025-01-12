@@ -23,8 +23,8 @@ export class SignupCommand extends MemberCommand {
     const player1 = interaction.options.getUser("player1", true);
     const player2 = interaction.options.getUser("player2", true);
     const player3 = interaction.options.getUser("player3", true);
+    await interaction.reply("Fetched all input, working on request");
 
-    // TODO move getting scrimId into signups.addTeam method
     try {
       const signupId = await this.signupService.addTeam(
         channelId as string,
@@ -32,11 +32,12 @@ export class SignupCommand extends MemberCommand {
         signupPlayer,
         [player1, player2, player3],
       );
-      interaction.reply(
-        `Team ${teamName} signed up with players: ${player1}, ${player2}, ${player3}, Signup id: ${signupId}`,
+      await interaction.editReply(
+        `Team ${teamName} signed up with players: <@${player1.id}>, <@${player2.id}>, <@${player3.id}>, signed up by <@${signupPlayer.id}>. Signup id: ${signupId}`,
       );
     } catch (error) {
-      interaction.reply(`Team not created: ${(error as Error)?.message}`);
+      await interaction.editReply("Team not signed up. " + error);
+      return;
     }
   }
 }
