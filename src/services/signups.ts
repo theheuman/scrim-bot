@@ -6,6 +6,7 @@ import { CacheService } from "./cache";
 import { OverstatService } from "./overstat";
 import { Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
+import { appConfig } from "../config";
 
 export class ScrimSignups {
   constructor(
@@ -191,7 +192,9 @@ export class ScrimSignups {
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
   } {
-    const waitlistCutoff = 20;
+    const lobbySize = appConfig.lobbySize;
+    const waitlistCutoff =
+      lobbySize * Math.floor(teams.length / 20) || lobbySize;
     teams.sort((teamA, teamB) => {
       const lowPrioResult =
         (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
