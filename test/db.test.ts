@@ -585,6 +585,7 @@ describe("DB connection", () => {
             ) {
               returning {
                 id
+                discord_id
               }
            }
 
@@ -628,12 +629,15 @@ describe("DB connection", () => {
               returning: [
                 {
                   id: "11583f2c-184f-4ab5-9f6f-ff33f2741117",
+                  discord_id: zboy.discordId,
                 },
                 {
                   id: "7605b2bf-1875-4415-a04b-75fe47768565",
+                  discord_id: supreme.discordId,
                 },
                 {
                   id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+                  discord_id: theheuman.discordId,
                 },
               ],
             },
@@ -649,8 +653,15 @@ describe("DB connection", () => {
           },
         });
       };
-      const newID = await nhostDb.insertPlayers([zboy, supreme, theheuman]);
+      // attempt to insert zboy twice should result in only one zboy being inserted
+      const newID = await nhostDb.insertPlayers([
+        zboy,
+        zboy,
+        supreme,
+        theheuman,
+      ]);
       expect(newID).toEqual([
+        "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "7605b2bf-1875-4415-a04b-75fe47768565",
         "f272a11e-5b30-4aea-b596-af2464de59ba",

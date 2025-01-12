@@ -208,14 +208,19 @@ export abstract class DB {
    * Created a special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
    */
   async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
-    const playerUpdates = players
+    const playerMap: Map<string, PlayerInsert> = new Map();
+    for (const player of players) {
+      playerMap.set(player.discordId, player);
+    }
+    const nonDuplicatePlayers = [...playerMap.values()];
+    const playerUpdates = nonDuplicatePlayers
       .map((player, index) =>
         this.generatePlayerUpdateQuery(player, (index + 1).toString()),
       )
       .join("\n\n");
     const playerInsert = `
       insert_players(objects: [
-        ${players.map((player) => `{discord_id: "${player.discordId}", display_name: "${player.displayName}"}`).join("\n")}
+        ${nonDuplicatePlayers.map((player) => `{discord_id: "${player.discordId}", display_name: "${player.displayName}"}`).join("\n")}
       ]
         on_conflict: {
           constraint: players_discord_id_key,   # Unique constraint on discord_id
@@ -226,6 +231,7 @@ export abstract class DB {
       ) {
         returning {
           id
+          discord_id
         }
       }
     `;
@@ -237,9 +243,18 @@ export abstract class DB {
       }
     `;
     const result: JSONValue = await this.customQuery(query);
-    const returnedData: { insert_players: { returning: { id: string }[] } } =
-      result as { insert_players: { returning: { id: string }[] } };
-    return returnedData.insert_players.returning.map((entry) => entry.id);
+    const returnedData: {
+      insert_players: { returning: { id: string; discord_id: string }[] };
+    } = result as {
+      insert_players: { returning: { id: string; discord_id: string }[] };
+    };
+
+    return players.map(
+      (player) =>
+        returnedData.insert_players.returning.find(
+          (entry) => entry.discord_id === player.discordId,
+        )?.id as string,
+    );
   }
 
   getActiveScrims(): Promise<
