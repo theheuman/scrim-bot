@@ -208,14 +208,19 @@ export abstract class DB {
    * Created a special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
    */
   async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
-    const playerUpdates = players
+    const playerMap: Map<string, PlayerInsert> = new Map();
+    for (const player of players) {
+      playerMap.set(player.discordId, player);
+    }
+    const nonDuplicatePlayers = [...playerMap.values()];
+    const playerUpdates = nonDuplicatePlayers
       .map((player, index) =>
         this.generatePlayerUpdateQuery(player, (index + 1).toString()),
       )
       .join("\n\n");
     const playerInsert = `
       insert_players(objects: [
-        ${players.map((player) => `{discord_id: "${player.discordId}", display_name: "${player.displayName}"}`).join("\n")}
+        ${nonDuplicatePlayers.map((player) => `{discord_id: "${player.discordId}", display_name: "${player.displayName}"}`).join("\n")}
       ]
         on_conflict: {
           constraint: players_discord_id_key,   # Unique constraint on discord_id

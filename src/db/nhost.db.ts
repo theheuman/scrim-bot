@@ -109,10 +109,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      console.log(query);
-      console.log(result.data);
-      console.log(result.error);
-      throw Error("Graph ql error: " + result.error);
+      throw Error("Graph ql error: " + result.error?.toString());
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
@@ -498,7 +495,10 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error);
+      console.error("Problem with custom query", query);
+      console.error(result.data);
+      console.error(result.error);
+      throw Error("Graph ql error: " + result.error?.toString());
     }
     return Promise.resolve(result.data);
   }
