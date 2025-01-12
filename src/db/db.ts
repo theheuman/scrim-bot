@@ -231,6 +231,7 @@ export abstract class DB {
       ) {
         returning {
           id
+          discord_id
         }
       }
     `;
@@ -242,9 +243,18 @@ export abstract class DB {
       }
     `;
     const result: JSONValue = await this.customQuery(query);
-    const returnedData: { insert_players: { returning: { id: string }[] } } =
-      result as { insert_players: { returning: { id: string }[] } };
-    return returnedData.insert_players.returning.map((entry) => entry.id);
+    const returnedData: {
+      insert_players: { returning: { id: string; discord_id: string }[] };
+    } = result as {
+      insert_players: { returning: { id: string; discord_id: string }[] };
+    };
+
+    return players.map(
+      (player) =>
+        returnedData.insert_players.returning.find(
+          (entry) => entry.discord_id === player.discordId,
+        )?.id as string,
+    );
   }
 
   getActiveScrims(): Promise<
