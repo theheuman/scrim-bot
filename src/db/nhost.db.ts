@@ -495,9 +495,6 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      console.error("Problem with custom query", query);
-      console.error(result.data);
-      console.error(result.error);
       throw Error("Graph ql error: " + result.error?.toString());
     }
     return Promise.resolve(result.data);
