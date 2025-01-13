@@ -194,7 +194,7 @@ export class ScrimSignups {
   } {
     const lobbySize = appConfig.lobbySize;
     const waitlistCutoff =
-      lobbySize * Math.floor(teams.length / 20) || lobbySize;
+      lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
     teams.sort((teamA, teamB) => {
       const lowPrioResult =
         (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
