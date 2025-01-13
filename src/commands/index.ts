@@ -40,8 +40,8 @@ export const commands: Command[] = [
   new ComputeScrimCommand(authService, signupsService),
   new CloseScrimCommand(authService, signupsService),
 
-  new ChangeTeamNameCommand(),
+  new ChangeTeamNameCommand(rosterService),
   new DropoutCommand(rosterService),
   new SignupCommand(signupsService),
-  new SubPlayerCommand(),
+  new SubPlayerCommand(rosterService),
 ];

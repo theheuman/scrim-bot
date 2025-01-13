@@ -195,7 +195,7 @@ export class ScrimSignups {
     const lobbySize = appConfig.lobbySize;
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
-    teams.sort((teamA, teamB) => {
+    const sortedTeams = [...teams].sort((teamA, teamB) => {
       const lowPrioResult =
         (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
       if (lowPrioResult === 0) {
@@ -204,7 +204,10 @@ export class ScrimSignups {
       }
       return lowPrioResult;
     });
-    return { mainList: teams.splice(0, waitlistCutoff), waitList: teams };
+    return {
+      mainList: sortedTeams.splice(0, waitlistCutoff),
+      waitList: sortedTeams,
+    };
   }
 
   static convertDbToScrimSignup(
