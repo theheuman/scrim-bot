@@ -1,6 +1,7 @@
 import configJson from "../config.json";
 
 export interface AppConfig {
+  lobbySize: number;
   discord: {
     token: string;
     clientId: string;

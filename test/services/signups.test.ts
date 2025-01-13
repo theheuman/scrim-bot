@@ -306,7 +306,7 @@ describe("Signups", () => {
           prio,
         };
       };
-      const expectedTeams: ScrimSignup[] = [
+      const expectedMainTeams: ScrimSignup[] = [
         generateScrimSignupFromWithPlayers(highPrioTeam, {
           amount: 1,
           reasons: "Player 1 has league prio",
@@ -319,13 +319,18 @@ describe("Signups", () => {
           amount: 0,
           reasons: "",
         }),
+      ];
+      const expectedWaitTeams: ScrimSignup[] = [
         generateScrimSignupFromWithPlayers(lowPrioTeam, {
           amount: -5,
           reasons: "Player 1 is an enemy of the people",
         }),
       ];
       const teamsSignedUp = await signups.getSignups("");
-      expect(teamsSignedUp.mainList).toEqual(expectedTeams);
+      expect(teamsSignedUp).toEqual({
+        mainList: expectedMainTeams,
+        waitList: expectedWaitTeams,
+      });
     });
 
     it("Should throw error when no scrim", async () => {

@@ -14,6 +14,7 @@ The file should contain:
 ```json
 {
   "dev": {
+    "lobbySize": 3,
     "discord": {
       "token": "BOT_TOKEN",
       "clientId": "DEV_DISCORD_CLIENT_ID",
@@ -26,6 +27,7 @@ The file should contain:
     }
   },
   "prod": {
+    "lobbySize": 20,
     "discord": {
       "token": "BOT_TOKEN",
       "clientId": "DISCORD_CLIENT_ID",
