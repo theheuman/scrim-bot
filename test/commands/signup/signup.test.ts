@@ -1,5 +1,4 @@
 import {
-  GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
   InteractionResponse,
@@ -9,16 +8,12 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
-import { AuthMock } from "../../mocks/auth.mock";
-import { AuthService } from "../../../src/services/auth";
 import { ScrimSignupMock } from "../../mocks/signups.mock";
 import { ScrimSignups } from "../../../src/services/signups";
-import { CloseScrimCommand } from "../../../src/commands/admin/scrim-crud/close-scrim";
 import { SignupCommand } from "../../../src/commands/signup/sign-up";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
-  let member: GuildMember;
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
     [reply: string | InteractionReplyOptions | MessagePayload],
@@ -62,12 +57,6 @@ describe("Sign up", () => {
   const signupPlayers = [player1, player2, player3];
 
   beforeAll(() => {
-    member = {
-      roles: {},
-      user: {
-        username: "TheHeuman",
-      },
-    } as GuildMember;
     basicInteraction = {
       channelId: "forum thread id",
       reply: jest.fn(),
