@@ -19,7 +19,8 @@
   * add all the inputs necessary for your command by using the applicable parent methods or by adding new parent methods where necessary
     * required inputs must be added first
 * in your run method you must reply within 3 seconds so discord doesn't trash your interaction
-  * if you're doing async work you should reply with a generic message saying "working on your request" or something of the like
+  * The admin command already replies for you since it has to do some db checks, so admin commands will just use editReply
+  * for member commands if you're doing async work you should reply with a generic message saying "working on your request" or something of the like
 
 admin command example: 
 ```
@@ -49,7 +50,7 @@ export class NameOfYourCommand extends AdminCommand {
     const numberInput: number | null = interaction.options.getNumber(this.inputNames.number);
     const stringInput: string = interaction.options.getString(this.inputNames.string
     
-    interaction.reply("Got your command, working on it!"
+    interaction.editReply("Got your command, working on it!"
     await this.service.someMethod()
     interaction.editReply("useful information about the work that was executed")
   }

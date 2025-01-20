@@ -20,7 +20,7 @@ export class GetSignupsCommand extends AdminCommand {
     // Before executing any other code, we need to acknowledge the interaction.
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
-    await interaction.invisibleReply("Fetching teams, command in progress");
+    await interaction.editReply("Fetching teams, command in progress");
 
     const channelId = interaction.channelId;
 
