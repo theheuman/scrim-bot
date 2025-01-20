@@ -19,7 +19,7 @@ export class AddPrioCommand extends AdminCommand {
     authService: AuthService,
     private prioService: PrioService,
   ) {
-    super(authService, "addprio", "Adds a prio entry for up to three players");
+    super(authService, "add-prio", "Adds a prio entry for up to three players");
 
     this.addUserInput(this.inputNames.user1, "First user", true);
     this.addDateInput(this.inputNames.endDate, "End date", true);
@@ -75,7 +75,7 @@ export class AddPrioCommand extends AdminCommand {
     }
 
     const prioIdString = dbIds
-      .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
+      .map((dbId, index) => `<@${users[index]?.id}> prio id: ${dbId}`)
       .join("\n");
     await interaction.editReply(
       `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}`,

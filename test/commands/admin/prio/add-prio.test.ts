@@ -136,7 +136,7 @@ describe("Add prio", () => {
     editReplySpy = jest.spyOn(singleUserInteraction, "editReply");
     await command.run(singleUserInteraction);
     expect(editReplySpy).toHaveBeenCalledWith(
-      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\nSupreme prio id: db id`,
+      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\n<@1> prio id: db id`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);
@@ -162,7 +162,7 @@ describe("Add prio", () => {
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     await command.run(basicInteraction);
     expect(editReplySpy).toHaveBeenCalledWith(
-      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\nSupreme prio id: db id\nSupreme prio id: db id 2\nSupreme prio id: db id 3`,
+      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\n<@1> prio id: db id\n<@1> prio id: db id 2\n<@1> prio id: db id 3`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);
