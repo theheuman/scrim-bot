@@ -6,7 +6,7 @@ export class AddAdminRoleCommand extends AdminCommand {
   constructor(authService: AuthService) {
     super(
       authService,
-      "addadminrole",
+      "add-admin-role",
       "Adds a role that can perform scrim admin actions",
     );
     this.addRoleInput("role", "Role to add", true);

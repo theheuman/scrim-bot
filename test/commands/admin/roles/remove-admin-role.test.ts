@@ -7,15 +7,14 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { AuthMock } from "../../../mocks/auth.mock";
 import { AuthService } from "../../../../src/services/auth";
-import { AddAdminRoleCommand } from "../../../../src/commands/admin/roles/add-admin-role";
-import { DiscordRole } from "../../../../src/models/Role";
+import { RemoveAdminRoleCommand } from "../../../../src/commands/admin/roles/remove-admin-role";
 
-describe("Add admin role", () => {
+describe("Remove admin role", () => {
   let basicInteraction: CustomInteraction;
 
-  let addAdminRoleSpy: SpyInstance<
+  let removeAdminRoleSpy: SpyInstance<
     Promise<string[]>,
-    [roles: DiscordRole[]],
+    [roles: string[]],
     string
   >;
   let editReplySpy: SpyInstance<
@@ -26,16 +25,15 @@ describe("Add admin role", () => {
 
   const mockAuthService = new AuthMock();
 
-  let command: AddAdminRoleCommand;
+  let command: RemoveAdminRoleCommand;
 
   beforeAll(() => {
-    command = new AddAdminRoleCommand(mockAuthService as AuthService);
+    command = new RemoveAdminRoleCommand(mockAuthService as AuthService);
 
     basicInteraction = {
       options: {
         getRole: () => ({
           id: "discord role id",
-          name: "Void Admin",
         }),
       },
       editReply: jest.fn(),
@@ -43,29 +41,28 @@ describe("Add admin role", () => {
 
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     editReplySpy.mockClear();
-    addAdminRoleSpy = jest.spyOn(mockAuthService, "addAdminRoles");
-    addAdminRoleSpy.mockClear();
+    removeAdminRoleSpy = jest.spyOn(mockAuthService, "removeAdminRoles");
+    removeAdminRoleSpy.mockClear();
   });
 
   it("Should add admin role", async () => {
-    addAdminRoleSpy.mockReturnValueOnce(Promise.resolve(["db id"]));
+    removeAdminRoleSpy.mockReturnValueOnce(Promise.resolve(["db id"]));
     await command.run(basicInteraction);
-    expect(addAdminRoleSpy).toHaveBeenCalledWith([
-      { discordRoleId: "discord role id", roleName: "Void Admin" },
-    ]);
+    expect(removeAdminRoleSpy).toHaveBeenCalledWith(["discord role id"]);
     expect(editReplySpy).toHaveBeenCalledWith(
-      "Scrim bot admin role <@discord role id> added",
+      "Scrim bot admin role <@discord role id> removed",
     );
   });
 
   it("Should reply with an error if auth service fails", async () => {
-    addAdminRoleSpy.mockImplementationOnce(() => {
+    removeAdminRoleSpy.mockImplementationOnce(() => {
       throw Error("The database fell asleep");
     });
 
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
     await command.run(basicInteraction);
     expect(editReplySpy).toHaveBeenCalledWith(
-      "Error while adding admin role. Error: The database fell asleep",
+      "Error while removing admin role. Error: The database fell asleep",
     );
   });
 });
