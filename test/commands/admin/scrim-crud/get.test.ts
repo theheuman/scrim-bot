@@ -1,5 +1,6 @@
 import {
   InteractionEditReplyOptions,
+  InteractionReplyOptions,
   InteractionResponse,
   Message,
   MessagePayload,
@@ -18,6 +19,11 @@ describe("Get signups", () => {
   let replySpy: SpyInstance<
     Promise<InteractionResponse<boolean>>,
     [reply: string],
+    string
+  >;
+  let followupSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [options: string | InteractionReplyOptions | MessagePayload],
     string
   >;
   let editReplySpy: SpyInstance<
@@ -91,9 +97,11 @@ describe("Get signups", () => {
       channelId: "forum thread id",
       invisibleReply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
     } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "invisibleReply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    followupSpy = jest.spyOn(basicInteraction, "followUp");
     getSignupsSpy = jest.spyOn(mockScrimSignups, "getSignups");
     getSignupsSpy.mockImplementation(() => {
       return Promise.resolve({
@@ -105,6 +113,7 @@ describe("Get signups", () => {
 
   beforeEach(() => {
     replySpy.mockClear();
+    followupSpy.mockClear();
     editReplySpy.mockClear();
     getSignupsSpy.mockClear();
     command = new GetSignupsCommand(
@@ -117,8 +126,16 @@ describe("Get signups", () => {
     jest.useFakeTimers();
     await command.run(basicInteraction);
     expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id");
-    const expectedString = `Main list.\n__Main list team__. Signed up by: <@teamCapDiscordId1>. Players: <@teamCapDiscordId1> <@teamCapDiscordId1>. Prio: 1. League prio.\n__Main list team 2__. Signed up by: <@teamCapDiscordId2>. Players: .\n\n\nWait list.\n__Wait list team__. Signed up by: <@teamCapDiscordId3>. Players: . Prio: -1. Team captain is a known inter.`;
-    expect(editReplySpy).toHaveBeenCalledWith(expectedString);
+    const expectedMainListString = `Main list.\n__Main list team__. Signed up by: <@teamCapDiscordId1>. Players: <@teamCapDiscordId1> <@teamCapDiscordId1>. Prio: 1. League prio.\n__Main list team 2__. Signed up by: <@teamCapDiscordId2>. Players: .\n`;
+    const expectedWaitListString = `Wait list.\n__Wait list team__. Signed up by: <@teamCapDiscordId3>. Players: . Prio: -1. Team captain is a known inter.\n`;
+    expect(followupSpy).toHaveBeenCalledWith({
+      content: expectedMainListString,
+      ephemeral: true,
+    });
+    expect(followupSpy).toHaveBeenCalledWith({
+      content: expectedWaitListString,
+      ephemeral: true,
+    });
     jest.runAllTimers();
     jest.useRealTimers();
   });
