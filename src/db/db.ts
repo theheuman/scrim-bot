@@ -346,7 +346,15 @@ export abstract class DB {
         "player_three_id",
         "scrim_id",
       ],
-    ) as Promise<JSONValue>;
+    ) as Promise<
+      {
+        team_name: string;
+        player_one_id: string;
+        player_two_id: string;
+        player_three_id: string;
+        scrim_id: string;
+      }[]
+    >;
   }
 
   async setPrio(
