@@ -1,7 +1,9 @@
 import {
   GuildMember,
+  InteractionEditReplyOptions,
   InteractionReplyOptions,
   InteractionResponse,
+  Message,
   MessagePayload,
   Snowflake,
   User,
@@ -33,9 +35,9 @@ describe("Add prio", () => {
   >;
   let member: GuildMember;
   const supreme: User = { displayName: "Supreme", id: "1" } as unknown as User;
-  let replySpy: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
+  let editReplySpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionEditReplyOptions | MessagePayload],
     string
   >;
 
@@ -73,6 +75,7 @@ describe("Add prio", () => {
         getNumber: () => -400,
       },
       reply: jest.fn(),
+      editReply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
@@ -100,6 +103,7 @@ describe("Add prio", () => {
         getNumber: () => -400,
       },
       reply: jest.fn(),
+      editReply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
@@ -129,10 +133,10 @@ describe("Add prio", () => {
       },
     );
 
-    replySpy = jest.spyOn(singleUserInteraction, "reply");
+    editReplySpy = jest.spyOn(singleUserInteraction, "editReply");
     await command.run(singleUserInteraction);
-    expect(replySpy).toHaveBeenCalledWith(
-      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\nSupreme prio id: db id`,
+    expect(editReplySpy).toHaveBeenCalledWith(
+      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\n<@1> prio id: db id`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);
@@ -155,10 +159,10 @@ describe("Add prio", () => {
       },
     );
 
-    replySpy = jest.spyOn(basicInteraction, "reply");
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
     await command.run(basicInteraction);
-    expect(replySpy).toHaveBeenCalledWith(
-      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\nSupreme prio id: db id\nSupreme prio id: db id 2\nSupreme prio id: db id 3`,
+    expect(editReplySpy).toHaveBeenCalledWith(
+      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\n<@1> prio id: db id\n<@1> prio id: db id 2\n<@1> prio id: db id 3`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);
@@ -169,9 +173,9 @@ describe("Add prio", () => {
       return Promise.reject("The database fell asleep");
     });
 
-    replySpy = jest.spyOn(basicInteraction, "reply");
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
     await command.run(basicInteraction);
-    expect(replySpy).toHaveBeenCalledWith(
+    expect(editReplySpy).toHaveBeenCalledWith(
       "Error while executing set prio: The database fell asleep",
     );
   });

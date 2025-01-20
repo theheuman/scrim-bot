@@ -25,7 +25,7 @@ export class ComputeScrimCommand extends AdminCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    await interaction.reply({
+    await interaction.editReply({
       content: "Fetched all input and working on your request!",
     });
     const channelId = interaction.channelId;

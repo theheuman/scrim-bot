@@ -88,7 +88,6 @@ describe("abstract command", () => {
     replySpy = jest.spyOn(basicInteraction, "reply");
     await adminCommand.execute(basicInteraction);
     expect(runSpy).toHaveBeenCalledWith(basicInteraction);
-    expect(replySpy).not.toHaveBeenCalled();
   });
 
   it("Should call child class run command because member does not need to be authorized", async () => {

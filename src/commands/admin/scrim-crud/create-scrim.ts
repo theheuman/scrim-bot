@@ -60,7 +60,7 @@ export class CreateScrimCommand extends AdminCommand {
       return;
     }
 
-    await interaction.reply({
+    await interaction.editReply({
       content: "Fetched all input and working on your request!",
     });
 
