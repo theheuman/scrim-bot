@@ -257,6 +257,18 @@ export abstract class DB {
     );
   }
 
+  // This feels like a really gross way to grab a single entry
+  async getPlayerLink(discordId: string)
+  {
+    const dbData = await this.get(DbTable.players,
+      { fieldName: "discord_id", 
+       comparator: "eq", 
+       value: discordId}, 
+       ["overstat_link"]);
+
+   return dbData[0]["overstat_link"] as string
+  }
+
   getActiveScrims(): Promise<
     { discord_channel: string; id: string; date_time_field: string }[]
   > {

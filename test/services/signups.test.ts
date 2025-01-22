@@ -24,7 +24,7 @@ describe("Signups", () => {
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
-    overstatService = new OverstatService();
+    overstatService = new OverstatService(dbMock);
     prioService = new PrioService(dbMock, cache);
     signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
   });

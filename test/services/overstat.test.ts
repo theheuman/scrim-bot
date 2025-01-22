@@ -4,14 +4,17 @@ import { User } from "discord.js";
 import { Player, PlayerStatInsert } from "../../src/models/Player";
 import { ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
+import { DbMock } from "../mocks/db.mock";
 
 describe("Overstat", () => {
   let overstatService: OverstatService;
+  let dbMock: DbMock;
   const overstatLink =
     "https://overstat.gg/tournament/thevoidesports/9994.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard";
 
   beforeEach(() => {
-    overstatService = new OverstatService();
+    dbMock = new DbMock();
+    overstatService = new OverstatService(dbMock);
     global.fetch = jest.fn();
   });
 
