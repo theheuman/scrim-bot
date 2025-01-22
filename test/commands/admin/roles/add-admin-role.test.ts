@@ -1,5 +1,6 @@
 import {
   InteractionEditReplyOptions,
+  InteractionReplyOptions,
   Message,
   MessagePayload,
 } from "discord.js";
@@ -23,6 +24,11 @@ describe("Add admin role", () => {
     [reply: string | InteractionEditReplyOptions | MessagePayload],
     string
   >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
+    string
+  >;
 
   const mockAuthService = new AuthMock();
 
@@ -39,10 +45,14 @@ describe("Add admin role", () => {
         }),
       },
       editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
     } as unknown as CustomInteraction;
 
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     editReplySpy.mockClear();
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
+    followUpSpy.mockClear();
     addAdminRoleSpy = jest.spyOn(mockAuthService, "addAdminRoles");
     addAdminRoleSpy.mockClear();
   });
@@ -53,7 +63,7 @@ describe("Add admin role", () => {
     expect(addAdminRoleSpy).toHaveBeenCalledWith([
       { discordRoleId: "discord role id", roleName: "Void Admin" },
     ]);
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       "Scrim bot admin role <@&discord role id> added",
     );
   });

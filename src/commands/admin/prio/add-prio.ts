@@ -77,7 +77,8 @@ export class AddPrioCommand extends AdminCommand {
     const prioIdString = dbIds
       .map((dbId, index) => `<@${users[index]?.id}> prio id: ${dbId}`)
       .join("\n");
-    await interaction.editReply(
+    await interaction.deleteReply();
+    await interaction.followUp(
       `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}`,
     );
   }

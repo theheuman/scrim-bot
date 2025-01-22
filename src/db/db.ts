@@ -4,6 +4,7 @@ import {
   Comparator,
   DbTable,
   DbValue,
+  Expression,
   JSONValue,
   LogicalExpression,
 } from "./types";
@@ -101,26 +102,33 @@ export abstract class DB {
   }
 
   async closeScrim(discordChannelID: string): Promise<string[]> {
-    const equateExpression = {
-      fieldName: "discord_channel",
-      comparator: "eq" as Comparator,
-      value: discordChannelID,
-    };
     const updatedScrimInfo: { id: DbValue }[] = await this.update(
       DbTable.scrims,
-      equateExpression,
+      {
+        fieldName: "discord_channel",
+        comparator: "eq" as Comparator,
+        value: discordChannelID,
+      },
       { active: false },
       ["id"],
     );
-    if (!updatedScrimInfo[0].id) {
+    if (!updatedScrimInfo[0]?.id) {
       throw Error("Could not set scrim(s) to inactive, no updates made");
     }
-    const deletedEntries = await this.delete(
+    const equateExpressions: Expression[] = updatedScrimInfo.map((scrim) => ({
+      fieldName: "scrim_id",
+      comparator: "eq" as Comparator,
+      value: scrim.id,
+    }));
+    const deletedScrimSignups = await this.delete(
       DbTable.scrimSignups,
-      equateExpression,
+      {
+        operator: "or",
+        expressions: equateExpressions,
+      },
       ["id"],
     );
-    return deletedEntries.map((entry) => entry.id as string);
+    return deletedScrimSignups.map((entry) => entry.id as string);
   }
 
   async addScrimSignup(

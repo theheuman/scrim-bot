@@ -93,7 +93,7 @@ export class ScrimSignups {
     if (!scrimId) {
       throw Error("No scrim found for that channel");
     }
-    await this.db.closeScrim(scrimId);
+    await this.db.closeScrim(discordChannelID);
     this.cache.removeScrimChannel(discordChannelID);
   }
 

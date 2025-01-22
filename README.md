@@ -70,7 +70,7 @@ Get the signups for a scrim, only sends the list to the user calling the command
 Can only be used in a signup post created by the bot
 
 #### /compute-scrim
-Computes stats for the scrim, any overstat accounts linked to discord accounts will have stats generated for them weighted to the lobby strength if sent.
+Computes stats for the scrim, any overstat accounts linked to discord accounts will have stats generated for them weighted to the lobby strength.
 
 This command can be used multiple times in the same signup post if there are multiple lobbies
 
@@ -78,9 +78,7 @@ This command can be used multiple times in the same signup post if there are mul
 Can only be used in a signup post created by the bot
 
 
-Fill out the required fields: full overstat link (not shortened)
-
-Optionally add skill to it so it can be weighted properly
+Fill out the required fields: full overstat link (not shortened), skill (see below table for skill for each type of lobby)
 
 Skill map
 ```

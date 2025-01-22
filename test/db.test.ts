@@ -846,7 +846,7 @@ describe("DB connection", () => {
   describe("close and compute scrim", () => {
     const expectedDeleteQuery = `
       mutation {
-        delete_scrim_signups(where: { discord_channel: { _eq: "discord_channel_id" } }) {
+        delete_scrim_signups(where: { _or: [{ scrim_id: { _eq: "scrim_id_1" } }, { scrim_id: { _eq: "scrim_id_2" } }] }) {
           returning {
             id
           }
@@ -903,10 +903,10 @@ describe("DB connection", () => {
             update_scrims: {
               returning: [
                 {
-                  id: "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
+                  id: "scrim_id_1",
                 },
                 {
-                  id: "9766e780-3c13-4298-8eed-a3cf9a206db4",
+                  id: "scrim_id_2",
                 },
               ],
             },

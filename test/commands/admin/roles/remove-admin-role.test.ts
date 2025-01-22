@@ -1,5 +1,6 @@
 import {
   InteractionEditReplyOptions,
+  InteractionReplyOptions,
   Message,
   MessagePayload,
 } from "discord.js";
@@ -22,6 +23,11 @@ describe("Remove admin role", () => {
     [reply: string | InteractionEditReplyOptions | MessagePayload],
     string
   >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
+    string
+  >;
 
   const mockAuthService = new AuthMock();
 
@@ -37,10 +43,14 @@ describe("Remove admin role", () => {
         }),
       },
       editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
     } as unknown as CustomInteraction;
 
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     editReplySpy.mockClear();
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
+    followUpSpy.mockClear();
     removeAdminRoleSpy = jest.spyOn(mockAuthService, "removeAdminRoles");
     removeAdminRoleSpy.mockClear();
   });
@@ -49,7 +59,7 @@ describe("Remove admin role", () => {
     removeAdminRoleSpy.mockReturnValueOnce(Promise.resolve(["db id"]));
     await command.run(basicInteraction);
     expect(removeAdminRoleSpy).toHaveBeenCalledWith(["discord role id"]);
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       "Scrim bot admin role <@&discord role id> removed",
     );
   });
