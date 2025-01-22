@@ -162,7 +162,6 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      console.log(result.data, result.error);
       throw Error("Graph ql error: " + result.error);
     }
     const returnedData = result.data as Record<
