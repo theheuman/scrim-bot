@@ -131,7 +131,7 @@ export abstract class Command extends SlashCommandBuilder {
 
 export abstract class AdminCommand extends Command {
   constructor(
-    private authService: AuthService,
+    protected authService: AuthService,
     name: string,
     description: string,
   ) {
