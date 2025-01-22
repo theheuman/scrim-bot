@@ -21,7 +21,9 @@ export class RemoveAdminRoleCommand extends AdminCommand {
 
     try {
       await this.authService.removeAdminRoles([role.id]);
-      await interaction.editReply(`Scrim bot admin role <@${role.id}> removed`);
+      await interaction.editReply(
+        `Scrim bot admin role <@&${role.id}> removed`,
+      );
     } catch (e) {
       await interaction.editReply("Error while removing admin role. " + e);
     }

@@ -23,7 +23,7 @@ export class AddAdminRoleCommand extends AdminCommand {
       await this.authService.addAdminRoles([
         { discordRoleId: role.id, roleName: role.name },
       ]);
-      await interaction.editReply(`Scrim bot admin role <@${role.id}> added`);
+      await interaction.editReply(`Scrim bot admin role <@&${role.id}> added`);
     } catch (e) {
       await interaction.editReply("Error while adding admin role. " + e);
     }

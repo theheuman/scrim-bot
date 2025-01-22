@@ -50,7 +50,7 @@ describe("Remove admin role", () => {
     await command.run(basicInteraction);
     expect(removeAdminRoleSpy).toHaveBeenCalledWith(["discord role id"]);
     expect(editReplySpy).toHaveBeenCalledWith(
-      "Scrim bot admin role <@discord role id> removed",
+      "Scrim bot admin role <@&discord role id> removed",
     );
   });
 

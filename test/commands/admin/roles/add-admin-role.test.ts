@@ -54,7 +54,7 @@ describe("Add admin role", () => {
       { discordRoleId: "discord role id", roleName: "Void Admin" },
     ]);
     expect(editReplySpy).toHaveBeenCalledWith(
-      "Scrim bot admin role <@discord role id> added",
+      "Scrim bot admin role <@&discord role id> added",
     );
   });
 
