@@ -17,14 +17,14 @@ import { ComputeScrimCommand } from "../../../../src/commands/admin/scrim-crud/c
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
   let member: GuildMember;
-  let replySpy: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
-    string
-  >;
   let editReplySpy: SpyInstance<
     Promise<Message<boolean>>,
     [options: string | InteractionEditReplyOptions | MessagePayload],
+    string
+  >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
   let signupComputeScrimSpy: SpyInstance<
@@ -52,10 +52,12 @@ describe("Close scrim", () => {
       },
       reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
       member,
     } as unknown as CustomInteraction;
-    replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
     signupComputeScrimSpy = jest.spyOn(mockScrimSignups, "computeScrim");
     signupComputeScrimSpy.mockImplementation(() => {
       return Promise.resolve();
@@ -63,8 +65,8 @@ describe("Close scrim", () => {
   });
 
   beforeEach(() => {
-    replySpy.mockClear();
     editReplySpy.mockClear();
+    followUpSpy.mockClear();
     signupComputeScrimSpy.mockClear();
     command = new ComputeScrimCommand(
       new AuthMock() as AuthService,
@@ -79,7 +81,7 @@ describe("Close scrim", () => {
       "overstat.link",
       1,
     );
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       "Scrim lobby successfully computed, you can now compute another lobby or close the scrim",
     );
     jest.useRealTimers();

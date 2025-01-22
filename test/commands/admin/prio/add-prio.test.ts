@@ -40,6 +40,11 @@ describe("Add prio", () => {
     [reply: string | InteractionEditReplyOptions | MessagePayload],
     string
   >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
+    string
+  >;
 
   const mockPrioService = new PrioServiceMock();
 
@@ -74,8 +79,9 @@ describe("Add prio", () => {
         },
         getNumber: () => -400,
       },
-      reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
@@ -102,11 +108,17 @@ describe("Add prio", () => {
         },
         getNumber: () => -400,
       },
-      reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
       channelId,
       member,
     } as unknown as CustomInteraction;
+
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    editReplySpy.mockClear();
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
+    followUpSpy.mockClear();
 
     setPlayerPrioSpy = jest.spyOn(mockPrioService, "setPlayerPrio");
     setPlayerPrioSpy.mockClear();
@@ -133,9 +145,9 @@ describe("Add prio", () => {
       },
     );
 
-    editReplySpy = jest.spyOn(singleUserInteraction, "editReply");
+    followUpSpy = jest.spyOn(singleUserInteraction, "followUp");
     await command.run(singleUserInteraction);
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\n<@1> prio id: db id`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
@@ -159,9 +171,9 @@ describe("Add prio", () => {
       },
     );
 
-    editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
     await command.run(basicInteraction);
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\n<@1> prio id: db id\n<@1> prio id: db id 2\n<@1> prio id: db id 3`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values

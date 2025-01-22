@@ -20,14 +20,14 @@ import { ChannelType } from "discord-api-types/v10";
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
   let member: GuildMember;
-  let replySpy: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
-    string
-  >;
   let editReplySpy: SpyInstance<
     Promise<Message<boolean>>,
     [options: string | InteractionEditReplyOptions | MessagePayload],
+    string
+  >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
   let signupsCreateScrimSpy: SpyInstance<
@@ -79,9 +79,11 @@ describe("Create scrim", () => {
       },
       reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
       member,
     } as unknown as CustomInteraction;
-    replySpy = jest.spyOn(basicInteraction, "reply");
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     signupsCreateScrimSpy = jest.spyOn(mockScrimSignups, "createScrim");
     signupsCreateScrimSpy.mockImplementation(() => {
@@ -95,7 +97,7 @@ describe("Create scrim", () => {
   });
 
   beforeEach(() => {
-    replySpy.mockClear();
+    followUpSpy.mockClear();
     editReplySpy.mockClear();
     signupsCreateScrimSpy.mockClear();
     command = new CreateScrimCommand(
@@ -107,7 +109,7 @@ describe("Create scrim", () => {
 
   it("Should create scrim", async () => {
     await command.run(basicInteraction);
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       "Scrim created. Channel: <#forum thread id>",
     );
     expect(channelCreatedSpy).toHaveBeenCalledWith(
@@ -134,11 +136,11 @@ describe("Create scrim", () => {
           },
           getChannel: () => ({ type: ChannelType.GuildText }),
         },
-        reply: jest.fn(),
+        editReply: jest.fn(),
       } as unknown as CustomInteraction;
-      replySpy = jest.spyOn(noChannelInteraction, "reply");
+      editReplySpy = jest.spyOn(noChannelInteraction, "editReply");
       await command.run(noChannelInteraction);
-      expect(replySpy).toHaveBeenCalledWith(
+      expect(editReplySpy).toHaveBeenCalledWith(
         "Scrim post could not be created. Channel provided is not a forum channel",
       );
       expect(signupsCreateScrimSpy).not.toHaveBeenCalled();

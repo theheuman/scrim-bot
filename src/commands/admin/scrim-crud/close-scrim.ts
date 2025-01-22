@@ -31,18 +31,20 @@ export class CloseScrimCommand extends AdminCommand {
     try {
       await this.signupService.closeScrim(channel.id);
     } catch (error) {
-      interaction.editReply("Scrim not closed. " + error);
+      await interaction.editReply("Scrim not closed. " + error);
       return;
     }
 
-    interaction.editReply("Scrim closed. Deleting this channel in 5 seconds");
+    await interaction.editReply(
+      "Scrim closed. Deleting this channel in 5 seconds",
+    );
     setTimeout(async () => {
       try {
         await channel.delete(
           "Scrim closed by " + interaction.member?.user.username,
         );
       } catch (error) {
-        interaction.editReply(
+        await interaction.editReply(
           "Scrim closed but channel could not be deleted. " + error,
         );
         return;
