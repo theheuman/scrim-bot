@@ -115,4 +115,36 @@ describe("Overstat", () => {
     };
     expect(playerStats[0]).toEqual(expectedStats);
   });
+
+  it("Should link a players overstat", async () => {
+    const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+    insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+    await overstatService.addPlayerOverstatLink(
+      { id: "discord id", displayName: "TheHeuman" } as User,
+      "https://overstat.gg/player/357606/overview",
+    );
+    expect(insertPlayerSpy).toHaveBeenCalledWith(
+      "discord id",
+      "TheHeuman",
+      "357606",
+    );
+  });
+
+  it("Should get a players overstat", async () => {
+    const getPlayerSpy = jest.spyOn(dbMock, "getPlayerFromDiscordId");
+    getPlayerSpy.mockReturnValue(
+      Promise.resolve({
+        id: "db id",
+        displayName: "TheHeuman",
+        overstatId: "357606",
+        discordId: "discord id",
+      }),
+    );
+    const overstatLink = await overstatService.getPlayerOverstat({
+      id: "discord id",
+      displayName: "TheHeuman",
+    } as User);
+    expect(getPlayerSpy).toHaveBeenCalledWith("discord id");
+    expect(overstatLink).toEqual("https://overstat.gg/player/357606/overview");
+  });
 });

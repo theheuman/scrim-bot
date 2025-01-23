@@ -46,12 +46,6 @@ export class OverstatService {
     return id[0];
   }
 
-  // We may want to make sure that the ID returns a valid player
-  // https://overstat.gg/api/player/{id} could be used for this
-  private getPlayerOverstatLink(overstatId: string): string {
-    return "https://overstat.gg/api/player/" + overstatId;
-  }
-
   async getOverallStats(
     overstatLink: string,
   ): Promise<OverstatTournamentResponse> {
@@ -133,12 +127,11 @@ export class OverstatService {
     overstatLink: string,
   ): Promise<string> {
     const overstatId = this.getPlayerId(overstatLink);
-    const id = this.getPlayerUrl(overstatId);
 
     const dbId = await this.db.insertPlayerIfNotExists(
       user.id,
       user.displayName,
-      id,
+      overstatId,
     );
 
     return dbId;
@@ -149,6 +142,6 @@ export class OverstatService {
     if (!player.overstatId) {
       throw Error("Player has no overstat id");
     }
-    return this.getPlayerOverstatLink(player.overstatId);
+    return this.getPlayerUrl(player.overstatId);
   }
 }
