@@ -27,7 +27,9 @@ export class ExpungePrioCommand extends AdminCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    await interaction.reply("Fetched all input and working on your request!");
+    await interaction.editReply(
+      "Fetched all input and working on your request!",
+    );
 
     // get prio id from interaction
     const prioId1 = interaction.options.getString("prio-id1", true);
@@ -35,15 +37,18 @@ export class ExpungePrioCommand extends AdminCommand {
     const prioId3 = interaction.options.getString("prio-id3");
     // in a try catch block
     const prios: string[] = [prioId1, prioId2, prioId3].filter(
-      (prio) => !!prio,
-    ) as unknown as string[];
+      (prio) => prio !== null,
+    );
     try {
-      const expungePlayers = await this.prioService.expungePlayerPrio(prios);
-      await interaction.reply(
-        `Expunged prio of ${expungePlayers[0].amount} on player <@${expungePlayers[0].playerDiscordId}> (${expungePlayers[0].playerDisplayName}) that was set to end on ${this.formatDate(expungePlayers[0].endDate)}`,
+      const expungedPrios = await this.prioService.expungePlayerPrio(prios);
+      const expungeMessageArray = expungedPrios.map(
+        (prio) =>
+          `Expunged prio of ${prio.amount} on player <@${prio.playerDiscordId}> (${prio.playerDisplayName}) that was set to end on ${this.formatDate(prio.endDate)}`,
       );
+      await interaction.deleteReply();
+      await interaction.followUp(expungeMessageArray.join("\n"));
     } catch (e) {
-      await interaction.reply("Error while executing set prio: " + e);
+      await interaction.editReply("Error while executing expunge prio. " + e);
       return;
     }
     // send prio id to prioService.expungePrio method

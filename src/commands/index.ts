@@ -33,7 +33,7 @@ export const commands: Command[] = [
 
   // custom commands
   new AddPrioCommand(authService, prioService),
-  new ExpungePrioCommand(authService),
+  new ExpungePrioCommand(authService, prioService),
 
   new AddAdminRoleCommand(authService),
   new RemoveAdminRoleCommand(authService),
