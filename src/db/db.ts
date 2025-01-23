@@ -1,4 +1,4 @@
-import { PlayerInsert, PlayerStatInsert } from "../models/Player";
+import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
 import {
   Comparator,
@@ -183,14 +183,12 @@ export abstract class DB {
   async insertPlayerIfNotExists(
     discordId: string,
     displayName: string,
-    overstatLink?: string,
+    overstatId?: string,
   ): Promise<string> {
-    const overstatLinkObjectSuffix = overstatLink
-      ? `, overstat_link: "${overstatLink}"`
+    const overstatLinkObjectSuffix = overstatId
+      ? `, overstat_id: "${overstatId}"`
       : "";
-    const overstatLinkColumn = overstatLink
-      ? `\n              overstat_link`
-      : "";
+    const overstatLinkColumn = overstatId ? `\n              overstat_id` : "";
     const query = `
       mutation upsertPlayer {
         insert_players_one(
@@ -265,6 +263,25 @@ export abstract class DB {
           (entry) => entry.discord_id === player.discordId,
         )?.id as string,
     );
+  }
+
+  // This feels like a really gross way to grab a single entry
+  async getPlayerFromDiscordId(discordId: string): Promise<Player> {
+    const dbData = await this.get(
+      DbTable.players,
+      {
+        fieldName: "discord_id",
+        comparator: "eq",
+        value: discordId,
+      },
+      ["id", "display_name", "overstat_id"],
+    );
+    return {
+      discordId: discordId,
+      displayName: dbData[0].display_name as string,
+      id: dbData[0].id as string,
+      overstatId: dbData[0].overstat_id as string,
+    };
   }
 
   getActiveScrims(): Promise<

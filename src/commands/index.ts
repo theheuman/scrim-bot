@@ -16,11 +16,14 @@ import { SignupCommand } from "./signup/sign-up";
 import { SubPlayerCommand } from "./signup/sub-player";
 import {
   authService,
+  overstatService,
   prioService,
   rosterService,
   signupsService,
   staticValueService,
 } from "../services";
+import { LinkOverstatCommand } from "./overstat/link-overstat";
+import { GetOverstatCommand } from "./overstat/get-overstat";
 
 export const commands: Command[] = [
   // test commands
@@ -44,4 +47,7 @@ export const commands: Command[] = [
   new DropoutCommand(rosterService),
   new SignupCommand(signupsService),
   new SubPlayerCommand(rosterService),
+
+  new LinkOverstatCommand(authService, overstatService),
+  new GetOverstatCommand(authService, overstatService),
 ];
