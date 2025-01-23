@@ -19,7 +19,7 @@ export class AddPrioCommand extends AdminCommand {
     authService: AuthService,
     private prioService: PrioService,
   ) {
-    super(authService, "addprio", "Adds a prio entry for up to three players");
+    super(authService, "add-prio", "Adds a prio entry for up to three players");
 
     this.addUserInput(this.inputNames.user1, "First user", true);
     this.addDateInput(this.inputNames.endDate, "End date", true);
