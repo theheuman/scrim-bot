@@ -536,12 +536,12 @@ describe("DB connection", () => {
         const expected = `
       mutation upsertPlayer {
         insert_players_one(
-          object: {discord_id: "316280734115430403", display_name: "zboy", overstat_link: "https://overstat.gg/player/749174.Zboy5z5/overview"}
+          object: {discord_id: "316280734115430403", display_name: "zboy", overstat_id: "749174"}
           on_conflict: {
             constraint: players_discord_id_key,  # Unique constraint on discord_id
             update_columns: [
               display_name
-              overstat_link
+              overstat_id
             ]
           }
         ) {
@@ -561,7 +561,7 @@ describe("DB connection", () => {
       const newID = await nhostDb.insertPlayerIfNotExists(
         "316280734115430403",
         "zboy",
-        "https://overstat.gg/player/749174.Zboy5z5/overview",
+        "749174",
       );
       expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
       expect.assertions(2);

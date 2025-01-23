@@ -9,7 +9,7 @@ import { StaticValueService } from "./static-values";
 
 // This file creates all the singleton services
 export const cache = new CacheService();
-export const overstatService = new OverstatService();
+export const overstatService = new OverstatService(nhostDb);
 export const staticValueService = new StaticValueService(nhostDb);
 
 export const authService = new AuthService(nhostDb, cache);
