@@ -407,8 +407,8 @@ describe("Signups", () => {
       cache.setSignups(scrimId, []);
       jest
         .spyOn(dbMock, "closeScrim")
-        .mockImplementation((dbScrimId: string) => {
-          expect(dbScrimId).toEqual(scrimId);
+        .mockImplementation((discordChannelId: string) => {
+          expect(discordChannelId).toEqual(channelId);
           return Promise.resolve([scrimId]);
         });
 

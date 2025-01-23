@@ -393,13 +393,15 @@ describe("DB connection", () => {
           "scrim_id",
         ],
       );
-      expect(newData).toEqual({
-        team_name: "Dude Cube",
-        player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
-        player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
-        player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
-        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-      });
+      expect(newData).toEqual([
+        {
+          team_name: "Dude Cube",
+          player_one_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
+          player_two_id: "c450684a-d423-4e52-b6ea-0778bf021910",
+          player_three_id: "7605b2bf-1875-4415-a04b-75fe47768565",
+          scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+        },
+      ]);
       expect.assertions(2);
     });
   });
@@ -844,7 +846,7 @@ describe("DB connection", () => {
   describe("close and compute scrim", () => {
     const expectedDeleteQuery = `
       mutation {
-        delete_scrim_signups(where: { scrim_id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } }) {
+        delete_scrim_signups(where: { _or: [{ scrim_id: { _eq: "scrim_id_1" } }, { scrim_id: { _eq: "scrim_id_2" } }] }) {
           returning {
             id
           }
@@ -883,7 +885,7 @@ describe("DB connection", () => {
         let expected = `
         mutation {
          update_scrims(
-           where: { id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } },
+           where: { discord_channel: { _eq: "discord_channel_id" } },
           _set:
           {
             active: false
@@ -901,7 +903,10 @@ describe("DB connection", () => {
             update_scrims: {
               returning: [
                 {
-                  id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                  id: "scrim_id_1",
+                },
+                {
+                  id: "scrim_id_2",
                 },
               ],
             },
@@ -929,9 +934,7 @@ describe("DB connection", () => {
         );
         return Promise.resolve(returnData);
       };
-      const returnedData = await nhostDb.closeScrim(
-        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-      );
+      const returnedData = await nhostDb.closeScrim("discord_channel_id");
       expect(returnedData).toEqual([
         "7d3bc090-f9aa-4d74-a686-7ab198ab2dfe",
         "9766e780-3c13-4298-8eed-a3cf9a206db4",

@@ -20,7 +20,7 @@ export class GetSignupsCommand extends AdminCommand {
     // Before executing any other code, we need to acknowledge the interaction.
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
-    await interaction.invisibleReply("Fetching teams, command in progress");
+    await interaction.editReply("Fetching teams, command in progress");
 
     const channelId = interaction.channelId;
 
@@ -35,15 +35,41 @@ export class GetSignupsCommand extends AdminCommand {
     const { mainList, waitList } = channelSignups;
 
     const mainListString = `Main list.\n${this.formatTeams(mainList)}`;
-    const waitListString =
-      waitList.length > 0
-        ? `\n\n\nWait list.\n${this.formatTeams(waitList)}`
-        : "";
-    const message = mainListString + waitListString;
-    await interaction.editReply(message);
+
+    await this.replyWithString(interaction, mainListString);
+
+    if (waitList.length > 0) {
+      const waitListString = `Wait list.\n${this.formatTeams(waitList)}`;
+      await this.replyWithString(interaction, waitListString);
+    }
   }
 
-  formatTeams(teams: ScrimSignup[]) {
-    return teams.map((team) => this.formatTeam(team)).join("\n");
+  // Break long strings into chunks for discord
+  async replyWithString(interaction: CustomInteraction, replyString: string) {
+    let stringToReplyWith = replyString;
+    while (stringToReplyWith.length > 0) {
+      // discords max reply length is 2000
+      let cutoffIndex =
+        stringToReplyWith.length > 2000 ? 2000 : stringToReplyWith.length;
+      let charAtIndex = stringToReplyWith.charAt(cutoffIndex - 1);
+      while (charAtIndex !== "\n") {
+        cutoffIndex--;
+        charAtIndex = stringToReplyWith.charAt(cutoffIndex - 1);
+      }
+      const message = stringToReplyWith.substring(0, cutoffIndex);
+      try {
+        await interaction.followUp({ content: message, ephemeral: true });
+      } catch (e) {
+        await interaction.followUp({
+          content: "error sending part of response " + e,
+          ephemeral: true,
+        });
+      }
+      stringToReplyWith = stringToReplyWith.substring(cutoffIndex);
+    }
+  }
+
+  formatTeams(teams: ScrimSignup[]): string {
+    return teams.map((team) => this.formatTeam(team)).join("\n") + "\n";
   }
 }

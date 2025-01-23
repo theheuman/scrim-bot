@@ -106,13 +106,13 @@ export class DbMock extends DB {
     return Promise.resolve({});
   }
 
-  update(
+  update<K extends string>(
     tableName: string,
     fieldsToEquate: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue> {
-    return Promise.resolve({});
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>> {
+    return Promise.resolve([]);
   }
 
   changeTeamName(

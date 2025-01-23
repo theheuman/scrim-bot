@@ -131,7 +131,7 @@ export abstract class Command extends SlashCommandBuilder {
 
 export abstract class AdminCommand extends Command {
   constructor(
-    private authService: AuthService,
+    protected authService: AuthService,
     name: string,
     description: string,
   ) {
@@ -139,6 +139,7 @@ export abstract class AdminCommand extends Command {
   }
 
   async childExecute(interaction: CustomInteraction) {
+    await interaction.invisibleReply("Checking if user is authorized");
     if (!isGuildMember(interaction.member)) {
       await interaction.reply(
         "Can't find the member issuing the command or this is an api command, no command executed",

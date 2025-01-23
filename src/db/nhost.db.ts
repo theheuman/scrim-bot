@@ -171,12 +171,12 @@ class NhostDb extends DB {
     return returnedData[deleteName].returning;
   }
 
-  async update(
+  async update<K extends string>(
     tableName: string,
     fieldsToSearch: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue> {
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>> {
     const updateName = "update_" + tableName;
     const searchString = this.generateWhereClause(fieldsToSearch);
     const fieldsToUpdateArray = Object.keys(fieldsToUpdate).map(
@@ -199,9 +199,11 @@ class NhostDb extends DB {
     if (!result.data || result.error) {
       throw Error("Graph ql error: " + result.error);
     }
-    const returnedData: Record<string, { returning: { id: string }[] }> =
-      result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[updateName].returning[0];
+    const returnedData = result.data as Record<
+      string,
+      { returning: Array<Record<K, DbValue>> }
+    >;
+    return returnedData[updateName].returning;
   }
 
   async changeTeamName(

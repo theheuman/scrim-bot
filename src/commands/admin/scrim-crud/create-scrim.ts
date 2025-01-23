@@ -54,13 +54,13 @@ export class CreateScrimCommand extends AdminCommand {
 
     // just to triple check
     if (!isForumChannel(channel)) {
-      await interaction.reply(
+      await interaction.editReply(
         "Scrim post could not be created. Channel provided is not a forum channel",
       );
       return;
     }
 
-    await interaction.reply({
+    await interaction.editReply({
       content: "Fetched all input and working on your request!",
     });
 
@@ -92,7 +92,8 @@ export class CreateScrimCommand extends AdminCommand {
       return;
     }
 
-    await interaction.editReply(
+    await interaction.deleteReply();
+    await interaction.followUp(
       `Scrim created. Channel: <#${createdThread.id}>`,
     );
   }

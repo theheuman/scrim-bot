@@ -1,6 +1,13 @@
 import { PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
-import { DbTable, DbValue, JSONValue, LogicalExpression } from "./types";
+import {
+  Comparator,
+  DbTable,
+  DbValue,
+  Expression,
+  JSONValue,
+  LogicalExpression,
+} from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
 
@@ -10,12 +17,12 @@ export abstract class DB {
     logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: K[],
   ): Promise<Array<Record<K, DbValue>>>;
-  abstract update(
+  abstract update<K extends string>(
     tableName: DbTable,
     logicalExpression: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue>;
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>>;
   // returns id of new object as a string
   abstract post(
     tableName: DbTable,
@@ -73,18 +80,17 @@ export abstract class DB {
     skill: number,
     playerStats: PlayerStatInsert[],
   ): Promise<string[]> {
-    const updatedScrimInfo: { id: string } = (await this.update(
+    const updatedScrimInfo: { id: DbValue }[] = await this.update(
       DbTable.scrims,
       {
         fieldName: "id",
         comparator: "eq",
         value: scrimId,
       },
-
       { skill, overstat_link: overstatLink },
       ["id"],
-    )) as { id: string };
-    if (!updatedScrimInfo?.id) {
+    );
+    if (!updatedScrimInfo[0].id) {
       throw Error(
         "Could not set skill level or overstat link on scrim, no updates made",
       );
@@ -95,30 +101,34 @@ export abstract class DB {
     );
   }
 
-  async closeScrim(scrimId: string): Promise<string[]> {
-    const updatedScrimInfo: { id: string } = (await this.update(
+  async closeScrim(discordChannelID: string): Promise<string[]> {
+    const updatedScrimInfo: { id: DbValue }[] = await this.update(
       DbTable.scrims,
       {
-        fieldName: "id",
-        comparator: "eq",
-        value: scrimId,
+        fieldName: "discord_channel",
+        comparator: "eq" as Comparator,
+        value: discordChannelID,
       },
       { active: false },
       ["id"],
-    )) as { id: string };
-    if (!updatedScrimInfo?.id) {
-      throw Error("Could not set scrim to inactive, no updates made");
+    );
+    if (!updatedScrimInfo[0]?.id) {
+      throw Error("Could not set scrim(s) to inactive, no updates made");
     }
-    const deletedEntries = await this.delete(
+    const equateExpressions: Expression[] = updatedScrimInfo.map((scrim) => ({
+      fieldName: "scrim_id",
+      comparator: "eq" as Comparator,
+      value: scrim.id,
+    }));
+    const deletedScrimSignups = await this.delete(
       DbTable.scrimSignups,
       {
-        fieldName: "scrim_id",
-        comparator: "eq",
-        value: updatedScrimInfo.id,
+        operator: "or",
+        expressions: equateExpressions,
       },
       ["id"],
     );
-    return deletedEntries.map((entry) => entry.id as string);
+    return deletedScrimSignups.map((entry) => entry.id as string);
   }
 
   async addScrimSignup(
@@ -356,7 +366,15 @@ export abstract class DB {
         "player_three_id",
         "scrim_id",
       ],
-    );
+    ) as Promise<
+      {
+        team_name: string;
+        player_one_id: string;
+        player_two_id: string;
+        player_three_id: string;
+        scrim_id: string;
+      }[]
+    >;
   }
 
   async setPrio(
