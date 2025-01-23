@@ -4,14 +4,17 @@ import { User } from "discord.js";
 import { Player, PlayerStatInsert } from "../../src/models/Player";
 import { ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
+import { DbMock } from "../mocks/db.mock";
 
 describe("Overstat", () => {
   let overstatService: OverstatService;
+  let dbMock: DbMock;
   const overstatLink =
     "https://overstat.gg/tournament/thevoidesports/9994.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard";
 
   beforeEach(() => {
-    overstatService = new OverstatService();
+    dbMock = new DbMock();
+    overstatService = new OverstatService(dbMock);
     global.fetch = jest.fn();
   });
 
@@ -111,5 +114,37 @@ describe("Overstat", () => {
       ultimates_used: theHeumanOverallStats.ultimatesUsed,
     };
     expect(playerStats[0]).toEqual(expectedStats);
+  });
+
+  it("Should link a players overstat", async () => {
+    const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+    insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+    await overstatService.addPlayerOverstatLink(
+      { id: "discord id", displayName: "TheHeuman" } as User,
+      "https://overstat.gg/player/357606/overview",
+    );
+    expect(insertPlayerSpy).toHaveBeenCalledWith(
+      "discord id",
+      "TheHeuman",
+      "357606",
+    );
+  });
+
+  it("Should get a players overstat", async () => {
+    const getPlayerSpy = jest.spyOn(dbMock, "getPlayerFromDiscordId");
+    getPlayerSpy.mockReturnValue(
+      Promise.resolve({
+        id: "db id",
+        displayName: "TheHeuman",
+        overstatId: "357606",
+        discordId: "discord id",
+      }),
+    );
+    const overstatLink = await overstatService.getPlayerOverstat({
+      id: "discord id",
+      displayName: "TheHeuman",
+    } as User);
+    expect(getPlayerSpy).toHaveBeenCalledWith("discord id");
+    expect(overstatLink).toEqual("https://overstat.gg/player/357606/overview");
   });
 });

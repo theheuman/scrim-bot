@@ -21,28 +21,25 @@ export class ComputeScrimCommand extends AdminCommand {
         minLength: 30,
       },
     );
-    this.addNumberInput("skill", "Skill level of the lobby");
+    this.addNumberInput("skill", "Skill level of the lobby", true);
   }
 
   async run(interaction: CustomInteraction) {
-    // Before executing any other code, we need to acknowledge the interaction.
-    // Discord only gives us 3 seconds to acknowledge an interaction before
-    // the interaction gets voided and can't be used anymore.
-    await interaction.reply({
-      content: "Fetched all input and working on your request!",
-    });
     const channelId = interaction.channelId;
     const overstatLink = interaction.options.getString("overstat-link", true);
     const skill = interaction.options.getNumber("skill", true);
+    await interaction.editReply({
+      content: "Fetched all input and working on your request!",
+    });
 
     try {
       await this.signupService.computeScrim(channelId, overstatLink, skill);
+      await interaction.deleteReply();
+      await interaction.followUp(
+        "Scrim lobby successfully computed, you can now compute another lobby or close the scrim",
+      );
     } catch (error) {
-      await interaction.reply(`Unable to complete request: ${error}`);
+      await interaction.editReply(`Scrim not computed. ${error}`);
     }
-
-    await interaction.reply(
-      "Scrim successfully computed, you can now compute another lobby or close the scrim",
-    );
   }
 }

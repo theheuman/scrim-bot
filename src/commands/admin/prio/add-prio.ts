@@ -51,6 +51,11 @@ export class AddPrioCommand extends AdminCommand {
       this.inputNames.endDate,
       true,
     );
+
+    await interaction.editReply({
+      content: "Fetched all input and working on your request!",
+    });
+
     // end date is inclusive
     endDate = setEasternHours(endDate, 23, 59, 59);
 
@@ -65,14 +70,15 @@ export class AddPrioCommand extends AdminCommand {
         reason,
       );
     } catch (e) {
-      await interaction.reply("Error while executing set prio: " + e);
+      await interaction.editReply("Error while executing set prio: " + e);
       return;
     }
 
     const prioIdString = dbIds
-      .map((dbId, index) => `${users[index]?.displayName} prio id: ${dbId}`)
+      .map((dbId, index) => `<@${users[index]?.id}> prio id: ${dbId}`)
       .join("\n");
-    await interaction.reply(
+    await interaction.deleteReply();
+    await interaction.followUp(
       `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}`,
     );
   }

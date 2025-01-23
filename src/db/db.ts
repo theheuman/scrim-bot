@@ -1,21 +1,28 @@
-import { PlayerInsert, PlayerStatInsert } from "../models/Player";
+import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
-import { DbTable, DbValue, JSONValue, LogicalExpression } from "./types";
+import {
+  Comparator,
+  DbTable,
+  DbValue,
+  Expression,
+  JSONValue,
+  LogicalExpression,
+} from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
 
 export abstract class DB {
-  abstract get(
+  abstract get<K extends string>(
     tableName: DbTable,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue>;
-  abstract update(
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>>;
+  abstract update<K extends string>(
     tableName: DbTable,
     logicalExpression: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue>;
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>>;
   // returns id of new object as a string
   abstract post(
     tableName: DbTable,
@@ -73,18 +80,17 @@ export abstract class DB {
     skill: number,
     playerStats: PlayerStatInsert[],
   ): Promise<string[]> {
-    const updatedScrimInfo: { id: string } = (await this.update(
+    const updatedScrimInfo: { id: DbValue }[] = await this.update(
       DbTable.scrims,
       {
         fieldName: "id",
         comparator: "eq",
         value: scrimId,
       },
-
       { skill, overstat_link: overstatLink },
       ["id"],
-    )) as { id: string };
-    if (!updatedScrimInfo?.id) {
+    );
+    if (!updatedScrimInfo[0].id) {
       throw Error(
         "Could not set skill level or overstat link on scrim, no updates made",
       );
@@ -95,30 +101,34 @@ export abstract class DB {
     );
   }
 
-  async closeScrim(scrimId: string): Promise<string[]> {
-    const updatedScrimInfo: { id: string } = (await this.update(
+  async closeScrim(discordChannelID: string): Promise<string[]> {
+    const updatedScrimInfo: { id: DbValue }[] = await this.update(
       DbTable.scrims,
       {
-        fieldName: "id",
-        comparator: "eq",
-        value: scrimId,
+        fieldName: "discord_channel",
+        comparator: "eq" as Comparator,
+        value: discordChannelID,
       },
       { active: false },
       ["id"],
-    )) as { id: string };
-    if (!updatedScrimInfo?.id) {
-      throw Error("Could not set scrim to inactive, no updates made");
+    );
+    if (!updatedScrimInfo[0]?.id) {
+      throw Error("Could not set scrim(s) to inactive, no updates made");
     }
-    const deletedEntries = await this.delete(
+    const equateExpressions: Expression[] = updatedScrimInfo.map((scrim) => ({
+      fieldName: "scrim_id",
+      comparator: "eq" as Comparator,
+      value: scrim.id,
+    }));
+    const deletedScrimSignups = await this.delete(
       DbTable.scrimSignups,
       {
-        fieldName: "scrim_id",
-        comparator: "eq",
-        value: updatedScrimInfo.id,
+        operator: "or",
+        expressions: equateExpressions,
       },
       ["id"],
     );
-    return deletedEntries.map((entry) => entry.id as string);
+    return deletedScrimSignups.map((entry) => entry.id as string);
   }
 
   async addScrimSignup(
@@ -173,14 +183,12 @@ export abstract class DB {
   async insertPlayerIfNotExists(
     discordId: string,
     displayName: string,
-    overstatLink?: string,
+    overstatId?: string,
   ): Promise<string> {
-    const overstatLinkObjectSuffix = overstatLink
-      ? `, overstat_link: "${overstatLink}"`
+    const overstatLinkObjectSuffix = overstatId
+      ? `, overstat_id: "${overstatId}"`
       : "";
-    const overstatLinkColumn = overstatLink
-      ? `\n              overstat_link`
-      : "";
+    const overstatLinkColumn = overstatId ? `\n              overstat_id` : "";
     const query = `
       mutation upsertPlayer {
         insert_players_one(
@@ -208,14 +216,19 @@ export abstract class DB {
    * Created a special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
    */
   async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
-    const playerUpdates = players
+    const playerMap: Map<string, PlayerInsert> = new Map();
+    for (const player of players) {
+      playerMap.set(player.discordId, player);
+    }
+    const nonDuplicatePlayers = [...playerMap.values()];
+    const playerUpdates = nonDuplicatePlayers
       .map((player, index) =>
         this.generatePlayerUpdateQuery(player, (index + 1).toString()),
       )
       .join("\n\n");
     const playerInsert = `
       insert_players(objects: [
-        ${players.map((player) => `{discord_id: "${player.discordId}", display_name: "${player.displayName}"}`).join("\n")}
+        ${nonDuplicatePlayers.map((player) => `{discord_id: "${player.discordId}", display_name: "${player.displayName}"}`).join("\n")}
       ]
         on_conflict: {
           constraint: players_discord_id_key,   # Unique constraint on discord_id
@@ -226,6 +239,7 @@ export abstract class DB {
       ) {
         returning {
           id
+          discord_id
         }
       }
     `;
@@ -237,25 +251,53 @@ export abstract class DB {
       }
     `;
     const result: JSONValue = await this.customQuery(query);
-    const returnedData: { insert_players: { returning: { id: string }[] } } =
-      result as { insert_players: { returning: { id: string }[] } };
-    return returnedData.insert_players.returning.map((entry) => entry.id);
+    const returnedData: {
+      insert_players: { returning: { id: string; discord_id: string }[] };
+    } = result as {
+      insert_players: { returning: { id: string; discord_id: string }[] };
+    };
+
+    return players.map(
+      (player) =>
+        returnedData.insert_players.returning.find(
+          (entry) => entry.discord_id === player.discordId,
+        )?.id as string,
+    );
   }
 
-  getActiveScrims(): Promise<{
-    scrims: { discord_channel: string; id: string; date_time_field: string }[];
-  }> {
+  // This feels like a really gross way to grab a single entry
+  async getPlayerFromDiscordId(discordId: string): Promise<Player> {
+    const dbData = await this.get(
+      DbTable.players,
+      {
+        fieldName: "discord_id",
+        comparator: "eq",
+        value: discordId,
+      },
+      ["id", "display_name", "overstat_id"],
+    );
+    return {
+      discordId: discordId,
+      displayName: dbData[0].display_name as string,
+      id: dbData[0].id as string,
+      overstatId: dbData[0].overstat_id as string,
+    };
+  }
+
+  getActiveScrims(): Promise<
+    { discord_channel: string; id: string; date_time_field: string }[]
+  > {
     return this.get(
       DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
       ["discord_channel", "id", "date_time_field"],
-    ) as Promise<{
-      scrims: {
+    ) as Promise<
+      {
         discord_channel: string;
         id: string;
         date_time_field: string;
-      }[];
-    }>;
+      }[]
+    >;
   }
 
   async getScrimSignupsWithPlayers(
@@ -329,7 +371,15 @@ export abstract class DB {
         "player_three_id",
         "scrim_id",
       ],
-    );
+    ) as Promise<
+      {
+        team_name: string;
+        player_one_id: string;
+        player_two_id: string;
+        player_three_id: string;
+        scrim_id: string;
+      }[]
+    >;
   }
 
   async setPrio(
@@ -356,7 +406,7 @@ export abstract class DB {
   async getPrio(
     date: Date,
   ): Promise<{ id: string; amount: number; reason: string }[]> {
-    const dbData = (await this.get(
+    const dbData = await this.get(
       DbTable.prio,
       {
         operator: "and",
@@ -374,30 +424,22 @@ export abstract class DB {
         ],
       },
       ["player_id", "amount", "reason"],
-    )) as {
-      prio: {
-        player_id: string;
-        amount: number;
-        reason: string;
-      }[];
-    };
-    return dbData.prio.map(({ player_id, amount, reason }) => ({
-      id: player_id,
-      amount,
-      reason,
+    );
+    return dbData.map(({ player_id, amount, reason }) => ({
+      id: player_id as string,
+      amount: amount as number,
+      reason: reason as string,
     }));
   }
 
   async getAdminRoles(): Promise<DiscordRole[]> {
-    const results = (await this.get(DbTable.scrimAdminRoles, undefined, [
+    const results = await this.get(DbTable.scrimAdminRoles, undefined, [
       "discord_role_id",
       "role_name",
-    ])) as {
-      scrim_admin_roles: { discord_role_id: string; role_name: string }[];
-    };
-    return results.scrim_admin_roles.map((role) => ({
-      discordRoleId: role.discord_role_id,
-      roleName: role.role_name,
+    ]);
+    return results.map((role) => ({
+      discordRoleId: role.discord_role_id as string,
+      roleName: role.role_name as string,
     }));
   }
 

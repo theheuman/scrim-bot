@@ -2,11 +2,14 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { isGuildMember } from "../utility/utility";
 import {
   CustomInteraction,
-  getCustomOptions,
+  getCustomInteraction,
   OptionConfig,
   SlashCommandOption,
 } from "./interaction";
 import { AuthService } from "../services/auth";
+import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
+import { ScrimSignup } from "../models/Scrims";
+import { Player } from "../models/Player";
 
 export abstract class Command extends SlashCommandBuilder {
   protected constructor(name: string, description: string) {
@@ -55,6 +58,24 @@ export abstract class Command extends SlashCommandBuilder {
     );
   }
 
+  addChannelInput(
+    name: string,
+    description: string,
+    config: {
+      isRequired: boolean;
+      channelTypes: ApplicationCommandOptionAllowedChannelTypes[];
+    },
+  ) {
+    this.addChannelOption((option) => {
+      return this.addOption(
+        option,
+        name,
+        description,
+        config.isRequired ?? false,
+      ).addChannelTypes(config.channelTypes);
+    });
+  }
+
   // at some point discord might actually implement this, for now just use string
   addDateInput(name: string, description: string, isRequired: boolean = false) {
     this.addStringOption((option) =>
@@ -84,9 +105,25 @@ export abstract class Command extends SlashCommandBuilder {
     return `<t:${Math.floor(date.valueOf() / 1000)}:t>`;
   }
 
+  formatTeam(team: ScrimSignup) {
+    const playerString = team.players
+      .map((player) => this.formatPlayer(player))
+      .join(" ");
+    const teamString = `__${team.teamName}__. Signed up by: ${this.formatPlayer(team.signupPlayer)}. Players: ${playerString}.`;
+    const prioString =
+      team.prio && team.prio.reasons
+        ? ` Prio: ${team.prio.amount}. ${team.prio.reasons}.`
+        : "";
+    return teamString + prioString;
+  }
+
+  formatPlayer(player: Player) {
+    return `<@${player.discordId}>`;
+  }
+
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    interaction.options = getCustomOptions(interaction);
-    return this.childExecute(interaction as CustomInteraction);
+    const customInteraction = getCustomInteraction(interaction);
+    return this.childExecute(customInteraction);
   }
 
   abstract childExecute(interaction: CustomInteraction): Promise<void>;
@@ -94,7 +131,7 @@ export abstract class Command extends SlashCommandBuilder {
 
 export abstract class AdminCommand extends Command {
   constructor(
-    private authService: AuthService,
+    protected authService: AuthService,
     name: string,
     description: string,
   ) {
@@ -102,6 +139,7 @@ export abstract class AdminCommand extends Command {
   }
 
   async childExecute(interaction: CustomInteraction) {
+    await interaction.invisibleReply("Checking if user is authorized");
     if (!isGuildMember(interaction.member)) {
       await interaction.reply(
         "Can't find the member issuing the command or this is an api command, no command executed",

@@ -32,14 +32,14 @@ export class ScrimSignupMock {
   }
 
   async addTeam(
-    scrimId: string,
+    channelId: string,
     teamName: string,
     commandUser: User,
     players: User[],
   ): Promise<string> {
     console.log(
       "Adding team in signup mock",
-      scrimId,
+      channelId,
       teamName,
       commandUser,
       players,

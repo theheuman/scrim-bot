@@ -4,9 +4,12 @@ import { CustomInteraction } from "../interaction";
 import { RosterService } from "../../services/rosters";
 
 export class DropoutCommand extends MemberCommand {
+  inputNames = {
+    teamName: "team-name",
+  };
   constructor(private rosterService: RosterService) {
     super("dropout", "Drops a team from the signup list");
-    this.addStringInput("teamname", "Team name", {
+    this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
       minLength: 1,
       maxLength: 25,
@@ -14,17 +17,17 @@ export class DropoutCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    const channelId = interaction.channelId;
-    const teamName = interaction.options.getString("teamname");
-
-    await interaction.reply("Fetched all input and working on your request!");
-
     if (!isGuildMember(interaction.member)) {
-      interaction.reply(
-        "Can't find the member issuing the command or this is an api command, no command executed",
+      interaction.invisibleReply(
+        "Did NOT remove team from scrim. Member issuing command not found",
       );
       return;
     }
+
+    const channelId = interaction.channelId;
+    const teamName = interaction.options.getString(this.inputNames.teamName);
+
+    await interaction.reply("Fetched all input and working on your request!");
 
     try {
       await this.rosterService.removeSignup(
@@ -32,10 +35,12 @@ export class DropoutCommand extends MemberCommand {
         channelId as string,
         teamName as string,
       );
-      interaction.reply(`Team ${teamName} has dropped from the signups.`);
+      await interaction.editReply(
+        `Team __${teamName}__ has dropped from the signups.`,
+      );
     } catch (e) {
       const error = e as Error;
-      interaction.reply(`Did NOT remove team from scrim: ${error.message}`);
+      await interaction.editReply("Did NOT remove team from scrim. " + error);
     }
   }
 }

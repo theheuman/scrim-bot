@@ -6,19 +6,27 @@ export class AddAdminRoleCommand extends AdminCommand {
   constructor(authService: AuthService) {
     super(
       authService,
-      "addadminrole",
+      "add-admin-role",
       "Adds a role that can perform scrim admin actions",
     );
     this.addRoleInput("role", "Role to add", true);
   }
 
   async run(interaction: CustomInteraction) {
-    // Before executing any other code, we need to acknowledge the interaction.
-    // Discord only gives us 3 seconds to acknowledge an interaction before
-    // the interaction gets voided and can't be used anymore.
-    await interaction.reply({
+    const role = interaction.options.getRole("role", true);
+
+    await interaction.editReply({
       content: "Fetched all input and working on your request!",
     });
-    // TODO implement
+
+    try {
+      await this.authService.addAdminRoles([
+        { discordRoleId: role.id, roleName: role.name },
+      ]);
+      await interaction.deleteReply();
+      await interaction.followUp(`Scrim bot admin role <@&${role.id}> added`);
+    } catch (e) {
+      await interaction.editReply("Error while adding admin role. " + e);
+    }
   }
 }

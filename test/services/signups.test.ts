@@ -8,7 +8,7 @@ import {
 import { User } from "discord.js";
 import { CacheService } from "../../src/services/cache";
 import { OverstatService } from "../../src/services/overstat";
-import { ScrimSignup } from "../../src/models/Scrims";
+import { Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { mockOverstatResponse } from "../mocks/overstat-response.mock";
 import { PrioService } from "../../src/services/prio";
@@ -24,7 +24,7 @@ describe("Signups", () => {
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
-    overstatService = new OverstatService();
+    overstatService = new OverstatService(dbMock);
     prioService = new PrioService(dbMock, cache);
     signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
   });
@@ -42,9 +42,14 @@ describe("Signups", () => {
         teamName: "Fineapples",
         scrimId: "32451",
         signupId: "4685",
+        discordChannelId: "a forum post",
       };
 
-      cache.setSignups("32451", []);
+      cache.createScrim(expectedSignup.discordChannelId, {
+        id: expectedSignup.scrimId,
+        discordChannel: expectedSignup.discordChannelId,
+        active: true,
+      } as Scrim);
       jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
         const expected: PlayerInsert[] = [
           { discordId: "123", displayName: "TheHeuman" },
@@ -76,7 +81,7 @@ describe("Signups", () => {
         );
 
       const signupId = await signups.addTeam(
-        expectedSignup.scrimId,
+        expectedSignup.discordChannelId,
         expectedSignup.teamName,
         theheuman,
         [theheuman, zboy, supreme],
@@ -85,48 +90,75 @@ describe("Signups", () => {
       expect.assertions(7);
     });
 
-    it("Should not add a team because there is no scrim with that id", async () => {
+    it("Should not add a team because there is no scrim for that channel", async () => {
       const causeException = async () => {
         await signups.addTeam("", "", theheuman, []);
       };
 
       await expect(causeException).rejects.toThrow(
-        "No active scrim with that scrim id",
+        "No scrim found for that channel",
       );
     });
 
     it("Should not add a team because duplicate team name", async () => {
-      cache.setSignups("scrim 1", []);
-      const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", theheuman, [
-          zboy,
-          supreme,
-          mikey,
-        ]);
+      const expectedSignup = {
+        scrimId: "32451",
+        signupId: "4685",
+        discordChannelId: "a forum post",
       };
-      await signups.addTeam("scrim 1", "Fineapples", theheuman, [
+
+      cache.createScrim(expectedSignup.discordChannelId, {
+        id: expectedSignup.scrimId,
+        discordChannel: expectedSignup.discordChannelId,
+        active: true,
+      } as Scrim);
+
+      await signups.addTeam(
+        expectedSignup.discordChannelId,
+        "Fineapples",
         theheuman,
-        revy,
-        cTreazy,
-      ]);
+        [theheuman, revy, cTreazy],
+      );
+
+      const causeException = async () => {
+        await signups.addTeam(
+          expectedSignup.discordChannelId,
+          "Fineapples",
+          theheuman,
+          [zboy, supreme, mikey],
+        );
+      };
 
       await expect(causeException).rejects.toThrow("Duplicate team name");
     });
 
     it("Should not add a team because duplicate player", async () => {
-      cache.setSignups("scrim 1", []);
-      const causeException = async () => {
-        await signups.addTeam("scrim 1", "Dude Cube", theheuman, [
-          theheuman,
-          supreme,
-          mikey,
-        ]);
+      const expectedSignup = {
+        scrimId: "32451",
+        signupId: "4685",
+        discordChannelId: "a forum post",
       };
-      await signups.addTeam("scrim 1", "Fineapples", theheuman, [
+
+      cache.createScrim(expectedSignup.discordChannelId, {
+        id: expectedSignup.scrimId,
+        discordChannel: expectedSignup.discordChannelId,
+        active: true,
+      } as Scrim);
+
+      const causeException = async () => {
+        await signups.addTeam(
+          expectedSignup.discordChannelId,
+          "Dude Cube",
+          theheuman,
+          [theheuman, supreme, mikey],
+        );
+      };
+      await signups.addTeam(
+        expectedSignup.discordChannelId,
+        "Fineapples",
         theheuman,
-        revy,
-        cTreazy,
-      ]);
+        [theheuman, revy, cTreazy],
+      );
 
       await expect(causeException).rejects.toThrow(
         "Player already signed up on different team: TheHeuman <@123> on team Fineapples",
@@ -134,9 +166,25 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there aren't three players", async () => {
-      cache.setSignups("32451", []);
+      const expectedSignup = {
+        scrimId: "32451",
+        signupId: "4685",
+        discordChannelId: "a forum post",
+      };
+
+      cache.createScrim(expectedSignup.discordChannelId, {
+        id: expectedSignup.scrimId,
+        discordChannel: expectedSignup.discordChannelId,
+        active: true,
+      } as Scrim);
+
       const causeException = async () => {
-        await signups.addTeam("32451", "", theheuman, []);
+        await signups.addTeam(
+          expectedSignup.discordChannelId,
+          "",
+          theheuman,
+          [],
+        );
       };
 
       await expect(causeException).rejects.toThrow(
@@ -258,7 +306,7 @@ describe("Signups", () => {
           prio,
         };
       };
-      const expectedTeams: ScrimSignup[] = [
+      const expectedMainTeams: ScrimSignup[] = [
         generateScrimSignupFromWithPlayers(highPrioTeam, {
           amount: 1,
           reasons: "Player 1 has league prio",
@@ -271,13 +319,18 @@ describe("Signups", () => {
           amount: 0,
           reasons: "",
         }),
+      ];
+      const expectedWaitTeams: ScrimSignup[] = [
         generateScrimSignupFromWithPlayers(lowPrioTeam, {
           amount: -5,
           reasons: "Player 1 is an enemy of the people",
         }),
       ];
       const teamsSignedUp = await signups.getSignups("");
-      expect(teamsSignedUp.mainList).toEqual(expectedTeams);
+      expect(teamsSignedUp).toEqual({
+        mainList: expectedMainTeams,
+        waitList: expectedWaitTeams,
+      });
     });
 
     it("Should throw error when no scrim", async () => {
@@ -304,15 +357,13 @@ describe("Signups", () => {
       });
       cache.setSignups("ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", []);
       jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
-        return Promise.resolve({
-          scrims: [
-            {
-              id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-              discord_channel: "something",
-              date_time_field: "2024-10-14T20:10:35.706+00:00",
-            },
-          ],
-        });
+        return Promise.resolve([
+          {
+            id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+            discord_channel: "something",
+            date_time_field: "2024-10-14T20:10:35.706+00:00",
+          },
+        ]);
       });
 
       await signups.updateActiveScrims();
@@ -356,8 +407,8 @@ describe("Signups", () => {
       cache.setSignups(scrimId, []);
       jest
         .spyOn(dbMock, "closeScrim")
-        .mockImplementation((dbScrimId: string) => {
-          expect(dbScrimId).toEqual(scrimId);
+        .mockImplementation((discordChannelId: string) => {
+          expect(discordChannelId).toEqual(channelId);
           return Promise.resolve([scrimId]);
         });
 

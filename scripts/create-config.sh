@@ -3,6 +3,7 @@ file_location=config.json
 cat > $file_location <<EOF
 {
   "dev": {
+    "lobbySize": 3,
     "discord": {
       "token": "BOT_TOKEN",
       "clientId": "DISCORD_CLIENT_ID",
@@ -15,6 +16,7 @@ cat > $file_location <<EOF
     }
   },
   "prod": {
+    "lobbySize": 20,
     "discord": {
       "token": "BOT_TOKEN",
       "clientId": "DISCORD_CLIENT_ID",

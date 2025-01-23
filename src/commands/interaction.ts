@@ -2,6 +2,9 @@ import {
   CacheType,
   ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
+  InteractionReplyOptions,
+  InteractionResponse,
+  SlashCommandChannelOption,
   SlashCommandNumberOption,
   SlashCommandRoleOption,
   SlashCommandStringOption,
@@ -13,7 +16,8 @@ export type SlashCommandOption =
   | SlashCommandStringOption
   | SlashCommandNumberOption
   | SlashCommandRoleOption
-  | SlashCommandUserOption;
+  | SlashCommandUserOption
+  | SlashCommandChannelOption;
 
 export interface OptionConfig {
   isRequired?: boolean;
@@ -30,16 +34,13 @@ type ExtendedCommandInteractionOptionResolver = Omit<
   getDateTime(key: string, required: true): Date;
 };
 
-export const getCustomOptions = (
+export const getCustomInteraction = (
   interaction: ChatInputCommandInteraction,
-): ExtendedCommandInteractionOptionResolver => {
-  const extendedInteraction: ExtendedCommandInteractionOptionResolver =
+): CustomInteraction => {
+  const extendedOptions: ExtendedCommandInteractionOptionResolver =
     interaction.options as ExtendedCommandInteractionOptionResolver;
 
-  extendedInteraction["getDateTime"] = (
-    key: string,
-    required?: boolean,
-  ): Date => {
+  extendedOptions["getDateTime"] = (key: string, required?: boolean): Date => {
     const dateTimeString = interaction.options.getString(key);
     try {
       if (dateTimeString) {
@@ -57,9 +58,20 @@ export const getCustomOptions = (
     // get around typescript expecting a date here, technically we are supplying the getDate(): Date | null function here
     return null as unknown as Date;
   };
+  const extendedInteraction = interaction as CustomInteraction;
+  extendedInteraction["invisibleReply"] = (message: string) => {
+    const replyData: InteractionReplyOptions = {
+      content: message,
+      ephemeral: true,
+    };
+    return interaction.reply(replyData);
+  };
+  extendedInteraction.options = extendedOptions;
+
   return extendedInteraction;
 };
 
 export interface CustomInteraction extends ChatInputCommandInteraction {
   options: ExtendedCommandInteractionOptionResolver;
+  invisibleReply: (message: string) => Promise<InteractionResponse<boolean>>;
 }

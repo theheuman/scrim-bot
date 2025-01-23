@@ -52,11 +52,11 @@ class NhostDb extends DB {
     return "";
   }
 
-  async get(
+  async get<K extends string>(
     tableName: string,
     logicalExpression: LogicalExpression | undefined,
     fieldsToReturn: string[],
-  ): Promise<JSONValue> {
+  ): Promise<Array<Record<K, DbValue>>> {
     let searchString = this.generateWhereClause(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
@@ -76,7 +76,8 @@ class NhostDb extends DB {
     if (!result.data || result.error) {
       throw Error("Graph ql error: " + result.error);
     }
-    return result.data;
+    const dataArray = result.data as Record<string, Array<Record<K, DbValue>>>;
+    return dataArray[tableName] as Array<Record<K, DbValue>>;
   }
 
   async post(
@@ -108,10 +109,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      console.log(query);
-      console.log(result.data);
-      console.log(result.error);
-      throw Error("Graph ql error: " + result.error);
+      throw Error("Graph ql error: " + result.error?.toString());
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
@@ -173,12 +171,12 @@ class NhostDb extends DB {
     return returnedData[deleteName].returning;
   }
 
-  async update(
+  async update<K extends string>(
     tableName: string,
     fieldsToSearch: LogicalExpression,
     fieldsToUpdate: Record<string, DbValue>,
-    fieldsToReturn: string[],
-  ): Promise<JSONValue> {
+    fieldsToReturn: K[],
+  ): Promise<Array<Record<K, DbValue>>> {
     const updateName = "update_" + tableName;
     const searchString = this.generateWhereClause(fieldsToSearch);
     const fieldsToUpdateArray = Object.keys(fieldsToUpdate).map(
@@ -201,9 +199,11 @@ class NhostDb extends DB {
     if (!result.data || result.error) {
       throw Error("Graph ql error: " + result.error);
     }
-    const returnedData: Record<string, { returning: { id: string }[] }> =
-      result.data as Record<string, { returning: { id: string }[] }>;
-    return returnedData[updateName].returning[0];
+    const returnedData = result.data as Record<
+      string,
+      { returning: Array<Record<K, DbValue>> }
+    >;
+    return returnedData[updateName].returning;
   }
 
   async changeTeamName(
@@ -497,7 +497,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error);
+      throw Error("Graph ql error: " + result.error?.toString());
     }
     return Promise.resolve(result.data);
   }

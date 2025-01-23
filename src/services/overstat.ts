@@ -1,8 +1,12 @@
 import { OverstatTournamentResponse } from "../models/overstatModels";
 import { ScrimSignup } from "../models/Scrims";
 import { Player, PlayerStatInsert } from "../models/Player";
+import { DB } from "../db/db";
+import { User } from "discord.js";
 
 export class OverstatService {
+  constructor(private db: DB) {}
+
   private getUrl(tournamentId: string) {
     return `https://overstat.gg/api/stats/${tournamentId}/overall`;
   }
@@ -24,6 +28,22 @@ export class OverstatService {
       );
     }
     return tournamentId;
+  }
+
+  private getPlayerUrl(playerId: string) {
+    return `https://overstat.gg/player/${playerId}/overview`;
+  }
+
+  // We may want to make sure that the ID returns a valid player
+  // https://overstat.gg/api/player/{id} could be used for this
+  private getPlayerId(overstatLink: string): string {
+    const re = RegExp("[0-9]+", "g");
+    const id = re.exec(overstatLink);
+    if (id == null) {
+      throw Error("No player ID found in link.");
+    }
+
+    return id[0];
   }
 
   async getOverallStats(
@@ -100,5 +120,28 @@ export class OverstatService {
       }
     }
     return Array.from(players.values());
+  }
+
+  async addPlayerOverstatLink(
+    user: User,
+    overstatLink: string,
+  ): Promise<string> {
+    const overstatId = this.getPlayerId(overstatLink);
+
+    const dbId = await this.db.insertPlayerIfNotExists(
+      user.id,
+      user.displayName,
+      overstatId,
+    );
+
+    return dbId;
+  }
+
+  async getPlayerOverstat(user: User) {
+    const player = await this.db.getPlayerFromDiscordId(user.id);
+    if (!player.overstatId) {
+      throw Error("Player has no overstat id");
+    }
+    return this.getPlayerUrl(player.overstatId);
   }
 }

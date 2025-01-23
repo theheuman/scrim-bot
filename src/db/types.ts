@@ -26,6 +26,7 @@ export enum DbTable {
   scrimPlayerStats = "scrim_player_stats",
   scrimSignups = "scrim_signups",
   prio = "prio",
+  staticKeyValues = "static_key_value",
 }
 
 export function isCompoundExpression(

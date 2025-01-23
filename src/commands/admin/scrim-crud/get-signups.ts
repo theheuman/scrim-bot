@@ -20,7 +20,7 @@ export class GetSignupsCommand extends AdminCommand {
     // Before executing any other code, we need to acknowledge the interaction.
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
-    await interaction.reply("Fetching teams, command in progress");
+    await interaction.editReply("Fetching teams, command in progress");
 
     const channelId = interaction.channelId;
 
@@ -28,46 +28,48 @@ export class GetSignupsCommand extends AdminCommand {
     try {
       channelSignups = await this.signupService.getSignups(channelId);
     } catch (e) {
-      await interaction.reply(`Could not fetch signups ${e}`);
+      await interaction.editReply(`Could not fetch signups. ${e}`);
       return;
     }
 
     const { mainList, waitList } = channelSignups;
 
-    const formatTeams = (teams: ScrimSignup[], startIndex: number) => {
-      return teams
-        .map((signup, index) => {
-          const players = signup.players
-            .map((player) => `<@${player.id}>`)
-            .join(", ");
+    const mainListString = `Main list.\n${this.formatTeams(mainList)}`;
 
-          return `${startIndex + index + 1}. ${signup.teamName}: ${players} Priority: ${signup.prio ?? 0}`;
-        })
-        .join("");
-    };
+    await this.replyWithString(interaction, mainListString);
 
-    const sendMessages = async (messages: string[]) => {
-      for (const message of messages) {
+    if (waitList.length > 0) {
+      const waitListString = `Wait list.\n${this.formatTeams(waitList)}`;
+      await this.replyWithString(interaction, waitListString);
+    }
+  }
+
+  // Break long strings into chunks for discord
+  async replyWithString(interaction: CustomInteraction, replyString: string) {
+    let stringToReplyWith = replyString;
+    while (stringToReplyWith.length > 0) {
+      // discords max reply length is 2000
+      let cutoffIndex =
+        stringToReplyWith.length > 2000 ? 2000 : stringToReplyWith.length;
+      let charAtIndex = stringToReplyWith.charAt(cutoffIndex - 1);
+      while (charAtIndex !== "\n") {
+        cutoffIndex--;
+        charAtIndex = stringToReplyWith.charAt(cutoffIndex - 1);
+      }
+      const message = stringToReplyWith.substring(0, cutoffIndex);
+      try {
         await interaction.followUp({ content: message, ephemeral: true });
+      } catch (e) {
+        await interaction.followUp({
+          content: "error sending part of response " + e,
+          ephemeral: true,
+        });
       }
-    };
+      stringToReplyWith = stringToReplyWith.substring(cutoffIndex);
+    }
+  }
 
-    const messages: string[] = [];
-    let currentMessage = "Signed up teams for one lobby:\n";
-
-    const addTeamsToMessages = (teams: ScrimSignup[], startIndex: number) => {
-      for (let i = 0; i < teams.length; i += 20) {
-        const chunk = teams.slice(i, i + 20);
-        currentMessage += formatTeams(chunk, startIndex + i);
-        messages.push(currentMessage);
-        currentMessage = "Waitlist or multiple lobbies:\n";
-      }
-    };
-
-    addTeamsToMessages(mainList, 0);
-    addTeamsToMessages(waitList, mainList.length);
-
-    await interaction.reply({ content: messages.shift()!, ephemeral: true });
-    await sendMessages(messages);
+  formatTeams(teams: ScrimSignup[]): string {
+    return teams.map((team) => this.formatTeam(team)).join("\n") + "\n";
   }
 }
