@@ -4,6 +4,7 @@ Commands only admins can use
 ## /create-scrim
 Creates a scrim, creates the associated signup post in the forum specified when calling the command
 
+![Create scrim](/usage/assets/admins/create-scrim.png)
 
 Please use #bot-handling in area-51 for now to run this command
 
@@ -14,6 +15,10 @@ Optionally add a name to it, this will be appended to the date in the name of th
 
 ## /get-signups
 Get the signups for a scrim, only sends the list to the user calling the command, no one else can see it
+
+In addition to replying with all the teams it also returns a csv, you can download this csv and then import it into a google sheet by using `file -> import -> select your downloaded file -> and then choosing "append to current sheet" for import location`
+
+![Google sheet import](/usage/assets/admins/get-signups-google.png)
 
 Can only be used in a signup post created by the bot
 
