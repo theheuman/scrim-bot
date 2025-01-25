@@ -18,7 +18,7 @@ export class CloseScrimCommand extends AdminCommand {
   async run(interaction: CustomInteraction) {
     const channel = interaction.channel;
     if (!channel) {
-      interaction.reply(
+      interaction.editReply(
         "Scrim not closed. Could not get channel this command was sent in. " +
           channel,
       );
