@@ -94,7 +94,9 @@ export class GetSignupsCommand extends AdminCommand {
     const teamCsvStringConverter = (team: ScrimSignup) => {
       return [
         team.teamName,
-        ...team.players.map((player) => player.displayName),
+        ...team.players.map(
+          (player) => `${player.displayName} <@${player.discordId}`,
+        ),
       ].join(",");
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
