@@ -27,15 +27,14 @@ export class ExpungePrioCommand extends AdminCommand {
   }
 
   async run(interaction: CustomInteraction) {
+    const prioId1 = interaction.options.getString("prio-id1", true);
+    const prioId2 = interaction.options.getString("prio-id2");
+    const prioId3 = interaction.options.getString("prio-id3");
+
     await interaction.editReply(
       "Fetched all input and working on your request!",
     );
 
-    // get prio id from interaction
-    const prioId1 = interaction.options.getString("prio-id1", true);
-    const prioId2 = interaction.options.getString("prio-id2");
-    const prioId3 = interaction.options.getString("prio-id3");
-    // in a try catch block
     const prios: string[] = [prioId1, prioId2, prioId3].filter(
       (prio) => prio !== null,
     );
@@ -51,8 +50,5 @@ export class ExpungePrioCommand extends AdminCommand {
       await interaction.editReply("Error while executing expunge prio. " + e);
       return;
     }
-    // send prio id to prioService.expungePrio method
-    // reply to interaction that command is successful
-    // in catch block reply to interaction that command was unsuccessful
   }
 }

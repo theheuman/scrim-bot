@@ -72,7 +72,7 @@ Please use #bot-handling
 
 Fill out the required field: role
 
-## /remove-admin-rle
+## /remove-admin-role
 Remove a discord role from being able to use the bots admin commands
 
 Please use #bot-handling

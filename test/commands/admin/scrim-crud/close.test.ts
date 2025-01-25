@@ -17,11 +17,6 @@ import { CloseScrimCommand } from "../../../../src/commands/admin/scrim-crud/clo
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
   let member: GuildMember;
-  let replySpy: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
-    string
-  >;
   let editReplySpy: SpyInstance<
     Promise<Message<boolean>>,
     [options: string | InteractionEditReplyOptions | MessagePayload],
@@ -54,7 +49,6 @@ describe("Close scrim", () => {
       editReply: jest.fn(),
       member,
     } as unknown as CustomInteraction;
-    replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     signupCloseScrimSpy = jest.spyOn(mockScrimSignups, "closeScrim");
     signupCloseScrimSpy.mockImplementation(() => {
@@ -63,7 +57,6 @@ describe("Close scrim", () => {
   });
 
   beforeEach(() => {
-    replySpy.mockClear();
     editReplySpy.mockClear();
     signupCloseScrimSpy.mockClear();
     channelDeletedSpy.mockClear();
@@ -89,11 +82,11 @@ describe("Close scrim", () => {
     it("should not close scrim because the channel provided is null", async () => {
       const badInteraction = {
         channel: null,
-        reply: jest.fn(),
+        editReply: jest.fn(),
       } as unknown as CustomInteraction;
-      replySpy = jest.spyOn(badInteraction, "reply");
+      editReplySpy = jest.spyOn(badInteraction, "editReply");
       await command.run(badInteraction);
-      expect(replySpy).toHaveBeenCalledWith(
+      expect(editReplySpy).toHaveBeenCalledWith(
         "Scrim not closed. Could not get channel this command was sent in. null",
       );
       expect(signupCloseScrimSpy).not.toHaveBeenCalled();
@@ -105,6 +98,7 @@ describe("Close scrim", () => {
         throw Error("No scrim found for that channel");
       });
 
+      editReplySpy = jest.spyOn(basicInteraction, "editReply");
       await command.run(basicInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
         "Scrim not closed. Error: No scrim found for that channel",
