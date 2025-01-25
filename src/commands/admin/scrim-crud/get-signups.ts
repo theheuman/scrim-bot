@@ -92,12 +92,15 @@ export class GetSignupsCommand extends AdminCommand {
     waitList: ScrimSignup[],
   ): Promise<string> {
     const teamCsvStringConverter = (team: ScrimSignup) => {
-      return team.players.map((player) => player.displayName).join(",");
+      return [
+        team.teamName,
+        ...team.players.map((player) => player.displayName),
+      ].join(",");
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
-    const seperator = "\n,,\n";
+    const separator = "\n,,,\n";
     const waitListString = waitList.map(teamCsvStringConverter).join("\n");
-    const content = mainListString + seperator + waitListString;
+    const content = mainListString + separator + waitListString;
     const fileName = "temp-signup-" + channelId + ".csv";
     fs.writeFileSync(fileName, content);
     return fileName;
