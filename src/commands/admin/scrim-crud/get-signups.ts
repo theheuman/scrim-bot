@@ -95,7 +95,7 @@ export class GetSignupsCommand extends AdminCommand {
       return [
         team.teamName,
         ...team.players.map(
-          (player) => `${player.displayName} <@${player.discordId}`,
+          (player) => `${player.displayName} <@${player.discordId}>`,
         ),
       ].join(",");
     };
