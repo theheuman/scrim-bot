@@ -29,7 +29,7 @@ type ExtendedCommandInteractionOptionResolver = Omit<
   CommandInteractionOptionResolver<CacheType>,
   "getMessage" | "getFocused"
 > & {
-  getDateTime(key: string): Date | null;
+  getDateTime(key: string, required?: boolean): Date | null;
   getDateTime(key: string, required: true): Date;
 };
 
