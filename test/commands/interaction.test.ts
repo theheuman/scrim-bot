@@ -111,10 +111,7 @@ describe("Custom interaction", () => {
         customInteraction.options.getDateTime("date");
       };
       expect(expectErrors).toThrow(
-        "Unable to parse a date argument that was supplied",
-      );
-      expect(replySpy).toHaveBeenCalledWith(
-        "Can't parse date. Error: Month not valid; Expected format: mm/dd/yy hh:mm pm",
+        'Can\'t parse "date". Error: Month not valid; Expected format: mm/dd/yy hh:mm pm',
       );
     });
 
@@ -123,13 +120,10 @@ describe("Custom interaction", () => {
       dateTimeString = "11/no";
       const customInteraction = getCustomInteraction(basicInteraction);
       const expectErrors = () => {
-        customInteraction.options.getDateTime("date", true);
+        customInteraction.options.getDateTime("date");
       };
       expect(expectErrors).toThrow(
-        "Unable to parse a date argument that was required",
-      );
-      expect(replySpy).toHaveBeenCalledWith(
-        "Can't parse date. Required. Error: Day not valid; Expected format: mm/dd/yy hh:mm pm",
+        'Can\'t parse "date". Error: Day not valid; Expected format: mm/dd/yy hh:mm pm',
       );
     });
 
@@ -141,13 +135,10 @@ describe("Custom interaction", () => {
         const customInteraction = getCustomInteraction(basicInteraction);
 
         const expectErrors = () => {
-          customInteraction.options.getDateTime("date", true);
+          customInteraction.options.getDateTime("date");
         };
         expect(expectErrors).toThrow(
-          "Unable to parse a date argument that was required",
-        );
-        expect(replySpy).toHaveBeenCalledWith(
-          "Can't parse date. Required. Error: Hour not valid; Expected format: mm/dd/yy hh:mm pm",
+          'Can\'t parse "date". Error: Hour not valid; Expected format: mm/dd/yy hh:mm pm',
         );
       });
 
@@ -161,10 +152,7 @@ describe("Custom interaction", () => {
           customInteraction.options.getDateTime("date");
         };
         expect(expectErrors).toThrow(
-          "Unable to parse a date argument that was supplied",
-        );
-        expect(replySpy).toHaveBeenCalledWith(
-          "Can't parse date. Error: Minute not valid; Expected format: mm/dd/yy hh:mm pm",
+          'Can\'t parse "date". Error: Minute not valid; Expected format: mm/dd/yy hh:mm pm',
         );
       });
 
@@ -175,13 +163,10 @@ describe("Custom interaction", () => {
         const customInteraction = getCustomInteraction(basicInteraction);
 
         const expectErrors = () => {
-          customInteraction.options.getDateTime("date", true);
+          customInteraction.options.getDateTime("date");
         };
         expect(expectErrors).toThrow(
-          "Unable to parse a date argument that was required",
-        );
-        expect(replySpy).toHaveBeenCalledWith(
-          "Can't parse date. Required. Error: am/pm label not valid; Expected format: mm/dd/yy hh:mm pm",
+          'Can\'t parse "date". Error: am/pm label not valid; Expected format: mm/dd/yy hh:mm pm',
         );
       });
     });

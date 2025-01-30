@@ -122,8 +122,15 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    const customInteraction = getCustomInteraction(interaction);
-    return this.childExecute(customInteraction);
+    try {
+      const customInteraction = getCustomInteraction(interaction);
+      await this.childExecute(customInteraction);
+    } catch (e) {
+      await interaction.followUp({
+        content: `Error executing "${interaction.commandName}. ` + e,
+        ephemeral: true,
+      });
+    }
   }
 
   abstract childExecute(interaction: CustomInteraction): Promise<void>;
@@ -149,7 +156,7 @@ export abstract class AdminCommand extends Command {
       await interaction.editReply("User calling command is not authorized");
       return;
     }
-    return this.run(interaction);
+    await this.run(interaction);
   }
 
   abstract run(interaction: CustomInteraction): Promise<void>;

@@ -30,7 +30,6 @@ type ExtendedCommandInteractionOptionResolver = Omit<
   "getMessage" | "getFocused"
 > & {
   getDateTime(key: string, required?: boolean): Date | null;
-  // if date can't be parsed,
   getDateTime(key: string, required: true): Date;
 };
 
@@ -40,20 +39,15 @@ export const getCustomInteraction = (
   const extendedOptions: ExtendedCommandInteractionOptionResolver =
     interaction.options as ExtendedCommandInteractionOptionResolver;
 
-  extendedOptions["getDateTime"] = (key: string, required?: boolean): Date => {
+  extendedOptions["getDateTime"] = (key: string): Date => {
     const dateTimeString = interaction.options.getString(key);
     try {
       if (dateTimeString) {
         return parseDate(dateTimeString);
       }
     } catch (e) {
-      interaction.reply(
-        `Can't parse ${key}. ${required ? "Required. " : ""}${e}; Expected format: mm/dd/yy hh:mm pm`,
-      );
-      throw Error(
-        "Unable to parse a date argument that was " +
-          (required ? "required" : "supplied"),
-      );
+      const errorMessage = `Can't parse "${key}". ${e}; Expected format: mm/dd/yy hh:mm pm`;
+      throw Error(errorMessage);
     }
     // get around typescript expecting a date here, technically we are supplying the getDate(): Date | null function here
     return null as unknown as Date;
