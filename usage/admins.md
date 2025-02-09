@@ -1,5 +1,12 @@
 # Admin Commands
-Commands only admins can use
+Commands only admins can use.
+
+The general flow:
+
+* Signup post is created with the /create-scrim command
+* When lobby sorting is to begin /get-signups is called to get all the teams (low prio teams are automatically moved to wait list)
+* When scrim is completed /compute-scrim is ran to collate all stats for the players in the scrim, this can be ran multiple times if scrim has multiple lobbies
+* After all lobbies have been computed you can use /close-scrim to delete the signup post (this is a destructive command, you will not be able to compute after closing)
 
 ## /create-scrim
 Creates a scrim, creates the associated signup post in the forum specified when calling the command
@@ -8,8 +15,9 @@ Creates a scrim, creates the associated signup post in the forum specified when 
 
 Please use #bot-handling in area-51 for now to run this command
 
-
 Fill out the required fields: Forum to post it in, datetime ( mm/dd hha. Ex: 1/26 8pm)
+
+The bot is programmed to take eastern time
 
 Optionally add a name to it, this will be appended to the date in the name of the scrim signup. Something like ED/WE to specify the maps
 
