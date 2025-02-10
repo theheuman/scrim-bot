@@ -69,12 +69,9 @@ class NhostDb extends DB {
         }
       }
     `;
-    const result: {
-      data: JSONValue | null;
-      error: GraphQLError[] | ErrorPayload | null;
-    } = await this.nhostClient.graphql.request(query);
+    const result = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error);
+      throw new Error(this.getDbErrorMessage(result));
     }
     const dataArray = result.data as Record<string, Array<Record<K, DbValue>>>;
     return dataArray[tableName] as Array<Record<K, DbValue>>;
@@ -109,7 +106,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error?.toString());
+      throw new Error(this.getDbErrorMessage(result));
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
@@ -134,7 +131,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error);
+      throw new Error(this.getDbErrorMessage(result));
     }
     const returnedData: Record<string, { returning: { id: string }[] }> =
       result.data as Record<string, { returning: { id: string }[] }>;
@@ -162,7 +159,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error);
+      throw new Error(this.getDbErrorMessage(result));
     }
     const returnedData = result.data as Record<
       string,
@@ -197,7 +194,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error);
+      throw new Error(this.getDbErrorMessage(result));
     }
     const returnedData = result.data as Record<
       string,
@@ -497,7 +494,7 @@ class NhostDb extends DB {
       error: GraphQLError[] | ErrorPayload | null;
     } = await this.nhostClient.graphql.request(query);
     if (!result.data || result.error) {
-      throw Error("Graph ql error: " + result.error?.toString());
+      throw new Error(this.getDbErrorMessage(result));
     }
     return Promise.resolve(result.data);
   }
@@ -514,7 +511,26 @@ class NhostDb extends DB {
     }
     return `${value}`;
   }
+
+  private getDbErrorMessage(result: {
+    data: JSONValue | null;
+    error: GraphQLError[] | ErrorPayload | null;
+  }): string {
+    if (result.error) {
+      if (Array.isArray(result.error)) {
+        return (
+          "Graph ql error: " + result.error.map((e) => e.message).join(", ")
+        );
+      } else {
+        return "Graph ql error: " + result.error.message;
+      }
+    } else if (!result.data) {
+      return "Graph ql error: No data returned";
+    }
+    return "Db Error";
+  }
 }
+
 export const nhostDb = new NhostDb(
   appConfig.nhost.adminSecret,
   appConfig.nhost.region,
