@@ -12,6 +12,7 @@ The general flow:
 Creates a scrim, creates the associated signup post in the forum specified when calling the command
 
 ![Create scrim](/usage/assets/admins/create-scrim.png)
+![Create scrim success](/usage/assets/admins/create-scrim-success.png)
 
 Please use #bot-handling in area-51 for now to run this command
 
@@ -24,6 +25,10 @@ Optionally add a name to it, this will be appended to the date in the name of th
 ## /get-signups
 Get the signups for a scrim, only sends the list to the user calling the command, no one else can see it
 
+
+![Get signups](/usage/assets/admins/get-signups.png)
+![Get signups success](/usage/assets/admins/get-signups-success.png)
+
 In addition to replying with all the teams it also returns a csv, you can download this csv and then import it into a google sheet by using `file -> import -> select your downloaded file -> and then choosing "append to current sheet" for import location`
 
 ![Google sheet import](/usage/assets/admins/get-signups-google.png)
@@ -35,6 +40,8 @@ Computes stats for the scrim, any overstat accounts linked to discord accounts w
 
 This command can be used multiple times in the same signup post if there are multiple lobbies
 
+![Compute scrim](/usage/assets/admins/compute-scrim.png)
+![Compute scrim success](/usage/assets/admins/compute-scrim-success.png)
 
 Can only be used in a signup post created by the bot
 
@@ -56,12 +63,18 @@ Div 5  |   7   |
 Close the scrim, deletes the post and sets the scrim to not active.
 Only run this after computing the scrim
 
+![Close scrim](/usage/assets/admins/close-scrim.png)
+![Close scrim success](/usage/assets/admins/close-scrim-success.png)
+
 Can only be used in a signup post created by the bot
 
 ## /add-prio
 Add a prio entry to up to three players
 
 Please use the usual low prio channel
+
+![Add prio](/usage/assets/admins/add-prio.png)
+![Add prio success](/usage/assets/admins/add-prio-success.png)
 
 Fill out the required fields: amount (negative for low prio), reason, player 1, end date
 
@@ -73,6 +86,9 @@ Optionally add player 2 and player 3
 Expunge up to three prio entries. This deletes a specific entry, it does not remove all prio from a player
 
 Please use the usual low prio channel
+
+![Expunge prio](/usage/assets/admins/expunge-prio.png)
+![Expunge prio success](/usage/assets/admins/expunge-prio-success.png)
 
 Fill out the required fields: reason, prio id 1. The id can be found in the response to the command where prio was added
 
