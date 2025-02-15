@@ -86,6 +86,14 @@ describe("Custom interaction", () => {
     expect(date).toEqual(new Date("2024-12-03T10:00:00-05:00"));
   });
 
+  it("Should set scrim date correctly when full year provided", async () => {
+    jest.setSystemTime(new Date("2025-02-12"));
+    dateTimeString = "02/12/2025 10 am";
+    const customInteraction = getCustomInteraction(basicInteraction);
+    const date = customInteraction.options.getDateTime("date");
+    expect(date).toEqual(new Date("2025-02-12T10:00:00-05:00"));
+  });
+
   it("Should set scrim for 12:30 pm", async () => {
     jest.setSystemTime(new Date("2024-12-2"));
     dateTimeString = "12/3 12:30 pm";
