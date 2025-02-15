@@ -11,7 +11,7 @@ import { isForumChannel } from "../../../utility/utility";
 
 export class CreateScrimCommand extends AdminCommand {
   inputNames = {
-    date: "date",
+    date: "datetime",
     name: "name",
     channel: "forum-channel",
   };

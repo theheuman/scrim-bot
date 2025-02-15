@@ -51,12 +51,13 @@ const getDateString = (monthDay: string): string => {
     if (month === 1 && now.getMonth() >= 4) {
       year++;
     }
-  } else if (year) {
+  } else if (year < 100) {
     // yes this is disgusting but also there's no way this code is being used in 75 years
     year += 2000;
   }
   const monthString = String(month).padStart(2, "0");
   const dayString = String(day).padStart(2, "0");
+  console.log(monthDay, year);
   return `${year}-${monthString}-${dayString}`;
 };
 
