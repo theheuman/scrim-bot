@@ -13,6 +13,7 @@
     "lint:staged": "npx lint-staged",
     "prepare": "husky",
     "create-config": "bash scripts/create-config.sh",
+    "heroku-prebuild": "bash scripts/create-config.sh",
     "nhost": "cd nhost && nhost up --apply-seeds"
   },
   "dependencies": {
