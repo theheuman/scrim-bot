@@ -57,7 +57,6 @@ const getDateString = (monthDay: string): string => {
   }
   const monthString = String(month).padStart(2, "0");
   const dayString = String(day).padStart(2, "0");
-  console.log(monthDay, year);
   return `${year}-${monthString}-${dayString}`;
 };
 

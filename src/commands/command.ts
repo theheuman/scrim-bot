@@ -126,6 +126,7 @@ export abstract class Command extends SlashCommandBuilder {
       const customInteraction = getCustomInteraction(interaction);
       await this.childExecute(customInteraction);
     } catch (e) {
+      console.error(e);
       await interaction.followUp({
         content: `Error executing "${interaction.commandName}. ` + e,
         ephemeral: true,
