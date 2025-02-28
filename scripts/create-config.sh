@@ -16,16 +16,16 @@ cat > $file_location <<EOF
     }
   },
   "prod": {
-    "lobbySize": 20,
+    "lobbySize": ${LOBBY_SIZE},
     "discord": {
-      "token": "BOT_TOKEN",
-      "clientId": "DISCORD_CLIENT_ID",
-      "guildId": "DISCORD_GUILD_ID"
+      "token": "${DISCORD_BOT_TOKEN}",
+      "clientId": "${DISCORD_CLIENT_ID}",
+      "guildId": "${DISCORD_GUILD_ID}"
     },
     "nhost": {
-      "adminSecret": "nhost admin secret",
-      "subdomain": "subdomain",
-      "region": "region"
+      "adminSecret": "${NHOST_SECRET}",
+      "subdomain": "${NHOST_SUBDOMAIN}",
+      "region": "${NHOST_REGION}"
     }
   }
 }
