@@ -12,7 +12,7 @@
     "lint": "eslint src/",
     "lint:staged": "npx lint-staged",
     "prepare": "husky",
-    "create-config": "sh scripts/create-config.sh",
+    "create-config": "bash scripts/create-config.sh",
     "nhost": "cd nhost && nhost up --apply-seeds"
   },
   "dependencies": {
