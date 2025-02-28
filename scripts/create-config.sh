@@ -1,5 +1,23 @@
 #!/bin/bash
 file_location=config.json
+
+warn_if_missing() {
+  local var_name="$1"
+  local default_value="$2"
+  if [ -z "${!var_name}" ]; then
+    echo "Warning: $var_name is missing, using default: $default_value"
+    eval "$var_name='$default_value'"
+  fi
+}
+
+warn_if_missing "LOBBY_SIZE" "20"
+warn_if_missing "DISCORD_BOT_TOKEN" "default_bot_token"
+warn_if_missing "DISCORD_CLIENT_ID" "default_client_id"
+warn_if_missing "DISCORD_GUILD_ID" "default_guild_id"
+warn_if_missing "NHOST_SECRET" "default_admin_secret"
+warn_if_missing "NHOST_SUBDOMAIN" "default_subdomain"
+warn_if_missing "NHOST_REGION" "default_region"
+
 cat > $file_location <<EOF
 {
   "dev": {
@@ -16,16 +34,16 @@ cat > $file_location <<EOF
     }
   },
   "prod": {
-    "lobbySize": 20,
+    "lobbySize": ${LOBBY_SIZE},
     "discord": {
-      "token": "BOT_TOKEN",
-      "clientId": "DISCORD_CLIENT_ID",
-      "guildId": "DISCORD_GUILD_ID"
+      "token": "${DISCORD_BOT_TOKEN}",
+      "clientId": "${DISCORD_CLIENT_ID}",
+      "guildId": "${DISCORD_GUILD_ID}"
     },
     "nhost": {
-      "adminSecret": "nhost admin secret",
-      "subdomain": "subdomain",
-      "region": "region"
+      "adminSecret": "${NHOST_SECRET}",
+      "subdomain": "${NHOST_SUBDOMAIN}",
+      "region": "${NHOST_REGION}"
     }
   }
 }
