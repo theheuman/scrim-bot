@@ -70,7 +70,7 @@ They depend on services in the services/ directory
 
 ## Deploying
 
-The `main` branch is tracked heroku and automatically deploys.
+The `main` branch is tracked by heroku and automatically deploys.
 
 ### Test commands on a server
 
@@ -79,7 +79,7 @@ https://docs.nhost.io/development/cli/getting-started
 
 Start nhost by going to the nhost/ directory and running `nhost up --apply-seeds`, you can then navigate to the dashboard link the command gives you to see that its running correctly
 
-Before merge to main test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info and insert necessary data into nhost (scrim_admin_roles and static_key_values.signup_channel).
+Before merge to main, test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info and insert necessary data into nhost (scrim_admin_roles and static_key_values.signup_channel).
 
 Deploy commands to your private server with `npm run deploy-commands`
 
