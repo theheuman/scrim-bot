@@ -56,7 +56,8 @@ You can create a template config file by running
 `
 npm run create-config
 `
-This script will default to generic placeholders but can use environment variables of the same name to fill in values. The script will warn you which variables are missing and you can re run it to get the correct values.
+This script will default to generic placeholders but can use environment variables of the same names to populate the values. 
+The script will warn you which variables are missing and you can re run it to get the correct values.
 
 Then you can run tests with 
 
@@ -86,7 +87,11 @@ The bot can use hot reloads `npm run start:watch` or you can run it normally fro
 
 ### Deploy to prod
 
-After merge to main heroku will automatically start a new build. This build consists of the `heroku-prebuild` script in package.json, it then runs `npm install` and `npm run build` on its own, before running the worker specified in the `Procfile` and finally runs the release task in the same Procfile to deploy the commands
+After merge to main heroku will automatically start a new build. This build consists of 
+* `heroku-prebuild` script in package.json, heroku has secrets as env variables so they are auto populated by the script
+* Then runs `npm install` and `npm run build` automatically,
+* Then runs the worker specified in the `Procfile`
+* Finally it runs the release task in the same Procfile to deploy the commands.
 
 ## Install on discord server:
 
