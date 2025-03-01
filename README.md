@@ -23,14 +23,14 @@ The file should contain:
   "dev": {
     "lobbySize": 3,
     "discord": {
-      "token": "BOT_TOKEN",
+      "token": "DEV_DISCORD_BOT_TOKEN",
       "clientId": "DEV_DISCORD_CLIENT_ID",
       "guildId": "DEV_DISCORD_GUILD_ID"  
     },
     "nhost": {
-      "adminSecret": "LOCAL_ADMIN_SECRET",
-      "subdomain": "local_subdomain",
-      "region": "local_region"
+      "adminSecret": "nhost-admin-secret",
+      "subdomain": "local",
+      "region": "local"
     }
   },
   "prod": {

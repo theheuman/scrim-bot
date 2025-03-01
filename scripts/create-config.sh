@@ -23,14 +23,14 @@ cat > $file_location <<EOF
   "dev": {
     "lobbySize": 3,
     "discord": {
-      "token": "BOT_TOKEN",
-      "clientId": "DISCORD_CLIENT_ID",
-      "guildId": "DISCORD_GUILD_ID"
+      "token": "DEV_DISCORD_BOT_TOKEN",
+      "clientId": "DEV_DISCORD_CLIENT_ID",
+      "guildId": "DEV_DISCORD_GUILD_ID"
     },
     "nhost": {
-      "adminSecret": "nhost admin secret",
-      "subdomain": "subdomain",
-      "region": "region"
+      "adminSecret": "nhost-admin-secret",
+      "subdomain": "local",
+      "region": "local"
     }
   },
   "prod": {
