@@ -145,12 +145,15 @@ export class DbMock extends DB {
 
   async getPrio(
     date: Date,
-  ): Promise<{ id: string; amount: number; reason: string }[]> {
+  ): Promise<
+    { id: string; discordId: string; amount: number; reason: string }[]
+  > {
     return Promise.resolve([
       {
         id: "0",
         amount: 0,
         reason: "lol",
+        discordId: "id",
       },
     ]);
   }

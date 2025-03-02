@@ -1,9 +1,8 @@
-import { GuildMember, User } from "discord.js";
+import { User } from "discord.js";
 import { Player, PlayerInsert } from "../../src/models/Player";
 import { PrioService } from "../../src/services/prio";
 import { DbMock } from "../mocks/db.mock";
 import { CacheService } from "../../src/services/cache";
-import { AuthService } from "../../src/services/auth";
 import SpyInstance = jest.SpyInstance;
 import { Scrim, ScrimSignup } from "../../src/models/Scrims";
 
@@ -172,17 +171,37 @@ describe("Prio", () => {
         dbSpy.mockReturnValue(
           // return low prio for 1, and two high prio ticks for another, also return low prio for someone not participating in the scrim
           Promise.resolve([
-            { id: lowPrioPlayerOnTeam.id, amount: -1, reason: "bad boi" },
-            { id: highPrioPlayerOnTeam.id, amount: 1, reason: "good boi" },
-            { id: highPrioPlayerOnTeam.id, amount: 1, reason: "good boi" },
+            {
+              id: lowPrioPlayerOnTeam.id,
+              discordId: lowPrioPlayerOnTeam.discordId,
+              amount: -1,
+              reason: "bad boi",
+            },
+            {
+              id: highPrioPlayerOnTeam.id,
+              discordId: highPrioPlayerOnTeam.discordId,
+              amount: 1,
+              reason: "good boi",
+            },
+            {
+              id: highPrioPlayerOnTeam.id,
+              discordId: highPrioPlayerOnTeam.discordId,
+              amount: 1,
+              reason: "good boi",
+            },
             {
               id: lowPrioPlayerFreeAgent.id,
+              discordId: lowPrioPlayerFreeAgent.discordId,
               amount: -400,
               reason: "SMH Tried to nuke the entire server",
             },
           ]),
         );
-        const prioTeams = await prioService.getTeamPrioForScrim(scrim, teams);
+        const prioTeams = await prioService.getTeamPrioForScrim(
+          scrim,
+          teams,
+          [],
+        );
         expect(prioTeams).toEqual([
           {
             date: today,

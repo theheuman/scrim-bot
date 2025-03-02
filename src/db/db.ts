@@ -405,7 +405,9 @@ export abstract class DB {
 
   async getPrio(
     date: Date,
-  ): Promise<{ id: string; amount: number; reason: string }[]> {
+  ): Promise<
+    { id: string; discordId: string; amount: number; reason: string }[]
+  > {
     const dbData = await this.get(
       DbTable.prio,
       {
@@ -423,10 +425,11 @@ export abstract class DB {
           },
         ],
       },
-      ["player_id", "amount", "reason"],
+      ["player_id", "amount", "discord_id", "reason"],
     );
-    return dbData.map(({ player_id, amount, reason }) => ({
+    return dbData.map(({ player_id, discord_id, amount, reason }) => ({
       id: player_id as string,
+      discordId: discord_id as string,
       amount: amount as number,
       reason: reason as string,
     }));
