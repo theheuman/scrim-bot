@@ -155,9 +155,14 @@ describe("Prio", () => {
           displayName: "free agent",
           id: "3",
         };
+        const scrimPassHolder: Player = {
+          discordId: "on team discord id 4",
+          displayName: "Rich boi",
+          id: "4",
+        };
         const team: ScrimSignup = {
           date: today,
-          players: [lowPrioPlayerOnTeam, highPrioPlayerOnTeam],
+          players: [lowPrioPlayerOnTeam, highPrioPlayerOnTeam, scrimPassHolder],
           signupId: "",
           signupPlayer: {
             id: "",
@@ -197,15 +202,23 @@ describe("Prio", () => {
             },
           ]),
         );
-        const prioTeams = await prioService.getTeamPrioForScrim(
-          scrim,
-          teams,
-          [],
-        );
+        const prioTeams = await prioService.getTeamPrioForScrim(scrim, teams, [
+          scrimPassHolder.discordId,
+          lowPrioPlayerOnTeam.discordId,
+        ]);
+        // team should have
+        //   +2 prio from the high prio player since they have two +1 prio entries
+        //   +1 prio from the scrim pass holder
+        //   -1 prio from the low prio player (They have a scrim pass but that is ignored when they have low prio)
+        // For a total of +2 prio
         expect(prioTeams).toEqual([
           {
             date: today,
-            players: [lowPrioPlayerOnTeam, highPrioPlayerOnTeam],
+            players: [
+              lowPrioPlayerOnTeam,
+              highPrioPlayerOnTeam,
+              scrimPassHolder,
+            ],
             signupId: "",
             signupPlayer: {
               id: "",
@@ -214,8 +227,9 @@ describe("Prio", () => {
             },
             teamName: "",
             prio: {
-              amount: 1,
-              reasons: "Bad Boi: bad boi; Good Boi: good boi, good boi",
+              amount: 2,
+              reasons:
+                "Bad Boi: bad boi; Good Boi: good boi, good boi; Rich boi: Scrim pass",
             },
           },
         ]);
