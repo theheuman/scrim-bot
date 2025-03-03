@@ -1,5 +1,11 @@
 import { DB } from "../../src/db/db";
-import { DbValue, JSONValue, LogicalExpression } from "../../src/db/types";
+import {
+  DbValue,
+  ExtractReturnType,
+  FieldSelection,
+  JSONValue,
+  LogicalExpression,
+} from "../../src/db/types";
 import { PlayerInsert } from "../../src/models/Player";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
@@ -32,13 +38,13 @@ export class DbMock extends DB {
     return Promise.resolve(this.deleteResponse);
   }
 
-  get<K extends string>(
+  get<K extends FieldSelection[]>(
     tableName: string,
     fieldsToSearch: LogicalExpression,
-    fieldsToReturn: K[],
-  ): Promise<Array<Record<K, DbValue>>> {
+    fieldsToReturn: K,
+  ): Promise<Array<ExtractReturnType<K>>> {
     return Promise.resolve([{ id: "" }] as unknown as Array<
-      Record<K, DbValue>
+      ExtractReturnType<K>
     >);
   }
 

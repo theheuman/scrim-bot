@@ -5,6 +5,8 @@ import {
   DbTable,
   DbValue,
   Expression,
+  ExtractReturnType,
+  FieldSelection,
   JSONValue,
   LogicalExpression,
 } from "./types";
@@ -12,11 +14,12 @@ import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
 
 export abstract class DB {
-  abstract get<K extends string>(
+  abstract get<K extends FieldSelection[]>(
     tableName: DbTable,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: K[],
-  ): Promise<Array<Record<K, DbValue>>>;
+    fieldsToReturn: K,
+  ): Promise<Array<ExtractReturnType<K>>>;
+
   abstract update<K extends string>(
     tableName: DbTable,
     logicalExpression: LogicalExpression,
@@ -425,11 +428,11 @@ export abstract class DB {
           },
         ],
       },
-      ["player_id", "amount", "discord_id", "reason"],
+      [{ player: ["discord_id", "id"] }, "amount", "reason"],
     );
-    return dbData.map(({ player_id, discord_id, amount, reason }) => ({
-      id: player_id as string,
-      discordId: discord_id as string,
+    return dbData.map(({ player, amount, reason }) => ({
+      id: player.id as string,
+      discordId: player.discord_id as string,
       amount: amount as number,
       reason: reason as string,
     }));
