@@ -23,9 +23,13 @@ export class GetSignupsCommand extends AdminCommand {
     // the interaction gets voided and can't be used anymore.
     await interaction.editReply("Fetching teams, command in progress");
     const scrimPassRole = await interaction.guild?.roles.fetch(
-      "1344394308656300093",
+      "1345985586791579718",
+      // "1344394308656300093",
+      {
+        cache: true,
+        force: true,
+      },
     );
-    console.log(scrimPassRole);
     if (!scrimPassRole) {
       await interaction.editReply(
         "Can't fetch users with scrim pass from guild",
