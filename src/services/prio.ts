@@ -29,12 +29,12 @@ export class PrioService {
   async getTeamPrioForScrim(
     scrim: Scrim,
     teams: ScrimSignup[],
-    usersWithScrimPass: User[],
+    discordIdsWithScrimPass: string[],
   ): Promise<ScrimSignup[]> {
     const playersWithPrio = await this.db.getPrio(scrim.dateTime);
     const playerMap = this.generatePlayerMap(
       playersWithPrio,
-      usersWithScrimPass,
+      discordIdsWithScrimPass,
     );
     this.setTeamPrioFromPlayerPrio(teams, playerMap);
     return teams;
@@ -93,7 +93,7 @@ export class PrioService {
 
   private generatePlayerMap(
     playersIdsWithPrio: PlayerPrio[],
-    usersWithScrimPass: User[],
+    discordIdsWithScrimPass: string[],
   ): PlayerMap {
     const playerMap: Map<string, { amount: number; reason: string }> =
       new Map();
@@ -114,16 +114,15 @@ export class PrioService {
     }
 
     // we only add scrim pass prio if they do not have low prio
-    // use discordUser.id here to match it with the discordId of players above
-    for (const user of usersWithScrimPass) {
-      const playerPrio = playerMap.get(user.id);
+    for (const id of discordIdsWithScrimPass) {
+      const playerPrio = playerMap.get(id);
       if (!playerPrio) {
-        playerMap.set(user.id, {
+        playerMap.set(id, {
           amount: 1,
           reason: "Scrim pass",
         });
       } else if (playerPrio.amount > 0) {
-        playerMap.set(user.id, {
+        playerMap.set(id, {
           amount: playerPrio.amount + 1,
           reason: playerPrio.reason + ", " + "Scrim pass",
         });

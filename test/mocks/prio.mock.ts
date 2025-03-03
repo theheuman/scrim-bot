@@ -32,13 +32,13 @@ export class PrioServiceMock {
   async getTeamPrioForScrim(
     scrim: Scrim,
     teams: ScrimSignup[],
-    usersWithScrimPass: User[],
+    discordIdsWithScrimPass: string[],
   ): Promise<ScrimSignup[]> {
     console.log(
       "Getting team prio in prio mock",
       scrim,
       teams,
-      usersWithScrimPass,
+      discordIdsWithScrimPass,
     );
     return [];
   }

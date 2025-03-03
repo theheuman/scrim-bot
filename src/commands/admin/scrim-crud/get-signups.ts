@@ -22,12 +22,24 @@ export class GetSignupsCommand extends AdminCommand {
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
     await interaction.editReply("Fetching teams, command in progress");
-
+    const scrimPassRole = await interaction.guild?.roles.fetch(
+      "1344394308656300093",
+    );
+    console.log(scrimPassRole);
+    if (!scrimPassRole) {
+      await interaction.editReply(
+        "Can't fetch users with scrim pass from guild",
+      );
+      return;
+    }
     const channelId = interaction.channelId;
 
     let channelSignups: { mainList: ScrimSignup[]; waitList: ScrimSignup[] };
     try {
-      channelSignups = await this.signupService.getSignups(channelId);
+      channelSignups = await this.signupService.getSignups(
+        channelId,
+        [...scrimPassRole.members].map((collectionItem) => collectionItem[0]),
+      );
     } catch (e) {
       await interaction.editReply(`Could not fetch signups. ${e}`);
       return;
