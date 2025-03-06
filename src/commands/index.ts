@@ -39,7 +39,7 @@ export const commands: Command[] = [
   new RemoveAdminRoleCommand(authService),
 
   new CreateScrimCommand(authService, signupsService, staticValueService),
-  new GetSignupsCommand(authService, signupsService),
+  new GetSignupsCommand(authService, signupsService, staticValueService),
   new ComputeScrimCommand(authService, signupsService),
   new CloseScrimCommand(authService, signupsService),
 

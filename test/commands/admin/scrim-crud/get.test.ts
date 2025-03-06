@@ -17,6 +17,8 @@ import { ScrimSignupMock } from "../../../mocks/signups.mock";
 import { ScrimSignups } from "../../../../src/services/signups";
 import { GetSignupsCommand } from "../../../../src/commands/admin/scrim-crud/get-signups";
 import { ScrimSignup } from "../../../../src/models/Scrims";
+import { StaticValueServiceMock } from "../../../mocks/static-values.mock";
+import { StaticValueService } from "../../../../src/services/static-values";
 
 describe("Get signups", () => {
   let basicInteraction: CustomInteraction;
@@ -100,6 +102,7 @@ describe("Get signups", () => {
   let command: GetSignupsCommand;
 
   const mockScrimSignups = new ScrimSignupMock();
+  const mockStaticValueService = new StaticValueServiceMock();
 
   beforeAll(() => {
     basicInteraction = {
@@ -124,7 +127,7 @@ describe("Get signups", () => {
       });
     });
     const guild: Guild = basicInteraction.guild as Guild;
-    // @ts-ignore its trying to match the incorrect method
+    // @ts-expect-error its trying to match the incorrect method
     getMembersWithScrimPassRoleSpy = jest.spyOn(guild.roles, "fetch");
     getMembersWithScrimPassRoleSpy.mockReturnValue(
       Promise.resolve({ members: [] } as unknown as Role),
@@ -136,16 +139,27 @@ describe("Get signups", () => {
     followupSpy.mockClear();
     editReplySpy.mockClear();
     getSignupsSpy.mockClear();
+    getMembersWithScrimPassRoleSpy.mockClear();
     command = new GetSignupsCommand(
       new AuthMock() as AuthService,
       mockScrimSignups as unknown as ScrimSignups,
+      mockStaticValueService as unknown as StaticValueService,
     );
   });
 
   it("Should get signups", async () => {
     jest.useFakeTimers();
+    getMembersWithScrimPassRoleSpy.mockReturnValueOnce(
+      Promise.resolve({
+        members: [["an id", { id: "an id" }]],
+      } as unknown as Role),
+    );
     await command.run(basicInteraction);
-    expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id", []);
+    expect(getMembersWithScrimPassRoleSpy).toHaveBeenCalledWith("3568173514", {
+      cache: true,
+      force: true,
+    });
+    expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id", ["an id"]);
     const expectedMainListString = `Main list.\n__Main list team__. Signed up by: <@teamCapDiscordId1>. Players: <@teamCapDiscordId1> <@teamCapDiscordId1>. Prio: 1. League prio.\n__Main list team 2__. Signed up by: <@teamCapDiscordId2>. Players: .\n`;
     const expectedWaitListString = `Wait list.\n__Wait list team__. Signed up by: <@teamCapDiscordId3>. Players: . Prio: -1. Team captain is a known inter.\n`;
     expect(followupSpy).toHaveBeenCalledWith({
@@ -160,6 +174,37 @@ describe("Get signups", () => {
     jest.useRealTimers();
   });
 
+  it("should get signups but reply with error because theres no scrim pass role id in the db", async () => {
+    if (!basicInteraction.guild) {
+      expect(true).toBeFalsy();
+      return;
+    }
+    getMembersWithScrimPassRoleSpy.mockReturnValueOnce(Promise.resolve(null));
+    jest
+      .spyOn(mockStaticValueService, "getScrimPassRoleId")
+      .mockReturnValueOnce(Promise.resolve(undefined));
+
+    await command.run(basicInteraction);
+    expect(editReplySpy).toHaveBeenCalledWith(
+      "Unable to get scrim pass role id from db",
+    );
+    expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id", []);
+  });
+
+  it("should get signups but reply with error because the guild is not defined", async () => {
+    if (!basicInteraction.guild) {
+      expect(true).toBeFalsy();
+      return;
+    }
+    getMembersWithScrimPassRoleSpy.mockReturnValueOnce(Promise.resolve(null));
+
+    await command.run(basicInteraction);
+    expect(editReplySpy).toHaveBeenCalledWith(
+      "Can't fetch scrim pass role members from discord",
+    );
+    expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id", []);
+  });
+
   describe("errors", () => {
     it("should not get signups because the signup service threw an exception", async () => {
       getSignupsSpy.mockImplementation(() => {
@@ -169,19 +214,6 @@ describe("Get signups", () => {
       await command.run(basicInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
         "Could not fetch signups. Error: No scrim found for that channel",
-      );
-    });
-
-    it("should not get signups because the guild is not defined", async () => {
-      if (!basicInteraction.guild) {
-        expect(true).toBeFalsy();
-        return;
-      }
-      getMembersWithScrimPassRoleSpy.mockReturnValueOnce(Promise.resolve(null));
-
-      await command.run(basicInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
-        "Can't fetch users with scrim pass from guild",
       );
     });
   });

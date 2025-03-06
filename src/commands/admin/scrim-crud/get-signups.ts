@@ -4,11 +4,13 @@ import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
 import { AuthService } from "../../../services/auth";
 import * as fs from "node:fs";
+import { StaticValueService } from "../../../services/static-values";
 
 export class GetSignupsCommand extends AdminCommand {
   constructor(
     authService: AuthService,
     private signupService: ScrimSignups,
+    private staticValueService: StaticValueService,
   ) {
     super(
       authService,
@@ -22,27 +24,15 @@ export class GetSignupsCommand extends AdminCommand {
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
     await interaction.editReply("Fetching teams, command in progress");
-    const scrimPassRole = await interaction.guild?.roles.fetch(
-      "1345985586791579718",
-      // "1344394308656300093",
-      {
-        cache: true,
-        force: true,
-      },
-    );
-    if (!scrimPassRole) {
-      await interaction.editReply(
-        "Can't fetch users with scrim pass from guild",
-      );
-      return;
-    }
+    const scrimPassMemberIds: string[] =
+      await this.getScrimPassMemberIds(interaction);
     const channelId = interaction.channelId;
 
     let channelSignups: { mainList: ScrimSignup[]; waitList: ScrimSignup[] };
     try {
       channelSignups = await this.signupService.getSignups(
         channelId,
-        [...scrimPassRole.members].map((collectionItem) => collectionItem[0]),
+        scrimPassMemberIds,
       );
     } catch (e) {
       await interaction.editReply(`Could not fetch signups. ${e}`);
@@ -70,6 +60,40 @@ export class GetSignupsCommand extends AdminCommand {
     } catch (e) {
       await interaction.editReply("Problem generating csv. " + e);
     }
+  }
+
+  async getScrimPassMemberIds(
+    interaction: CustomInteraction,
+  ): Promise<string[]> {
+    const scrimPassRoleId = await this.staticValueService.getScrimPassRoleId();
+    let scrimPassMemberIds: string[] = [];
+    if (scrimPassRoleId) {
+      const scrimPassRole = await interaction.guild?.roles.fetch(
+        scrimPassRoleId,
+        {
+          cache: true,
+          force: true,
+        },
+      );
+      if (scrimPassRole) {
+        scrimPassMemberIds = [...scrimPassRole.members].map(
+          (collectionItem) => collectionItem[0],
+        );
+      } else {
+        console.error(
+          "Can't fetch scrim pass role members from discord for: guild, role id",
+          interaction.guild,
+          scrimPassRoleId,
+        );
+        await interaction.editReply(
+          "Can't fetch scrim pass role members from discord",
+        );
+      }
+    } else {
+      console.error("Unable to get scrim pass role id from db");
+      await interaction.editReply("Unable to get scrim pass role id from db");
+    }
+    return scrimPassMemberIds;
   }
 
   // Break long strings into chunks for discord
