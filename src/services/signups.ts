@@ -140,33 +140,35 @@ export class ScrimSignups {
         displayName: discordUser.displayName,
       }),
     );
-    const playerIds = await this.db.insertPlayers(convertedPlayers);
+    const insertedPlayers = await this.db.insertPlayers(convertedPlayers);
+    this.checkForMissingOverstat(insertedPlayers);
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,
       scrim.id,
-      playerIds[0],
-      playerIds[1],
-      playerIds[2],
-      playerIds[3],
+      insertedPlayers[0].id,
+      insertedPlayers[1].id,
+      insertedPlayers[2].id,
+      insertedPlayers[3].id,
       signupDate,
     );
-    const mappedPlayers: Player[] = convertedPlayers.map((player, index) => ({
-      id: playerIds[index],
-      displayName: player.displayName,
-      discordId: player.discordId,
-      overstatLink: player.overstatId,
-      elo: player.elo,
-    }));
     scrimSignups.push({
       teamName: teamName,
-      players: mappedPlayers.slice(1),
-      signupPlayer: mappedPlayers[0],
+      players: insertedPlayers.slice(1),
+      signupPlayer: insertedPlayers[0],
       signupId,
       date: signupDate,
     });
     this.cache.setSignups(scrim.id, scrimSignups);
     return signupId;
+  }
+
+  private checkForMissingOverstat(players: Player[]) {
+    for (const player of players) {
+      if (!player.overstatId) {
+        throw Error("No overstat linked for " + player.displayName);
+      }
+    }
   }
 
   async getSignups(

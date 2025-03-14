@@ -1,9 +1,8 @@
-import { GuildMember, User } from "discord.js";
+import { User } from "discord.js";
 import { Player, PlayerInsert } from "../../src/models/Player";
 import { PrioService } from "../../src/services/prio";
 import { DbMock } from "../mocks/db.mock";
 import { CacheService } from "../../src/services/cache";
-import { AuthService } from "../../src/services/auth";
 import SpyInstance = jest.SpyInstance;
 import { Scrim, ScrimSignup } from "../../src/models/Scrims";
 
@@ -48,7 +47,7 @@ describe("Prio", () => {
 
     describe("correctly set prio", () => {
       let insertSpy: SpyInstance<
-        Promise<string[]>,
+        Promise<Player[]>,
         [players: PlayerInsert[]],
         string
       >;
@@ -69,7 +68,15 @@ describe("Prio", () => {
         dbSetPrioSpy = jest.spyOn(dbMock, "setPrio");
         insertSpy.mockClear();
         dbSetPrioSpy.mockClear();
-        insertSpy.mockReturnValue(Promise.resolve(["a different db id"]));
+        insertSpy.mockReturnValue(
+          Promise.resolve([
+            {
+              id: "a different db id",
+              discordId: "discord id",
+              displayName: "test user",
+            },
+          ]),
+        );
       });
 
       it("should set prio for players in cache", async () => {

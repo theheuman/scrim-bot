@@ -1,10 +1,6 @@
 import { ScrimSignups } from "../../src/services/signups";
 import { DbMock } from "../mocks/db.mock";
-import {
-  Player,
-  PlayerInsert,
-  PlayerStatInsert,
-} from "../../src/models/Player";
+import { Player, PlayerStatInsert } from "../../src/models/Player";
 import { User } from "discord.js";
 import { CacheService } from "../../src/services/cache";
 import { OverstatService } from "../../src/services/overstat";
@@ -13,6 +9,7 @@ import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { mockOverstatResponse } from "../mocks/overstat-response.mock";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
+import SpyInstance = jest.SpyInstance;
 
 describe("Signups", () => {
   let dbMock: DbMock;
@@ -21,12 +18,38 @@ describe("Signups", () => {
   let prioService: PrioService;
   let overstatService: OverstatService;
 
+  let insertPlayersSpy: SpyInstance;
+
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
     overstatService = new OverstatService(dbMock);
     prioService = new PrioService(dbMock, cache);
     signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
+    insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
+    insertPlayersSpy.mockReturnValue(
+      Promise.resolve([
+        {
+          id: "111",
+          discordId: "123",
+          displayName: "TheHeuman",
+          overstatId: "123",
+        },
+        {
+          id: "111",
+          discordId: "123",
+          displayName: "TheHeuman",
+          overstatId: "123",
+        },
+        { id: "444", discordId: "456", displayName: "Zboy", overstatId: "456" },
+        {
+          id: "777",
+          discordId: "789",
+          displayName: "Supreme",
+          overstatId: "789",
+        },
+      ]),
+    );
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -50,29 +73,20 @@ describe("Signups", () => {
         discordChannel: expectedSignup.discordChannelId,
         active: true,
       } as Scrim);
-      jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
-        const expected: PlayerInsert[] = [
-          { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "456", displayName: "Zboy" },
-          { discordId: "789", displayName: "Supreme" },
-        ];
-        expect(players).toEqual(expected);
-        return Promise.resolve(["111", "444", "777"]);
-      });
-
       jest
         .spyOn(dbMock, "addScrimSignup")
         .mockImplementation(
           (
             teamName: string,
             scrimId: string,
+            userId: string,
             playerId: string,
             playerIdTwo: string,
             playerIdThree: string,
           ) => {
             expect(teamName).toEqual(expectedSignup.teamName);
             expect(scrimId).toEqual(expectedSignup.scrimId);
+            expect(userId).toEqual("111");
             expect(playerId).toEqual("111");
             expect(playerIdTwo).toEqual("444");
             expect(playerIdThree).toEqual("777");
@@ -87,7 +101,13 @@ describe("Signups", () => {
         [theheuman, zboy, supreme],
       );
       expect(signupId).toEqual(expectedSignup.signupId);
-      expect.assertions(7);
+      expect(insertPlayersSpy).toHaveBeenCalledWith([
+        { discordId: "123", displayName: "TheHeuman" },
+        { discordId: "123", displayName: "TheHeuman" },
+        { discordId: "456", displayName: "Zboy" },
+        { discordId: "789", displayName: "Supreme" },
+      ]);
+      expect.assertions(8);
     });
 
     it("Should not add a team because there is no scrim for that channel", async () => {

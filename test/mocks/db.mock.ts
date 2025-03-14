@@ -1,6 +1,6 @@
 import { DB } from "../../src/db/db";
 import { DbValue, JSONValue, LogicalExpression } from "../../src/db/types";
-import { PlayerInsert } from "../../src/models/Player";
+import { Player, PlayerInsert } from "../../src/models/Player";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
 export class DbMock extends DB {
@@ -9,7 +9,7 @@ export class DbMock extends DB {
   getResponse: JSONValue;
   postResponse: string[];
   addScrimSignupResponse: string;
-  insertPlayersResponse: string[];
+  insertPlayersResponse: Player[];
   insertPlayerIfNotExistsResponse: string;
 
   constructor() {
@@ -20,7 +20,7 @@ export class DbMock extends DB {
     this.getResponse = {};
     this.postResponse = [""];
     this.addScrimSignupResponse = "";
-    this.insertPlayersResponse = [""];
+    this.insertPlayersResponse = [];
     this.insertPlayerIfNotExistsResponse = "";
   }
 
@@ -67,7 +67,7 @@ export class DbMock extends DB {
     return Promise.resolve(this.insertPlayerIfNotExistsResponse);
   }
 
-  async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
+  async insertPlayers(players: PlayerInsert[]): Promise<Player[]> {
     return Promise.resolve(this.insertPlayersResponse);
   }
 

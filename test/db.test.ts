@@ -588,6 +588,8 @@ describe("DB connection", () => {
               returning {
                 id
                 discord_id
+                overstat_id
+                display_name
               }
            }
 
@@ -662,7 +664,7 @@ describe("DB connection", () => {
         supreme,
         theheuman,
       ]);
-      expect(newID).toEqual([
+      expect(newID.map((player) => player.id)).toEqual([
         "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "7605b2bf-1875-4415-a04b-75fe47768565",

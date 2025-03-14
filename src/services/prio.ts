@@ -65,15 +65,16 @@ export class PrioService {
     return { cacheMissedPlayers, playerIds };
   }
 
-  private fetchCacheMissedPlayerIds(
+  private async fetchCacheMissedPlayerIds(
     cacheMissedPlayers: User[],
   ): Promise<string[]> {
-    return this.db.insertPlayers(
+    const insertedPlayers = await this.db.insertPlayers(
       cacheMissedPlayers.map((player) => ({
         discordId: player.id,
         displayName: player.displayName,
       })),
     );
+    return insertedPlayers.map((player) => player.id);
   }
 
   private addPlayersToCache(players: User[], playerIds: string[]) {
