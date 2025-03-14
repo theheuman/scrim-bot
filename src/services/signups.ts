@@ -141,7 +141,7 @@ export class ScrimSignups {
       }),
     );
     const insertedPlayers = await this.db.insertPlayers(convertedPlayers);
-    this.checkForMissingOverstat(insertedPlayers);
+    this.checkForMissingOverstat(insertedPlayers.slice(1));
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,

@@ -33,7 +33,6 @@ describe("Signups", () => {
           id: "111",
           discordId: "123",
           displayName: "TheHeuman",
-          overstatId: "123",
         },
         {
           id: "111",
@@ -223,6 +222,54 @@ describe("Signups", () => {
       };
 
       await expect(causeException).rejects.toThrow("");
+    });
+
+    it("Should not add a team because a player doesn't have an overstat id", async () => {
+      cache.createScrim("1", {
+        id: "2",
+        discordChannel: "1",
+        active: true,
+      } as Scrim);
+
+      const causeException = async () => {
+        await signups.addTeam("1", "Dude Cube", theheuman, [
+          theheuman,
+          supreme,
+          mikey,
+        ]);
+      };
+
+      insertPlayersSpy.mockReturnValueOnce(
+        Promise.resolve([
+          {
+            id: "111",
+            discordId: "123",
+            displayName: "TheHeuman",
+            overstatId: "123",
+          },
+          {
+            id: "111",
+            discordId: "123",
+            displayName: "TheHeuman",
+          },
+          {
+            id: "444",
+            discordId: "456",
+            displayName: "Zboy",
+            overstatId: "456",
+          },
+          {
+            id: "777",
+            discordId: "789",
+            displayName: "Supreme",
+            overstatId: "789",
+          },
+        ]),
+      );
+
+      await expect(causeException).rejects.toThrow(
+        "No overstat linked for TheHeuman",
+      );
     });
   });
 
