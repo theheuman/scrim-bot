@@ -60,6 +60,9 @@ describe("Signups", () => {
 
   describe("addTeam()", () => {
     it("Should add a team", async () => {
+      jest.useFakeTimers();
+      const now = new Date();
+      jest.setSystemTime(now);
       const expectedSignup = {
         teamName: "Fineapples",
         scrimId: "32451",
@@ -93,13 +96,43 @@ describe("Signups", () => {
           },
         );
 
-      const signupId = await signups.addTeam(
+      const actualScrimSignup = await signups.addTeam(
         expectedSignup.discordChannelId,
         expectedSignup.teamName,
         theheuman,
         [theheuman, zboy, supreme],
       );
-      expect(signupId).toEqual(expectedSignup.signupId);
+      const expectedReturnSignup: ScrimSignup = {
+        date: now,
+        teamName: expectedSignup.teamName,
+        signupId: expectedSignup.signupId,
+        players: [
+          {
+            id: "111",
+            discordId: theheuman.id,
+            displayName: theheuman.displayName,
+            overstatId: theheuman.id,
+          },
+          {
+            id: "444",
+            discordId: zboy.id,
+            displayName: zboy.displayName,
+            overstatId: zboy.id,
+          },
+          {
+            id: "777",
+            discordId: supreme.id,
+            displayName: supreme.displayName,
+            overstatId: supreme.id,
+          },
+        ],
+        signupPlayer: {
+          id: "111",
+          discordId: theheuman.id,
+          displayName: theheuman.displayName,
+        },
+      };
+      expect(actualScrimSignup).toEqual(expectedReturnSignup);
       expect(insertPlayersSpy).toHaveBeenCalledWith([
         { discordId: "123", displayName: "TheHeuman" },
         { discordId: "123", displayName: "TheHeuman" },

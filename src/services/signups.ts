@@ -102,7 +102,7 @@ export class ScrimSignups {
     teamName: string,
     commandUser: User,
     players: User[],
-  ): Promise<string> {
+  ): Promise<ScrimSignup> {
     const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
@@ -152,15 +152,16 @@ export class ScrimSignups {
       insertedPlayers[3].id,
       signupDate,
     );
-    scrimSignups.push({
+    const scrimSignup: ScrimSignup = {
       teamName: teamName,
       players: insertedPlayers.slice(1),
       signupPlayer: insertedPlayers[0],
       signupId,
       date: signupDate,
-    });
+    };
+    scrimSignups.push(scrimSignup);
     this.cache.setSignups(scrim.id, scrimSignups);
-    return signupId;
+    return scrimSignup;
   }
 
   private checkForMissingOverstat(players: Player[]) {
