@@ -25,16 +25,30 @@ export class SignupCommand extends MemberCommand {
     const player3 = interaction.options.getUser("player3", true);
     await interaction.reply("Fetched all input, working on request");
 
+    const overstatRequiredDeadline = new Date(1742799600);
+
     try {
-      const signupId = await this.signupService.addTeam(
+      const signup = await this.signupService.addTeam(
         channelId as string,
         teamName,
         signupPlayer,
         [player1, player2, player3],
       );
       await interaction.editReply(
-        `Team ${teamName} signed up with players: <@${player1.id}>, <@${player2.id}>, <@${player3.id}>, signed up by <@${signupPlayer.id}>. Signup id: ${signupId}`,
+        `${teamName}\n<@${player1.id}>, <@${player2.id}>, <@${player3.id}>\nSigned up by <@${signupPlayer.id}>.\n${signup.signupId}`,
       );
+      const warnings = [];
+      for (const player of signup.players) {
+        if (!player.overstatId) {
+          warnings.push(`${player.displayName} is missing overstat id.`);
+        }
+      }
+      if (warnings.length > 0) {
+        await interaction.followUp({
+          content: `${warnings.join("\n")}\nScrims starting on ${this.formatDate(overstatRequiredDeadline)} will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376`,
+          ephemeral: true,
+        });
+      }
     } catch (error) {
       await interaction.editReply("Team not signed up. " + error);
       return;
