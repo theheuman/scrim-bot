@@ -3,7 +3,7 @@ name: 'Release'
 on:
   push:
     branches:
-      - 'bugfix/workflow'
+      - 'main'
 
 jobs:
   release:
