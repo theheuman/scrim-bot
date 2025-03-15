@@ -1,4 +1,4 @@
-name: 'Bump Version'
+name: 'Release'
 
 on:
   push:
@@ -6,10 +6,9 @@ on:
       - 'main'
 
 jobs:
-  bump-version:
-    name: 'Bump Version on main'
+  release:
+    name: 'Release'
     runs-on: ubuntu-latest
-
     steps:
       - name: 'Checkout source code'
         uses: 'actions/checkout@v2'
@@ -22,3 +21,10 @@ jobs:
           tag-prefix: 'v'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Create release"
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          draft: true
+          prerelease: false
+          automatic_release_tag: "latest"
