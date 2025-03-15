@@ -3,7 +3,7 @@ name: 'Release'
 on:
   push:
     branches:
-      - 'main'
+      - 'bugfix/workflow'
 
 jobs:
   release:
@@ -28,10 +28,5 @@ jobs:
         run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
       - name: Commit and Push Version Bump
         run: |
-          git branch --show-current
-          git fetch origin main
-          git switch -m main
-          git status
-          git branch --show-current
           git commit -am "Bump version to $VERSION [skip ci]"
           git push
