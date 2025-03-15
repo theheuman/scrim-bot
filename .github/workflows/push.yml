@@ -35,10 +35,3 @@ jobs:
           git branch --show-current
           git commit -am "Bump version to $VERSION [skip ci]"
           git push
-      - name: "Create release"
-        uses: softprops/action-gh-release@v2
-        with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
-          draft: true
-          prerelease: false
-          generate_release_notes: true
