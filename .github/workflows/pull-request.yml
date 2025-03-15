@@ -17,6 +17,13 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          ssh-key: ${{ secrets.DEPLOY_KEY }} # Private ssh key
+      - name: Debug SSH Authentication
+        run: |
+          ssh -vT git@github.com || true
+          ssh-add -L || echo "No keys loaded"
       - uses: actions/setup-node@v4
         with:
           node-version: 18
