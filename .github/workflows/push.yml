@@ -24,17 +24,10 @@ jobs:
           # Skip commit and push here, because you can't pass a deploy-key in to bypass branch protections.
           skip-commit: true
           skip-push: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get package version
         run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
       - name: Commit and Push Version Bump
         run: |
-          git branch --show-current
-          git fetch origin main
-          git switch -m main
-          git status
-          git branch --show-current
           git commit -am "Bump version to $VERSION [skip ci]"
           git push
       - name: "Create release"
