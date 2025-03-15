@@ -20,10 +20,13 @@ jobs:
         with:
           ref: ${{ github.ref }}
           ssh-key: ${{ secrets.DEPLOY_KEY }} # Private ssh key
-      - name: Debug SSH Authentication
+      - name: Add SSH Key
         run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
           ssh -vT git@github.com || true
-          ssh-add -L || echo "No keys loaded"
       - uses: actions/setup-node@v4
         with:
           node-version: 18
