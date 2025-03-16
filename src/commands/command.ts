@@ -12,7 +12,7 @@ import { ScrimSignup } from "../models/Scrims";
 import { Player } from "../models/Player";
 
 export abstract class Command extends SlashCommandBuilder {
-  private loggableOptions: {
+  private loggableArguments: {
     methodName: keyof ChatInputCommandInteraction["options"];
     name: string;
     required: boolean;
@@ -25,14 +25,14 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   addUserInput(name: string, description: string, isRequired: boolean = false) {
-    this.loggableOptions.push({
+    this.addUserOption((option) =>
+      this.addOption(option, name, description, isRequired),
+    );
+    this.loggableArguments.push({
       required: isRequired,
       name,
       methodName: "getUser",
     });
-    this.addUserOption((option) =>
-      this.addOption(option, name, description, isRequired),
-    );
   }
 
   addStringInput(name: string, description: string, config?: OptionConfig) {
@@ -51,6 +51,11 @@ export abstract class Command extends SlashCommandBuilder {
       }
       return option;
     });
+    this.loggableArguments.push({
+      required: config?.isRequired ?? false,
+      name,
+      methodName: "getString",
+    });
   }
 
   addNumberInput(
@@ -61,12 +66,22 @@ export abstract class Command extends SlashCommandBuilder {
     this.addNumberOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getNumber",
+    });
   }
 
   addRoleInput(name: string, description: string, isRequired: boolean = false) {
     this.addRoleOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getRole",
+    });
   }
 
   addChannelInput(
@@ -85,6 +100,11 @@ export abstract class Command extends SlashCommandBuilder {
         config.isRequired ?? false,
       ).addChannelTypes(config.channelTypes);
     });
+    this.loggableArguments.push({
+      required: config.isRequired ?? false,
+      name,
+      methodName: "getUser",
+    });
   }
 
   // at some point discord might actually implement this, for now just use string
@@ -94,6 +114,11 @@ export abstract class Command extends SlashCommandBuilder {
         .setMinLength(3)
         .setMaxLength(17),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getString",
+    });
   }
 
   addOption<T extends SlashCommandOption>(
@@ -151,8 +176,8 @@ export abstract class Command extends SlashCommandBuilder {
   private logInteraction(interaction: ChatInputCommandInteraction) {
     const informationArray = [];
     informationArray.push("Command issued");
-    informationArray.push(`Name: ${this.name}`);
-    const userArguments = this.loggableOptions.map((argument) => ({
+    informationArray.push(`Name and id: ${this.name} ${interaction.id}`);
+    const userArguments = this.loggableArguments.map((argument) => ({
       name: argument.name,
       required: argument.required,
       // @ts-expect-error right now this type isn't indexed correctly, fix when we have internet

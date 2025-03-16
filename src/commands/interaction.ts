@@ -53,14 +53,40 @@ export const getCustomInteraction = (
     return null as unknown as Date;
   };
   const extendedInteraction = interaction as CustomInteraction;
+  extendedInteraction.options = extendedOptions;
+
   extendedInteraction["invisibleReply"] = (message: string) => {
     const replyData: InteractionReplyOptions = {
       content: message,
       ephemeral: true,
     };
+    console.log(`Invisible reply to interaction ${interaction.id}: `, message);
     return interaction.reply(replyData);
   };
-  extendedInteraction.options = extendedOptions;
+
+  /*
+   * TODO the following causes infinite loops, how to resolve?
+  // @ts-expect-error ts doesn't know what to do with the return types of discords overlapping methods
+  extendedInteraction["reply"] = (
+    argument: string | MessagePayload | InteractionReplyOptions,
+  ) => {
+    console.log(`Replying to interaction ${interaction.id}: `, argument);
+    return interaction.reply(argument);
+  };
+  extendedInteraction["editReply"] = (
+    argument: string | MessagePayload | InteractionReplyOptions,
+  ) => {
+    console.log(`Editing reply to interaction ${interaction.id}: `, argument);
+    return interaction.editReply(argument);
+  };
+  extendedInteraction["followUp"] = (
+    argument: string | MessagePayload | InteractionReplyOptions,
+  ) => {
+    console.log(`Following up to interaction ${interaction.id}: `, argument);
+    return interaction.followUp(argument);
+  };
+
+   */
 
   return extendedInteraction;
 };
