@@ -258,13 +258,16 @@ describe("Signups", () => {
     });
 
     describe("Missing overstat id", () => {
-      beforeEach(() => {
+      const createScrim = (dateTime: Date) => {
         cache.createScrim("1", {
           id: "2",
           discordChannel: "1",
           active: true,
+          dateTime,
         } as Scrim);
+      };
 
+      beforeEach(() => {
         insertPlayersSpy.mockReturnValueOnce(
           Promise.resolve([
             {
@@ -292,16 +295,10 @@ describe("Signups", () => {
             },
           ]),
         );
-
-        jest.useFakeTimers();
-      });
-
-      afterEach(() => {
-        jest.useRealTimers();
       });
 
       it("Should add a team because overstat required deadline not reached", async () => {
-        jest.setSystemTime(new Date(174279960000));
+        createScrim(new Date(174279960000));
 
         const actualSignup = await signups.addTeam(
           "1",
@@ -314,7 +311,7 @@ describe("Signups", () => {
       });
 
       it("Should not add a team because a player doesn't have an overstat id", async () => {
-        jest.setSystemTime(new Date(17427996000000));
+        createScrim(new Date(17427996000000));
 
         const causeException = async () => {
           await signups.addTeam("1", "Dude Cube", theheuman, [

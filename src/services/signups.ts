@@ -141,7 +141,7 @@ export class ScrimSignups {
       }),
     );
     const insertedPlayers = await this.db.insertPlayers(convertedPlayers);
-    this.checkForMissingOverstat(insertedPlayers.slice(1));
+    this.checkForMissingOverstat(insertedPlayers.slice(1), scrim);
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,
@@ -164,9 +164,9 @@ export class ScrimSignups {
     return scrimSignup;
   }
 
-  private checkForMissingOverstat(players: Player[]) {
+  private checkForMissingOverstat(players: Player[], scrim: Scrim) {
     const deadline = new Date(1742799600000);
-    if (new Date() < deadline) {
+    if (scrim.dateTime < deadline) {
       return;
     }
     for (const player of players) {
