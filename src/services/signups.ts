@@ -165,6 +165,10 @@ export class ScrimSignups {
   }
 
   private checkForMissingOverstat(players: Player[]) {
+    const deadline = new Date(1742799600000);
+    if (new Date() < deadline) {
+      return;
+    }
     for (const player of players) {
       if (!player.overstatId) {
         throw Error("No overstat linked for " + player.displayName);

@@ -25,7 +25,7 @@ export class SignupCommand extends MemberCommand {
     const player3 = interaction.options.getUser("player3", true);
     await interaction.reply("Fetched all input, working on request");
 
-    const overstatRequiredDeadline = new Date(1742799600);
+    const overstatRequiredDeadline = new Date(1742799600000);
 
     try {
       const signup = await this.signupService.addTeam(

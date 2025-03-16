@@ -257,52 +257,77 @@ describe("Signups", () => {
       await expect(causeException).rejects.toThrow("");
     });
 
-    it("Should not add a team because a player doesn't have an overstat id", async () => {
-      cache.createScrim("1", {
-        id: "2",
-        discordChannel: "1",
-        active: true,
-      } as Scrim);
+    describe("Missing overstat id", () => {
+      beforeEach(() => {
+        cache.createScrim("1", {
+          id: "2",
+          discordChannel: "1",
+          active: true,
+        } as Scrim);
 
-      const causeException = async () => {
-        await signups.addTeam("1", "Dude Cube", theheuman, [
+        insertPlayersSpy.mockReturnValueOnce(
+          Promise.resolve([
+            {
+              id: "111",
+              discordId: "123",
+              displayName: "TheHeuman",
+              overstatId: "123",
+            },
+            {
+              id: "111",
+              discordId: "123",
+              displayName: "TheHeuman",
+            },
+            {
+              id: "444",
+              discordId: "456",
+              displayName: "Zboy",
+              overstatId: "456",
+            },
+            {
+              id: "777",
+              discordId: "789",
+              displayName: "Supreme",
+              overstatId: "789",
+            },
+          ]),
+        );
+
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it("Should add a team because overstat required deadline not reached", async () => {
+        jest.setSystemTime(new Date(174279960000));
+
+        const actualSignup = await signups.addTeam(
+          "1",
+          "Dude Cube",
           theheuman,
-          supreme,
-          mikey,
-        ]);
-      };
+          [theheuman, supreme, mikey],
+        );
 
-      insertPlayersSpy.mockReturnValueOnce(
-        Promise.resolve([
-          {
-            id: "111",
-            discordId: "123",
-            displayName: "TheHeuman",
-            overstatId: "123",
-          },
-          {
-            id: "111",
-            discordId: "123",
-            displayName: "TheHeuman",
-          },
-          {
-            id: "444",
-            discordId: "456",
-            displayName: "Zboy",
-            overstatId: "456",
-          },
-          {
-            id: "777",
-            discordId: "789",
-            displayName: "Supreme",
-            overstatId: "789",
-          },
-        ]),
-      );
+        expect(actualSignup).toBeDefined();
+      });
 
-      await expect(causeException).rejects.toThrow(
-        "No overstat linked for TheHeuman",
-      );
+      it("Should not add a team because a player doesn't have an overstat id", async () => {
+        jest.setSystemTime(new Date(17427996000000));
+
+        const causeException = async () => {
+          await signups.addTeam("1", "Dude Cube", theheuman, [
+            theheuman,
+            supreme,
+            mikey,
+          ]);
+        };
+
+        await expect(causeException).rejects.toThrow(
+          "No overstat linked for TheHeuman",
+        );
+      });
     });
   });
 
