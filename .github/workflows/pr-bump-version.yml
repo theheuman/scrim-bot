@@ -1,0 +1,23 @@
+name: Pull request bump version
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: [opened]
+
+jobs:
+  version-bump:
+    name: "Bump version"
+    runs-on: ubuntu-latest
+    steps:
+      - name : Print Title of PR
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: echo The Title of your PR is $TITLE
+      - name: Bump
+        # How do we get it to use the pull request title instead of commit message
+        uses: 'phips28/gh-action-bump-version@master'
+        with:
+          tag-prefix: 'v'
+          commit-message: 'CI: bump version to {{version}} [skip ci]'
+          commit-no-verify: true
