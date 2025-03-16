@@ -122,6 +122,7 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    this.logInteraction(interaction);
     try {
       const customInteraction = getCustomInteraction(interaction);
       await this.childExecute(customInteraction);
@@ -135,6 +136,19 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   abstract childExecute(interaction: CustomInteraction): Promise<void>;
+
+  private logInteraction(interaction: ChatInputCommandInteraction) {
+    const informationArray = [];
+    informationArray.push("Command issued");
+    informationArray.push(`Name: ${this.name}`);
+    // this is not the correct way to get user supplied arguments, how do we do it?
+    const userArguments = interaction.options;
+    informationArray.push(`User arguments: ${userArguments}`);
+    informationArray.push(`Member: ${interaction.user?.username}`);
+    informationArray.push(`Sent at: ${new Date(interaction.createdTimestamp)}`);
+
+    console.log(informationArray.join("\n\t"));
+  }
 }
 
 export abstract class AdminCommand extends Command {
