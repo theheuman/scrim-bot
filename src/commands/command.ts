@@ -12,6 +12,12 @@ import { ScrimSignup } from "../models/Scrims";
 import { Player } from "../models/Player";
 
 export abstract class Command extends SlashCommandBuilder {
+  private loggableOptions: {
+    methodName: keyof ChatInputCommandInteraction["options"];
+    name: string;
+    required: boolean;
+  }[] = [];
+
   protected constructor(name: string, description: string) {
     super();
     this.setName(name);
@@ -19,6 +25,11 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   addUserInput(name: string, description: string, isRequired: boolean = false) {
+    this.loggableOptions.push({
+      required: isRequired,
+      name,
+      methodName: "getUser",
+    });
     this.addUserOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
@@ -141,9 +152,13 @@ export abstract class Command extends SlashCommandBuilder {
     const informationArray = [];
     informationArray.push("Command issued");
     informationArray.push(`Name: ${this.name}`);
-    // this is not the correct way to get user supplied arguments, how do we do it?
-    const userArguments = interaction.options;
-    informationArray.push(`User arguments: ${userArguments}`);
+    const userArguments = this.loggableOptions.map((argument) => ({
+      name: argument.name,
+      required: argument.required,
+      // @ts-expect-error right now this type isn't indexed correctly, fix when we have internet
+      value: interaction.options[argument.methodName](argument.name),
+    }));
+    informationArray.push(`User arguments: ${userArguments.join(", ")}`);
     informationArray.push(`Member: ${interaction.user?.username}`);
     informationArray.push(`Sent at: ${new Date(interaction.createdTimestamp)}`);
 
