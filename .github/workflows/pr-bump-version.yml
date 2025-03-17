@@ -3,6 +3,17 @@ name: Pull request bump version
 on:
   pull_request:
     branches: ["main"]
+    types: [opened]
+  workflow_dispatch:
+    increment-type:
+      description: 'How to increment the version'
+      required: true
+      default: 'bugfix'
+      type: choice
+      options:
+        - bugfix
+        - feature
+        - major
 
 jobs:
   version-bump:
