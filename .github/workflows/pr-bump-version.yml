@@ -18,7 +18,7 @@ jobs:
           sparse-checkout-cone-mode: false
       - uses: qoomon/actions--setup-git@629bce2505e7d866b48860371f16f333e62801b8
         with:
-          user: github-action
+          user: bot
       - name : Bump version
         env:
           TITLE: ${{ github.event.pull_request.title }}
