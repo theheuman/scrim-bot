@@ -12,4 +12,4 @@ jobs:
       - name : Bump version
         env:
           TITLE: ${{ github.event.pull_request.title }}
-        run: ./scripts/bump-version.sh $TITLE
+        run: bash scripts/bump-version.sh $TITLE
