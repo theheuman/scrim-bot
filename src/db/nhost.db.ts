@@ -1,6 +1,8 @@
 import { DB } from "./db";
 import {
   DbValue,
+  ExtractReturnType,
+  FieldSelection,
   isCompoundExpression,
   isExpression,
   JSONValue,
@@ -52,11 +54,35 @@ class NhostDb extends DB {
     return "";
   }
 
-  async get<K extends string>(
+  private getReturnString<K extends FieldSelection[]>(
+    fieldsToReturn: K,
+  ): string {
+    const returnArray: string[] = [];
+    for (const fieldName of fieldsToReturn) {
+      if (typeof fieldName === "string") {
+        returnArray.push(fieldName);
+      } else {
+        let subFieldString = "";
+        for (const subFieldName in fieldName) {
+          subFieldString += `${subFieldName} {\n`;
+          subFieldString +=
+            "            " +
+            this.getReturnString(fieldName[subFieldName])
+              .split("\n")
+              .join("\n  ");
+          subFieldString += "\n          }";
+        }
+        returnArray.push(subFieldString);
+      }
+    }
+    return returnArray.join("\n          ");
+  }
+
+  async get<K extends FieldSelection[]>(
     tableName: string,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: string[],
-  ): Promise<Array<Record<K, DbValue>>> {
+    fieldsToReturn: K,
+  ): Promise<Array<ExtractReturnType<K>>> {
     let searchString = this.generateWhereClause(logicalExpression);
     if (searchString) {
       // only add parentheses if we have something to search with
@@ -65,7 +91,7 @@ class NhostDb extends DB {
     const query = `
       query {
         ${tableName}${searchString} {
-          ${fieldsToReturn.join("\n          ")}
+          ${this.getReturnString(fieldsToReturn)}
         }
       }
     `;
@@ -73,8 +99,11 @@ class NhostDb extends DB {
     if (!result.data || result.error) {
       throw new Error(this.getDbErrorMessage(result));
     }
-    const dataArray = result.data as Record<string, Array<Record<K, DbValue>>>;
-    return dataArray[tableName] as Array<Record<K, DbValue>>;
+    const dataArray = result.data as Record<
+      string,
+      Array<ExtractReturnType<K>>
+    >;
+    return dataArray[tableName] as Array<ExtractReturnType<K>>;
   }
 
   async post(

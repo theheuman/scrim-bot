@@ -1,4 +1,9 @@
 {
+  "name": "scrim-bot",
+  "description": "A multipurpose bot to track scrim signups, low prio and player performance among other things",
+  "version": "1.0.1",
+  "author": "Jacob Heuman",
+  "license": "LGPL-3.0-only",
   "scripts": {
     "start": "NODE_ENV=dev node dist/index.js",
     "start:prod": "NODE_ENV=prod node dist/index.js",
@@ -14,7 +19,8 @@
     "prepare": "husky",
     "create-config": "bash scripts/create-config.sh",
     "heroku-prebuild": "bash scripts/create-config.sh",
-    "nhost": "cd nhost && nhost up --apply-seeds"
+    "nhost": "cd nhost && nhost up --apply-seeds",
+    "bump-version": "./scripts/bump-version.sh"
   },
   "dependencies": {
     "@nhost/nhost-js": "^3.1.10",

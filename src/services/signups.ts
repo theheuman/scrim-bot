@@ -178,6 +178,7 @@ export class ScrimSignups {
 
   async getSignups(
     discordChannelID: string,
+    discordIdsWithScrimPass?: string[],
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }> {
     const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
@@ -190,7 +191,11 @@ export class ScrimSignups {
         ScrimSignups.convertDbToScrimSignup(signupData);
       teams.push(teamData);
     }
-    const prioTeams = await this.prioService.getTeamPrioForScrim(scrim, teams);
+    const prioTeams = await this.prioService.getTeamPrioForScrim(
+      scrim,
+      teams,
+      discordIdsWithScrimPass ?? [],
+    );
     this.cache.setSignups(scrim.id, prioTeams);
     return this.sortTeams(teams);
   }

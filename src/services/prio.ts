@@ -29,9 +29,13 @@ export class PrioService {
   async getTeamPrioForScrim(
     scrim: Scrim,
     teams: ScrimSignup[],
+    discordIdsWithScrimPass: string[],
   ): Promise<ScrimSignup[]> {
-    const playersIdsWithPrio = await this.db.getPrio(scrim.dateTime);
-    const playerMap = this.generatePlayerMap(playersIdsWithPrio);
+    const playersWithPrio = await this.db.getPrio(scrim.dateTime);
+    const playerMap = this.generatePlayerMap(
+      playersWithPrio,
+      discordIdsWithScrimPass,
+    );
     this.setTeamPrioFromPlayerPrio(teams, playerMap);
     return teams;
   }
@@ -88,20 +92,40 @@ export class PrioService {
     });
   }
 
-  private generatePlayerMap(playersIdsWithPrio: PlayerPrio[]): PlayerMap {
+  private generatePlayerMap(
+    playersIdsWithPrio: PlayerPrio[],
+    discordIdsWithScrimPass: string[],
+  ): PlayerMap {
     const playerMap: Map<string, { amount: number; reason: string }> =
       new Map();
+    // use discord id of player here
     for (const player of playersIdsWithPrio) {
-      const playerPrio = playerMap.get(player.id);
+      const playerPrio = playerMap.get(player.discordId);
       if (!playerPrio) {
-        playerMap.set(player.id, {
+        playerMap.set(player.discordId, {
           amount: player.amount,
           reason: player.reason,
         });
       } else {
-        playerMap.set(player.id, {
+        playerMap.set(player.discordId, {
           amount: playerPrio.amount + player.amount,
           reason: playerPrio.reason + ", " + player.reason,
+        });
+      }
+    }
+
+    // we only add scrim pass prio if they do not have low prio
+    for (const id of discordIdsWithScrimPass) {
+      const playerPrio = playerMap.get(id);
+      if (!playerPrio) {
+        playerMap.set(id, {
+          amount: 1,
+          reason: "Scrim pass",
+        });
+      } else if (playerPrio.amount > 0) {
+        playerMap.set(id, {
+          amount: playerPrio.amount + 1,
+          reason: playerPrio.reason + ", " + "Scrim pass",
         });
       }
     }
@@ -113,12 +137,18 @@ export class PrioService {
     playerMap: PlayerMap,
   ) {
     for (const team of teams) {
-      let prio = 0;
+      let containsHighPrio = false;
+      let containsLowPrio = false;
       const reason: string[] = [];
       team.players.forEach((player) => {
-        const playerPrioEntry = playerMap.get(player.id);
+        const playerPrioEntry = playerMap.get(player.discordId);
         if (playerPrioEntry) {
-          prio += playerPrioEntry.amount;
+          containsHighPrio = containsHighPrio
+            ? containsHighPrio
+            : playerPrioEntry.amount > 0;
+          containsLowPrio = containsLowPrio
+            ? containsLowPrio
+            : playerPrioEntry.amount < 0;
           reason.push(`${player.displayName}: ${playerPrioEntry.reason}`);
           player.prio = {
             amount: playerPrioEntry.amount,
@@ -126,8 +156,15 @@ export class PrioService {
           };
         }
       });
+      // Per sly, prio does not stack. Anyone on low prio overrides whole team to be on low prio
+      let amount = 0;
+      if (containsLowPrio) {
+        amount = -1;
+      } else if (containsHighPrio) {
+        amount = 1;
+      }
       team.prio = {
-        amount: prio,
+        amount,
         reasons: reason.join("; "),
       };
     }
