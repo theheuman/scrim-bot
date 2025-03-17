@@ -34,4 +34,6 @@ jobs:
       - name : Bump version
         env:
           TITLE: ${{ github.event.pull_request.title }}
-        run: npm run bump-version $TITLE
+        run: |
+          npm run bump-version $TITLE
+          git push
