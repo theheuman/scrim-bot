@@ -19,7 +19,8 @@
     "prepare": "husky",
     "create-config": "bash scripts/create-config.sh",
     "heroku-prebuild": "bash scripts/create-config.sh",
-    "nhost": "cd nhost && nhost up --apply-seeds"
+    "nhost": "cd nhost && nhost up --apply-seeds",
+    "bump-version": "./scripts/bump-version.sh"
   },
   "dependencies": {
     "@nhost/nhost-js": "^3.1.10",
