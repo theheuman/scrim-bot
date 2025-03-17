@@ -9,6 +9,13 @@ jobs:
     name: "Bump version"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            scripts
+          sparse-checkout-cone-mode: false
       - name : Bump version
         env:
           TITLE: ${{ github.event.pull_request.title }}
