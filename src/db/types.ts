@@ -29,6 +29,18 @@ export enum DbTable {
   staticKeyValues = "static_key_value",
 }
 
+// Recursive type to infer the return structure
+export type FieldSelection = string | { [key: string]: FieldSelection[] };
+
+// Recursive type to infer return type from FieldSelection
+export type ExtractReturnType<T extends FieldSelection[]> = {
+  [K in T[number] as K extends string ? K : keyof K]: K extends string
+    ? DbValue
+    : K extends Record<string, FieldSelection[]>
+      ? ExtractReturnType<K[keyof K]> // 🔥 Flattening the nesting
+      : never;
+};
+
 export function isCompoundExpression(
   value: LogicalExpression,
 ): value is CompoundExpression {

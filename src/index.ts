@@ -1,11 +1,17 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { GatewayIntentBits } from "discord.js";
+import { Events, GatewayIntentBits } from "discord.js";
 import ExtendedClient from "./ExtendedClient";
 import { commands } from "./commands";
 import { appConfig } from "./config";
 
-const client = new ExtendedClient({ intents: [GatewayIntentBits.Guilds] });
+const client = new ExtendedClient({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildMembers,
+  ],
+});
 
 for (const command of commands) {
   client.commands.set(command.name, command);
