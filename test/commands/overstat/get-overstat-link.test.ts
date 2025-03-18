@@ -11,7 +11,6 @@ import { AuthMock } from "../../mocks/auth.mock";
 import { OverstatService } from "../../../src/services/overstat";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { AuthService } from "../../../src/services/auth";
-import { DbMock } from "../../mocks/db.mock";
 import { GetOverstatCommand } from "../../../src/commands/overstat/get-overstat";
 
 describe("Get overstat", () => {
@@ -25,7 +24,7 @@ describe("Get overstat", () => {
   >;
 
   const mockAuthService = new AuthMock();
-  const mockOverstatService = new OverstatServiceMock(new DbMock());
+  const mockOverstatService = new OverstatServiceMock();
 
   let command: GetOverstatCommand;
 

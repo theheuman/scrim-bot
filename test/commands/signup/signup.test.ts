@@ -1,4 +1,5 @@
 import {
+  GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
   InteractionResponse,
@@ -38,12 +39,13 @@ describe("Sign up", () => {
 
   let command: SignupCommand;
 
-  const mockScrimSignups = new ScrimSignupMock();
-
-  const signupUser = {
+  const signupMember = {
     displayName: "Signup User",
     id: "signupPlayerId",
-  } as User;
+    roles: {},
+  } as GuildMember;
+
+  const mockScrimSignups = new ScrimSignupMock();
 
   const player1 = {
     displayName: "Player 1",
@@ -80,7 +82,7 @@ describe("Sign up", () => {
         },
         getString: () => "team name",
       },
-      user: signupUser,
+      member: signupMember,
     } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
@@ -101,7 +103,7 @@ describe("Sign up", () => {
     expect(signupAddTeamSpy).toHaveBeenCalledWith(
       "forum thread id",
       "team name",
-      signupUser,
+      signupMember,
       signupPlayers,
     );
     expect(editReplySpy).toHaveBeenCalledWith(
@@ -151,7 +153,7 @@ describe("Sign up", () => {
     expect(signupAddTeamSpy).toHaveBeenCalledWith(
       "forum thread id",
       "team name",
-      signupUser,
+      signupMember,
       signupPlayers,
     );
     expect(editReplySpy).toHaveBeenCalledWith(
@@ -169,6 +171,22 @@ describe("Sign up", () => {
       await command.run(basicInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
         "Team not signed up. Error: DB Failure",
+      );
+    });
+
+    it("should not create scrim because the command member does not exist", async () => {
+      const errorInteraction = {
+        reply: jest.fn(),
+        options: {
+          getUser: jest.fn(),
+          getString: jest.fn(),
+        },
+        member: undefined,
+      } as unknown as CustomInteraction;
+      replySpy = jest.spyOn(errorInteraction, "reply");
+      await command.run(errorInteraction);
+      expect(replySpy).toHaveBeenCalledWith(
+        "Team not signed up. Signup initiated by member that cannot be found. Contact admin",
       );
     });
   });

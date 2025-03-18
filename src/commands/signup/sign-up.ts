@@ -1,6 +1,7 @@
 import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { ScrimSignups } from "../../services/signups";
+import { isGuildMember } from "../../utility/utility";
 
 export class SignupCommand extends MemberCommand {
   constructor(private signupService: ScrimSignups) {
@@ -19,10 +20,17 @@ export class SignupCommand extends MemberCommand {
   async run(interaction: CustomInteraction) {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString("teamname", true);
-    const signupPlayer = interaction.user;
+    const signupPlayer = interaction.member;
     const player1 = interaction.options.getUser("player1", true);
     const player2 = interaction.options.getUser("player2", true);
     const player3 = interaction.options.getUser("player3", true);
+
+    if (!isGuildMember(signupPlayer)) {
+      await interaction.reply(
+        "Team not signed up. Signup initiated by member that cannot be found. Contact admin",
+      );
+      return;
+    }
     await interaction.reply("Fetched all input, working on request");
 
     const overstatRequiredDeadline = new Date(1742799600000);

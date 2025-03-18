@@ -5,7 +5,7 @@ import { ScrimSignup } from "../../src/models/Scrims";
 import { PlayerStatInsert } from "../../src/models/Player";
 
 export class OverstatServiceMock {
-  constructor(private db: DB) {}
+  constructor() {}
 
   async getOverallStats(
     overstatLink: string,

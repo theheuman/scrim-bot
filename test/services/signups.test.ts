@@ -1,7 +1,7 @@
 import { ScrimSignups } from "../../src/services/signups";
 import { DbMock } from "../mocks/db.mock";
 import { Player, PlayerStatInsert } from "../../src/models/Player";
-import { User } from "discord.js";
+import { GuildMember, User } from "discord.js";
 import { CacheService } from "../../src/services/cache";
 import { OverstatService } from "../../src/services/overstat";
 import { Scrim, ScrimSignup } from "../../src/models/Scrims";
@@ -10,22 +10,34 @@ import { mockOverstatResponse } from "../mocks/overstat-response.mock";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 import SpyInstance = jest.SpyInstance;
+import { PrioServiceMock } from "../mocks/prio.mock";
+import { AuthMock } from "../mocks/auth.mock";
+import { AuthService } from "../../src/services/auth";
+import { OverstatServiceMock } from "../mocks/overstat.mock";
 
 describe("Signups", () => {
   let dbMock: DbMock;
   let cache: CacheService;
   let signups: ScrimSignups;
-  let prioService: PrioService;
-  let overstatService: OverstatService;
+  let prioServiceMock: PrioServiceMock;
+  let overstatService: OverstatServiceMock;
+  let authServiceMock: AuthMock;
 
   let insertPlayersSpy: SpyInstance;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
-    overstatService = new OverstatService(dbMock);
-    prioService = new PrioService(dbMock, cache);
-    signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
+    overstatService = new OverstatServiceMock();
+    prioServiceMock = new PrioServiceMock();
+    authServiceMock = new AuthMock();
+    signups = new ScrimSignups(
+      dbMock,
+      cache,
+      overstatService as OverstatService,
+      prioServiceMock as PrioService,
+      authServiceMock as AuthService,
+    );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
       Promise.resolve([
@@ -49,6 +61,11 @@ describe("Signups", () => {
         },
       ]),
     );
+    jest
+      .spyOn(authServiceMock, "memberIsAdmin")
+      .mockImplementation((member) =>
+        Promise.resolve(member === (theheuman as unknown as GuildMember)),
+      );
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -99,7 +116,7 @@ describe("Signups", () => {
       const actualScrimSignup = await signups.addTeam(
         expectedSignup.discordChannelId,
         expectedSignup.teamName,
-        theheuman,
+        theheuman as unknown as GuildMember,
         [theheuman, zboy, supreme],
       );
       const expectedReturnSignup: ScrimSignup = {
@@ -144,7 +161,7 @@ describe("Signups", () => {
 
     it("Should not add a team because there is no scrim for that channel", async () => {
       const causeException = async () => {
-        await signups.addTeam("", "", theheuman, []);
+        await signups.addTeam("", "", theheuman as unknown as GuildMember, []);
       };
 
       await expect(causeException).rejects.toThrow(
@@ -168,7 +185,7 @@ describe("Signups", () => {
       await signups.addTeam(
         expectedSignup.discordChannelId,
         "Fineapples",
-        theheuman,
+        theheuman as unknown as GuildMember,
         [theheuman, revy, cTreazy],
       );
 
@@ -176,7 +193,7 @@ describe("Signups", () => {
         await signups.addTeam(
           expectedSignup.discordChannelId,
           "Fineapples",
-          theheuman,
+          theheuman as unknown as GuildMember,
           [zboy, supreme, mikey],
         );
       };
@@ -201,14 +218,14 @@ describe("Signups", () => {
         await signups.addTeam(
           expectedSignup.discordChannelId,
           "Dude Cube",
-          theheuman,
+          theheuman as unknown as GuildMember,
           [theheuman, supreme, mikey],
         );
       };
       await signups.addTeam(
         expectedSignup.discordChannelId,
         "Fineapples",
-        theheuman,
+        theheuman as unknown as GuildMember,
         [theheuman, revy, cTreazy],
       );
 
@@ -234,7 +251,7 @@ describe("Signups", () => {
         await signups.addTeam(
           expectedSignup.discordChannelId,
           "",
-          theheuman,
+          theheuman as unknown as GuildMember,
           [],
         );
       };
@@ -247,11 +264,12 @@ describe("Signups", () => {
     it("Should not add a team because there are 2 of the same player on a team", async () => {
       cache.setSignups("scrim 1", []);
       const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", supreme, [
-          supreme,
-          supreme,
-          mikey,
-        ]);
+        await signups.addTeam(
+          "scrim 1",
+          "Fineapples",
+          supreme as unknown as GuildMember,
+          [supreme, supreme, mikey],
+        );
       };
 
       await expect(causeException).rejects.toThrow("");
@@ -303,7 +321,20 @@ describe("Signups", () => {
         const actualSignup = await signups.addTeam(
           "1",
           "Dude Cube",
-          theheuman,
+          supreme as unknown as GuildMember,
+          [theheuman, supreme, mikey],
+        );
+
+        expect(actualSignup).toBeDefined();
+      });
+
+      it("Should add a team because signup member is an admin", async () => {
+        createScrim(new Date(174279960000));
+
+        const actualSignup = await signups.addTeam(
+          "1",
+          "Dude Cube",
+          theheuman as unknown as GuildMember,
           [theheuman, supreme, mikey],
         );
 
@@ -314,11 +345,12 @@ describe("Signups", () => {
         createScrim(new Date(17427996000000));
 
         const causeException = async () => {
-          await signups.addTeam("1", "Dude Cube", theheuman, [
-            theheuman,
-            supreme,
-            mikey,
-          ]);
+          await signups.addTeam(
+            "1",
+            "Dude Cube",
+            supreme as unknown as GuildMember,
+            [theheuman, supreme, mikey],
+          );
         };
 
         await expect(causeException).rejects.toThrow(
@@ -350,7 +382,7 @@ describe("Signups", () => {
       } as ScrimSignupsWithPlayers;
 
       jest
-        .spyOn(prioService, "getTeamPrioForScrim")
+        .spyOn(prioServiceMock, "getTeamPrioForScrim")
         .mockImplementation((_, teams: ScrimSignup[]) => {
           for (const team of teams) {
             switch (team.teamName) {

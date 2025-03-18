@@ -34,7 +34,7 @@ describe("Link overstat", () => {
   >;
 
   const mockAuthService = new AuthMock();
-  const mockOverstatService = new OverstatServiceMock(new DbMock());
+  const mockOverstatService = new OverstatServiceMock();
 
   let command: LinkOverstatCommand;
 
