@@ -45,7 +45,7 @@ export class SignupCommand extends MemberCommand {
       }
       if (warnings.length > 0) {
         await interaction.followUp({
-          content: `${warnings.join("\n")}\nScrims starting on ${this.formatDate(overstatRequiredDeadline)} will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376`,
+          content: `${warnings.join("\n")}\nScrims starting after ${this.formatDate(overstatRequiredDeadline)} will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376`,
           ephemeral: true,
         });
       }
