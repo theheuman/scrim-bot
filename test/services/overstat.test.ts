@@ -130,6 +130,68 @@ describe("Overstat", () => {
     );
   });
 
+  describe("Fail to link a players overstat", () => {
+    it("Should fail because its not an valid link", async () => {
+      const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+
+      const causeException = async () => {
+        await overstatService.addPlayerOverstatLink(
+          { id: "discord id", displayName: "TheHeuman" } as User,
+          "F5 | StabJackal",
+        );
+      };
+      await expect(causeException).rejects.toThrow("Invalid URL");
+      expect(insertPlayerSpy).not.toHaveBeenCalled();
+    });
+
+    it("Should fail because its not an overstat link", async () => {
+      const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+
+      const causeException = async () => {
+        await overstatService.addPlayerOverstatLink(
+          { id: "discord id", displayName: "TheHeuman" } as User,
+          "https://google.com/player/357606/overview",
+        );
+      };
+      await expect(causeException).rejects.toThrow("Not an overstat link");
+      expect(insertPlayerSpy).not.toHaveBeenCalled();
+    });
+
+    it("Should fail because its not a player link", async () => {
+      const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+
+      const causeException = async () => {
+        await overstatService.addPlayerOverstatLink(
+          { id: "discord id", displayName: "TheHeuman" } as User,
+          "https://overstat.gg/account/overview",
+        );
+      };
+      await expect(causeException).rejects.toThrow(
+        "Not a link to a player profile",
+      );
+      expect(insertPlayerSpy).not.toHaveBeenCalled();
+    });
+
+    it("Should fail because theres no player id", async () => {
+      const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
+      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+
+      const causeException = async () => {
+        await overstatService.addPlayerOverstatLink(
+          { id: "discord id", displayName: "TheHeuman" } as User,
+          "https://overstat.gg/player/TheHeuman/overview",
+        );
+      };
+      await expect(causeException).rejects.toThrow(
+        "No player ID found in link.",
+      );
+      expect(insertPlayerSpy).not.toHaveBeenCalled();
+    });
+  });
+
   it("Should get a players overstat", async () => {
     const getPlayerSpy = jest.spyOn(dbMock, "getPlayerFromDiscordId");
     getPlayerSpy.mockReturnValue(
