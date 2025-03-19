@@ -69,15 +69,16 @@ export class PrioService {
     return { cacheMissedPlayers, playerIds };
   }
 
-  private fetchCacheMissedPlayerIds(
+  private async fetchCacheMissedPlayerIds(
     cacheMissedPlayers: User[],
   ): Promise<string[]> {
-    return this.db.insertPlayers(
+    const insertedPlayers = await this.db.insertPlayers(
       cacheMissedPlayers.map((player) => ({
         discordId: player.id,
         displayName: player.displayName,
       })),
     );
+    return insertedPlayers.map((player) => player.id);
   }
 
   private addPlayersToCache(players: User[], playerIds: string[]) {
@@ -105,9 +106,16 @@ export class PrioService {
           amount: player.amount,
           reason: player.reason,
         });
-      } else {
+        // if new entry is negative override all prio to be negative
+      } else if (player.amount < 0) {
         playerMap.set(player.discordId, {
-          amount: playerPrio.amount + player.amount,
+          amount: player.amount,
+          reason: playerPrio.reason + ", " + player.reason,
+        });
+        // if new entry is positive let previous (potentially negative) prio override new amount
+      } else if (player.amount >= 0) {
+        playerMap.set(player.discordId, {
+          amount: playerPrio.amount,
           reason: playerPrio.reason + ", " + player.reason,
         });
       }
@@ -121,9 +129,14 @@ export class PrioService {
           amount: 1,
           reason: "Scrim pass",
         });
+      } else if (playerPrio.amount < 0) {
+        playerMap.set(id, {
+          amount: -1,
+          reason: playerPrio.reason + ", " + "Scrim pass",
+        });
       } else if (playerPrio.amount > 0) {
         playerMap.set(id, {
-          amount: playerPrio.amount + 1,
+          amount: 1,
           reason: playerPrio.reason + ", " + "Scrim pass",
         });
       }

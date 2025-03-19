@@ -214,11 +214,10 @@ export abstract class DB {
     return returnedData.insert_players_one.id;
   }
 
-  /* returns list of id's
-   *
-   * Created a special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
+  /*
+   * A special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
    */
-  async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
+  async insertPlayers(players: PlayerInsert[]): Promise<Player[]> {
     const playerMap: Map<string, PlayerInsert> = new Map();
     for (const player of players) {
       playerMap.set(player.discordId, player);
@@ -243,6 +242,8 @@ export abstract class DB {
         returning {
           id
           discord_id
+          overstat_id
+          display_name
         }
       }
     `;
@@ -254,18 +255,33 @@ export abstract class DB {
       }
     `;
     const result: JSONValue = await this.customQuery(query);
-    const returnedData: {
-      insert_players: { returning: { id: string; discord_id: string }[] };
-    } = result as {
-      insert_players: { returning: { id: string; discord_id: string }[] };
+    const returnedData = result as {
+      insert_players: {
+        returning: {
+          id: string;
+          discord_id: string;
+          overstat_id: string;
+          display_name: string;
+        }[];
+      };
     };
 
-    return players.map(
-      (player) =>
-        returnedData.insert_players.returning.find(
+    return players
+      .map((player) => {
+        const playerData = returnedData.insert_players.returning.find(
           (entry) => entry.discord_id === player.discordId,
-        )?.id as string,
-    );
+        );
+        if (!playerData) {
+          return undefined;
+        }
+        return {
+          id: playerData.id,
+          discordId: playerData.discord_id,
+          displayName: playerData.display_name,
+          overstatId: playerData.overstat_id,
+        };
+      })
+      .filter((player) => !!player);
   }
 
   // This feels like a really gross way to grab a single entry

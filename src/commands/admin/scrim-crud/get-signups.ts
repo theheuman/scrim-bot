@@ -5,6 +5,8 @@ import { ScrimSignups } from "../../../services/signups";
 import { AuthService } from "../../../services/auth";
 import * as fs from "node:fs";
 import { StaticValueService } from "../../../services/static-values";
+import { Player } from "../../../models/Player";
+import { getPlayerOverstatUrl } from "../../../services/overstat";
 
 export class GetSignupsCommand extends AdminCommand {
   constructor(
@@ -132,12 +134,9 @@ export class GetSignupsCommand extends AdminCommand {
     waitList: ScrimSignup[],
   ): Promise<string> {
     const teamCsvStringConverter = (team: ScrimSignup) => {
-      return [
-        team.teamName,
-        ...team.players.map(
-          (player) => `${player.displayName} <@${player.discordId}>`,
-        ),
-      ].join(",");
+      return [team.teamName, ...team.players.map(this.getPlayerCsvFields)].join(
+        ",",
+      );
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
     const separator = "\n,,,\n";
@@ -146,5 +145,14 @@ export class GetSignupsCommand extends AdminCommand {
     const fileName = "temp-signup-" + channelId + ".csv";
     fs.writeFileSync(fileName, content);
     return fileName;
+  }
+
+  getPlayerCsvFields(player: Player) {
+    const requiredFields = `${player.displayName} <@${player.discordId}>`;
+    let overstatField = "";
+    if (player.overstatId) {
+      overstatField = " " + getPlayerOverstatUrl(player.overstatId);
+    }
+    return requiredFields + overstatField;
   }
 }

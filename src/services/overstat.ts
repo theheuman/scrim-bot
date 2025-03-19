@@ -30,10 +30,6 @@ export class OverstatService {
     return tournamentId;
   }
 
-  private getPlayerUrl(playerId: string) {
-    return `https://overstat.gg/player/${playerId}/overview`;
-  }
-
   // We may want to make sure that the ID returns a valid player
   // https://overstat.gg/api/player/{id} could be used for this
   private getPlayerId(overstatLink: string): string {
@@ -142,6 +138,10 @@ export class OverstatService {
     if (!player.overstatId) {
       throw Error("Player has no overstat id");
     }
-    return this.getPlayerUrl(player.overstatId);
+    return getPlayerOverstatUrl(player.overstatId);
   }
 }
+
+export const getPlayerOverstatUrl = (playerId: string) => {
+  return `https://overstat.gg/player/${playerId}/overview`;
+};

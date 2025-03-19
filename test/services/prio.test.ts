@@ -47,7 +47,7 @@ describe("Prio", () => {
 
     describe("correctly set prio", () => {
       let insertSpy: SpyInstance<
-        Promise<string[]>,
+        Promise<Player[]>,
         [players: PlayerInsert[]],
         string
       >;
@@ -68,7 +68,15 @@ describe("Prio", () => {
         dbSetPrioSpy = jest.spyOn(dbMock, "setPrio");
         insertSpy.mockClear();
         dbSetPrioSpy.mockClear();
-        insertSpy.mockReturnValue(Promise.resolve(["a different db id"]));
+        insertSpy.mockReturnValue(
+          Promise.resolve([
+            {
+              id: "a different db id",
+              discordId: "discord id",
+              displayName: "test user",
+            },
+          ]),
+        );
       });
 
       it("should set prio for players in cache", async () => {
@@ -183,6 +191,18 @@ describe("Prio", () => {
               reason: "bad boi",
             },
             {
+              id: lowPrioPlayerOnTeam.id,
+              discordId: lowPrioPlayerOnTeam.discordId,
+              amount: 1,
+              reason: "Scrim got messed up",
+            },
+            {
+              id: lowPrioPlayerOnTeam.id,
+              discordId: lowPrioPlayerOnTeam.discordId,
+              amount: -1,
+              reason: "bad boi",
+            },
+            {
               id: highPrioPlayerOnTeam.id,
               discordId: highPrioPlayerOnTeam.discordId,
               amount: 1,
@@ -191,6 +211,12 @@ describe("Prio", () => {
             {
               id: highPrioPlayerOnTeam.id,
               discordId: highPrioPlayerOnTeam.discordId,
+              amount: 1,
+              reason: "good boi",
+            },
+            {
+              id: scrimPassHolder.id,
+              discordId: scrimPassHolder.discordId,
               amount: 1,
               reason: "good boi",
             },
@@ -230,11 +256,12 @@ describe("Prio", () => {
             prio: {
               amount: -1,
               reasons:
-                "Bad Boi: bad boi; Good Boi: good boi, good boi; Rich boi: Scrim pass",
+                "Bad Boi: bad boi, Scrim got messed up, bad boi, Scrim pass; Good Boi: good boi, good boi; Rich boi: good boi, Scrim pass",
             },
           },
         ]);
       });
+
       it("should set high prio for teams from its players", async () => {
         const today = new Date();
         const scrim: Scrim = {
