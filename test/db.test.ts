@@ -588,6 +588,8 @@ describe("DB connection", () => {
               returning {
                 id
                 discord_id
+                overstat_id
+                display_name
               }
            }
 
@@ -662,7 +664,7 @@ describe("DB connection", () => {
         supreme,
         theheuman,
       ]);
-      expect(newID).toEqual([
+      expect(newID.map((player) => player.id)).toEqual([
         "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "11583f2c-184f-4ab5-9f6f-ff33f2741117",
         "7605b2bf-1875-4415-a04b-75fe47768565",
@@ -1118,7 +1120,10 @@ describe("DB connection", () => {
       const expected = `
       query {
         prio(where: { _and: [{ start_date: { _lte: "${scrimDate.toISOString()}" } }, { end_date: { _gte: "${scrimDate.toISOString()}" } }] }) {
-          player_id
+          player {
+            discord_id
+            id
+          }
           amount
           reason
         }
@@ -1129,9 +1134,12 @@ describe("DB connection", () => {
         data: {
           prio: [
             {
-              player_id: "c79f4607-2343-465a-94e4-f99e63ab7602",
-              amount: -400,
-              reason: "Enemy of the people",
+              player: {
+                id: "4d47ddfc-9773-4df2-9b59-35f55212535d",
+                discord_id: "675854726251675700",
+              },
+              amount: -5,
+              reason: "Rude to staff",
             },
           ],
         },
@@ -1141,9 +1149,10 @@ describe("DB connection", () => {
     const prioPlayers = await nhostDb.getPrio(scrimDate);
     expect(prioPlayers).toEqual([
       {
-        id: "c79f4607-2343-465a-94e4-f99e63ab7602",
-        amount: -400,
-        reason: "Enemy of the people",
+        id: "4d47ddfc-9773-4df2-9b59-35f55212535d",
+        discordId: "675854726251675700",
+        amount: -5,
+        reason: "Rude to staff",
       },
     ]);
   });

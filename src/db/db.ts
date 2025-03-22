@@ -5,6 +5,8 @@ import {
   DbTable,
   DbValue,
   Expression,
+  ExtractReturnType,
+  FieldSelection,
   JSONValue,
   LogicalExpression,
 } from "./types";
@@ -12,11 +14,12 @@ import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
 
 export abstract class DB {
-  abstract get<K extends string>(
+  abstract get<K extends FieldSelection[]>(
     tableName: DbTable,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: K[],
-  ): Promise<Array<Record<K, DbValue>>>;
+    fieldsToReturn: K,
+  ): Promise<Array<ExtractReturnType<K>>>;
+
   abstract update<K extends string>(
     tableName: DbTable,
     logicalExpression: LogicalExpression,
@@ -211,11 +214,10 @@ export abstract class DB {
     return returnedData.insert_players_one.id;
   }
 
-  /* returns list of id's
-   *
-   * Created a special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
+  /*
+   * A special method that inserts players if they do not exist, also takes special care not to overwrite overstats and elo if they are in DB but not included in player object
    */
-  async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
+  async insertPlayers(players: PlayerInsert[]): Promise<Player[]> {
     const playerMap: Map<string, PlayerInsert> = new Map();
     for (const player of players) {
       playerMap.set(player.discordId, player);
@@ -240,6 +242,8 @@ export abstract class DB {
         returning {
           id
           discord_id
+          overstat_id
+          display_name
         }
       }
     `;
@@ -251,18 +255,33 @@ export abstract class DB {
       }
     `;
     const result: JSONValue = await this.customQuery(query);
-    const returnedData: {
-      insert_players: { returning: { id: string; discord_id: string }[] };
-    } = result as {
-      insert_players: { returning: { id: string; discord_id: string }[] };
+    const returnedData = result as {
+      insert_players: {
+        returning: {
+          id: string;
+          discord_id: string;
+          overstat_id: string;
+          display_name: string;
+        }[];
+      };
     };
 
-    return players.map(
-      (player) =>
-        returnedData.insert_players.returning.find(
+    return players
+      .map((player) => {
+        const playerData = returnedData.insert_players.returning.find(
           (entry) => entry.discord_id === player.discordId,
-        )?.id as string,
-    );
+        );
+        if (!playerData) {
+          return undefined;
+        }
+        return {
+          id: playerData.id,
+          discordId: playerData.discord_id,
+          displayName: playerData.display_name,
+          overstatId: playerData.overstat_id,
+        };
+      })
+      .filter((player) => !!player);
   }
 
   // This feels like a really gross way to grab a single entry
@@ -405,7 +424,9 @@ export abstract class DB {
 
   async getPrio(
     date: Date,
-  ): Promise<{ id: string; amount: number; reason: string }[]> {
+  ): Promise<
+    { id: string; discordId: string; amount: number; reason: string }[]
+  > {
     const dbData = await this.get(
       DbTable.prio,
       {
@@ -423,10 +444,11 @@ export abstract class DB {
           },
         ],
       },
-      ["player_id", "amount", "reason"],
+      [{ player: ["discord_id", "id"] }, "amount", "reason"],
     );
-    return dbData.map(({ player_id, amount, reason }) => ({
-      id: player_id as string,
+    return dbData.map(({ player, amount, reason }) => ({
+      id: player.id as string,
+      discordId: player.discord_id as string,
       amount: amount as number,
       reason: reason as string,
     }));

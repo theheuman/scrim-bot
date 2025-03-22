@@ -1,11 +1,7 @@
 import { ScrimSignups } from "../../src/services/signups";
 import { DbMock } from "../mocks/db.mock";
-import {
-  Player,
-  PlayerInsert,
-  PlayerStatInsert,
-} from "../../src/models/Player";
-import { User } from "discord.js";
+import { Player, PlayerStatInsert } from "../../src/models/Player";
+import { GuildMember, User } from "discord.js";
 import { CacheService } from "../../src/services/cache";
 import { OverstatService } from "../../src/services/overstat";
 import { Scrim, ScrimSignup } from "../../src/models/Scrims";
@@ -13,20 +9,63 @@ import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { mockOverstatResponse } from "../mocks/overstat-response.mock";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
+import SpyInstance = jest.SpyInstance;
+import { PrioServiceMock } from "../mocks/prio.mock";
+import { AuthMock } from "../mocks/auth.mock";
+import { AuthService } from "../../src/services/auth";
+import { OverstatServiceMock } from "../mocks/overstat.mock";
 
 describe("Signups", () => {
   let dbMock: DbMock;
   let cache: CacheService;
   let signups: ScrimSignups;
-  let prioService: PrioService;
-  let overstatService: OverstatService;
+  let prioServiceMock: PrioServiceMock;
+  let overstatService: OverstatServiceMock;
+  let authServiceMock: AuthMock;
+
+  let insertPlayersSpy: SpyInstance;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
-    overstatService = new OverstatService(dbMock);
-    prioService = new PrioService(dbMock, cache);
-    signups = new ScrimSignups(dbMock, cache, overstatService, prioService);
+    overstatService = new OverstatServiceMock();
+    prioServiceMock = new PrioServiceMock();
+    authServiceMock = new AuthMock();
+    signups = new ScrimSignups(
+      dbMock,
+      cache,
+      overstatService as OverstatService,
+      prioServiceMock as PrioService,
+      authServiceMock as AuthService,
+    );
+    insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
+    insertPlayersSpy.mockReturnValue(
+      Promise.resolve([
+        {
+          id: "111",
+          discordId: "123",
+          displayName: "TheHeuman",
+        },
+        {
+          id: "111",
+          discordId: "123",
+          displayName: "TheHeuman",
+          overstatId: "123",
+        },
+        { id: "444", discordId: "456", displayName: "Zboy", overstatId: "456" },
+        {
+          id: "777",
+          discordId: "789",
+          displayName: "Supreme",
+          overstatId: "789",
+        },
+      ]),
+    );
+    jest
+      .spyOn(authServiceMock, "memberIsAdmin")
+      .mockImplementation((member) =>
+        Promise.resolve(member === (theheuman as unknown as GuildMember)),
+      );
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -38,6 +77,9 @@ describe("Signups", () => {
 
   describe("addTeam()", () => {
     it("Should add a team", async () => {
+      jest.useFakeTimers();
+      const now = new Date();
+      jest.setSystemTime(now);
       const expectedSignup = {
         teamName: "Fineapples",
         scrimId: "32451",
@@ -50,29 +92,20 @@ describe("Signups", () => {
         discordChannel: expectedSignup.discordChannelId,
         active: true,
       } as Scrim);
-      jest.spyOn(dbMock, "insertPlayers").mockImplementation((players) => {
-        const expected: PlayerInsert[] = [
-          { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "123", displayName: "TheHeuman" },
-          { discordId: "456", displayName: "Zboy" },
-          { discordId: "789", displayName: "Supreme" },
-        ];
-        expect(players).toEqual(expected);
-        return Promise.resolve(["111", "444", "777"]);
-      });
-
       jest
         .spyOn(dbMock, "addScrimSignup")
         .mockImplementation(
           (
             teamName: string,
             scrimId: string,
+            userId: string,
             playerId: string,
             playerIdTwo: string,
             playerIdThree: string,
           ) => {
             expect(teamName).toEqual(expectedSignup.teamName);
             expect(scrimId).toEqual(expectedSignup.scrimId);
+            expect(userId).toEqual("111");
             expect(playerId).toEqual("111");
             expect(playerIdTwo).toEqual("444");
             expect(playerIdThree).toEqual("777");
@@ -80,19 +113,55 @@ describe("Signups", () => {
           },
         );
 
-      const signupId = await signups.addTeam(
+      const actualScrimSignup = await signups.addTeam(
         expectedSignup.discordChannelId,
         expectedSignup.teamName,
-        theheuman,
+        theheuman as unknown as GuildMember,
         [theheuman, zboy, supreme],
       );
-      expect(signupId).toEqual(expectedSignup.signupId);
-      expect.assertions(7);
+      const expectedReturnSignup: ScrimSignup = {
+        date: now,
+        teamName: expectedSignup.teamName,
+        signupId: expectedSignup.signupId,
+        players: [
+          {
+            id: "111",
+            discordId: theheuman.id,
+            displayName: theheuman.displayName,
+            overstatId: theheuman.id,
+          },
+          {
+            id: "444",
+            discordId: zboy.id,
+            displayName: zboy.displayName,
+            overstatId: zboy.id,
+          },
+          {
+            id: "777",
+            discordId: supreme.id,
+            displayName: supreme.displayName,
+            overstatId: supreme.id,
+          },
+        ],
+        signupPlayer: {
+          id: "111",
+          discordId: theheuman.id,
+          displayName: theheuman.displayName,
+        },
+      };
+      expect(actualScrimSignup).toEqual(expectedReturnSignup);
+      expect(insertPlayersSpy).toHaveBeenCalledWith([
+        { discordId: "123", displayName: "TheHeuman" },
+        { discordId: "123", displayName: "TheHeuman" },
+        { discordId: "456", displayName: "Zboy" },
+        { discordId: "789", displayName: "Supreme" },
+      ]);
+      expect.assertions(8);
     });
 
     it("Should not add a team because there is no scrim for that channel", async () => {
       const causeException = async () => {
-        await signups.addTeam("", "", theheuman, []);
+        await signups.addTeam("", "", theheuman as unknown as GuildMember, []);
       };
 
       await expect(causeException).rejects.toThrow(
@@ -116,7 +185,7 @@ describe("Signups", () => {
       await signups.addTeam(
         expectedSignup.discordChannelId,
         "Fineapples",
-        theheuman,
+        theheuman as unknown as GuildMember,
         [theheuman, revy, cTreazy],
       );
 
@@ -124,7 +193,7 @@ describe("Signups", () => {
         await signups.addTeam(
           expectedSignup.discordChannelId,
           "Fineapples",
-          theheuman,
+          theheuman as unknown as GuildMember,
           [zboy, supreme, mikey],
         );
       };
@@ -149,14 +218,14 @@ describe("Signups", () => {
         await signups.addTeam(
           expectedSignup.discordChannelId,
           "Dude Cube",
-          theheuman,
+          theheuman as unknown as GuildMember,
           [theheuman, supreme, mikey],
         );
       };
       await signups.addTeam(
         expectedSignup.discordChannelId,
         "Fineapples",
-        theheuman,
+        theheuman as unknown as GuildMember,
         [theheuman, revy, cTreazy],
       );
 
@@ -182,7 +251,7 @@ describe("Signups", () => {
         await signups.addTeam(
           expectedSignup.discordChannelId,
           "",
-          theheuman,
+          theheuman as unknown as GuildMember,
           [],
         );
       };
@@ -195,14 +264,99 @@ describe("Signups", () => {
     it("Should not add a team because there are 2 of the same player on a team", async () => {
       cache.setSignups("scrim 1", []);
       const causeException = async () => {
-        await signups.addTeam("scrim 1", "Fineapples", supreme, [
-          supreme,
-          supreme,
-          mikey,
-        ]);
+        await signups.addTeam(
+          "scrim 1",
+          "Fineapples",
+          supreme as unknown as GuildMember,
+          [supreme, supreme, mikey],
+        );
       };
 
       await expect(causeException).rejects.toThrow("");
+    });
+
+    describe("Missing overstat id", () => {
+      const createScrim = (dateTime: Date) => {
+        cache.createScrim("1", {
+          id: "2",
+          discordChannel: "1",
+          active: true,
+          dateTime,
+        } as Scrim);
+      };
+
+      beforeEach(() => {
+        insertPlayersSpy.mockReturnValueOnce(
+          Promise.resolve([
+            {
+              id: "111",
+              discordId: "123",
+              displayName: "TheHeuman",
+              overstatId: "123",
+            },
+            {
+              id: "111",
+              discordId: "123",
+              displayName: "TheHeuman",
+            },
+            {
+              id: "444",
+              discordId: "456",
+              displayName: "Zboy",
+              overstatId: "456",
+            },
+            {
+              id: "777",
+              discordId: "789",
+              displayName: "Supreme",
+              overstatId: "789",
+            },
+          ]),
+        );
+      });
+
+      it("Should add a team because overstat required deadline not reached", async () => {
+        createScrim(new Date(174279960000));
+
+        const actualSignup = await signups.addTeam(
+          "1",
+          "Dude Cube",
+          supreme as unknown as GuildMember,
+          [theheuman, supreme, mikey],
+        );
+
+        expect(actualSignup).toBeDefined();
+      });
+
+      it("Should add a team because signup member is an admin", async () => {
+        createScrim(new Date(174279960000));
+
+        const actualSignup = await signups.addTeam(
+          "1",
+          "Dude Cube",
+          theheuman as unknown as GuildMember,
+          [theheuman, supreme, mikey],
+        );
+
+        expect(actualSignup).toBeDefined();
+      });
+
+      it("Should not add a team because a player doesn't have an overstat id", async () => {
+        createScrim(new Date(17427996000000));
+
+        const causeException = async () => {
+          await signups.addTeam(
+            "1",
+            "Dude Cube",
+            supreme as unknown as GuildMember,
+            [theheuman, supreme, mikey],
+          );
+        };
+
+        await expect(causeException).rejects.toThrow(
+          "No overstat linked for TheHeuman",
+        );
+      });
     });
   });
 
@@ -228,7 +382,7 @@ describe("Signups", () => {
       } as ScrimSignupsWithPlayers;
 
       jest
-        .spyOn(prioService, "getTeamPrioForScrim")
+        .spyOn(prioServiceMock, "getTeamPrioForScrim")
         .mockImplementation((_, teams: ScrimSignup[]) => {
           for (const team of teams) {
             switch (team.teamName) {

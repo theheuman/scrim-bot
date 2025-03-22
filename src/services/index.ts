@@ -19,5 +19,6 @@ export const signupsService = new ScrimSignups(
   cache,
   overstatService,
   prioService,
+  authService,
 );
 export const rosterService = new RosterService(nhostDb, cache, authService);

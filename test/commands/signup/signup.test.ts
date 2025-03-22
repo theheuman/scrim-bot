@@ -1,4 +1,5 @@
 import {
+  GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
   InteractionResponse,
@@ -11,6 +12,7 @@ import { CustomInteraction } from "../../../src/commands/interaction";
 import { ScrimSignupMock } from "../../mocks/signups.mock";
 import { ScrimSignups } from "../../../src/services/signups";
 import { SignupCommand } from "../../../src/commands/signup/sign-up";
+import { ScrimSignup } from "../../../src/models/Scrims";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -24,20 +26,26 @@ describe("Sign up", () => {
     [options: string | InteractionEditReplyOptions | MessagePayload],
     string
   >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
+    string
+  >;
   let signupAddTeamSpy: SpyInstance<
-    Promise<string>,
+    Promise<ScrimSignup>,
     [channelId: string, teamName: string, signupPlayer: User, players: User[]],
     string
   >;
 
   let command: SignupCommand;
 
-  const mockScrimSignups = new ScrimSignupMock();
-
-  const signupUser = {
+  const signupMember = {
     displayName: "Signup User",
     id: "signupPlayerId",
-  } as User;
+    roles: {},
+  } as GuildMember;
+
+  const mockScrimSignups = new ScrimSignupMock();
 
   const player1 = {
     displayName: "Player 1",
@@ -61,6 +69,7 @@ describe("Sign up", () => {
       channelId: "forum thread id",
       reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
       options: {
         getUser: (key: string) => {
           if (key === "player1") {
@@ -73,34 +82,84 @@ describe("Sign up", () => {
         },
         getString: () => "team name",
       },
-      user: signupUser,
+      member: signupMember,
     } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
     signupAddTeamSpy = jest.spyOn(mockScrimSignups, "addTeam");
-    signupAddTeamSpy.mockImplementation(() => {
-      return Promise.resolve("db id");
-    });
   });
 
   beforeEach(() => {
     replySpy.mockClear();
     editReplySpy.mockClear();
+    followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
     command = new SignupCommand(mockScrimSignups as unknown as ScrimSignups);
   });
 
-  it("Should complete signup", async () => {
+  it("Should complete signup but include warnings", async () => {
     await command.run(basicInteraction);
     expect(signupAddTeamSpy).toHaveBeenCalledWith(
       "forum thread id",
       "team name",
-      signupUser,
+      signupMember,
       signupPlayers,
     );
     expect(editReplySpy).toHaveBeenCalledWith(
-      `Team team name signed up with players: <@player1id>, <@player2id>, <@player3id>, signed up by <@signupPlayerId>. Signup id: db id`,
+      `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
     );
+    expect(followUpSpy).toHaveBeenCalledWith({
+      content:
+        "Player 1 is missing overstat id.\nPlayer 2 is missing overstat id.\nPlayer 3 is missing overstat id.\nScrims starting after <t:1742799600:f> will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376",
+      ephemeral: true,
+    });
+  });
+
+  it("Should complete warnings", async () => {
+    signupAddTeamSpy.mockReturnValueOnce(
+      Promise.resolve({
+        signupId: "scrim signup db id",
+        players: [
+          {
+            discordId: player1.id,
+            id: "player db id 1",
+            displayName: player1.displayName,
+            overstatId: "1",
+          },
+          {
+            discordId: player2.id,
+            id: "player db id 2",
+            displayName: player2.displayName,
+            overstatId: "2",
+          },
+          {
+            discordId: player3.id,
+            id: "player db id 3",
+            displayName: player3.displayName,
+            overstatId: "3",
+          },
+        ],
+        signupPlayer: {
+          discordId: player1.id,
+          displayName: player1.displayName,
+          id: "player db id 1",
+        },
+        teamName: "team name",
+        date: new Date(),
+      }),
+    );
+    await command.run(basicInteraction);
+    expect(signupAddTeamSpy).toHaveBeenCalledWith(
+      "forum thread id",
+      "team name",
+      signupMember,
+      signupPlayers,
+    );
+    expect(editReplySpy).toHaveBeenCalledWith(
+      `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
+    );
+    expect(followUpSpy).toHaveBeenCalledTimes(0);
   });
 
   describe("errors", () => {
@@ -112,6 +171,22 @@ describe("Sign up", () => {
       await command.run(basicInteraction);
       expect(editReplySpy).toHaveBeenCalledWith(
         "Team not signed up. Error: DB Failure",
+      );
+    });
+
+    it("should not create scrim because the command member does not exist", async () => {
+      const errorInteraction = {
+        reply: jest.fn(),
+        options: {
+          getUser: jest.fn(),
+          getString: jest.fn(),
+        },
+        member: undefined,
+      } as unknown as CustomInteraction;
+      replySpy = jest.spyOn(errorInteraction, "reply");
+      await command.run(errorInteraction);
+      expect(replySpy).toHaveBeenCalledWith(
+        "Team not signed up. Signup initiated by member that cannot be found. Contact admin",
       );
     });
   });

@@ -1,6 +1,12 @@
 import { DB } from "../../src/db/db";
-import { DbValue, JSONValue, LogicalExpression } from "../../src/db/types";
-import { PlayerInsert } from "../../src/models/Player";
+import {
+  DbValue,
+  ExtractReturnType,
+  FieldSelection,
+  JSONValue,
+  LogicalExpression,
+} from "../../src/db/types";
+import { Player, PlayerInsert } from "../../src/models/Player";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 
 export class DbMock extends DB {
@@ -9,7 +15,7 @@ export class DbMock extends DB {
   getResponse: JSONValue;
   postResponse: string[];
   addScrimSignupResponse: string;
-  insertPlayersResponse: string[];
+  insertPlayersResponse: Player[];
   insertPlayerIfNotExistsResponse: string;
 
   constructor() {
@@ -20,7 +26,7 @@ export class DbMock extends DB {
     this.getResponse = {};
     this.postResponse = [""];
     this.addScrimSignupResponse = "";
-    this.insertPlayersResponse = [""];
+    this.insertPlayersResponse = [];
     this.insertPlayerIfNotExistsResponse = "";
   }
 
@@ -32,13 +38,13 @@ export class DbMock extends DB {
     return Promise.resolve(this.deleteResponse);
   }
 
-  get<K extends string>(
+  get<K extends FieldSelection[]>(
     tableName: string,
     fieldsToSearch: LogicalExpression,
-    fieldsToReturn: K[],
-  ): Promise<Array<Record<K, DbValue>>> {
+    fieldsToReturn: K,
+  ): Promise<Array<ExtractReturnType<K>>> {
     return Promise.resolve([{ id: "" }] as unknown as Array<
-      Record<K, DbValue>
+      ExtractReturnType<K>
     >);
   }
 
@@ -67,7 +73,7 @@ export class DbMock extends DB {
     return Promise.resolve(this.insertPlayerIfNotExistsResponse);
   }
 
-  async insertPlayers(players: PlayerInsert[]): Promise<string[]> {
+  async insertPlayers(players: PlayerInsert[]): Promise<Player[]> {
     return Promise.resolve(this.insertPlayersResponse);
   }
 
@@ -145,12 +151,15 @@ export class DbMock extends DB {
 
   async getPrio(
     date: Date,
-  ): Promise<{ id: string; amount: number; reason: string }[]> {
+  ): Promise<
+    { id: string; discordId: string; amount: number; reason: string }[]
+  > {
     return Promise.resolve([
       {
         id: "0",
         amount: 0,
         reason: "lol",
+        discordId: "id",
       },
     ]);
   }

@@ -1,4 +1,4 @@
-import { User } from "discord.js";
+import { GuildMember, User } from "discord.js";
 import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
@@ -7,6 +7,7 @@ import { OverstatService } from "./overstat";
 import { Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
+import { AuthService } from "./auth";
 
 export class ScrimSignups {
   constructor(
@@ -14,6 +15,7 @@ export class ScrimSignups {
     private cache: CacheService,
     private overstatService: OverstatService,
     private prioService: PrioService,
+    private authService: AuthService,
   ) {
     this.updateActiveScrims();
   }
@@ -100,9 +102,9 @@ export class ScrimSignups {
   async addTeam(
     discordChannelID: string,
     teamName: string,
-    commandUser: User,
+    commandUser: GuildMember,
     players: User[],
-  ): Promise<string> {
+  ): Promise<ScrimSignup> {
     const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
@@ -135,42 +137,63 @@ export class ScrimSignups {
     }
     const playersToInsert = [commandUser, ...players];
     const convertedPlayers: PlayerInsert[] = playersToInsert.map(
-      (discordUser: User) => ({
+      (discordUser) => ({
         discordId: discordUser.id as string,
         displayName: discordUser.displayName,
       }),
     );
-    const playerIds = await this.db.insertPlayers(convertedPlayers);
+    const insertedPlayers = await this.db.insertPlayers(convertedPlayers);
+    await this.checkForMissingOverstat(
+      insertedPlayers.slice(1),
+      scrim,
+      commandUser,
+    );
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,
       scrim.id,
-      playerIds[0],
-      playerIds[1],
-      playerIds[2],
-      playerIds[3],
+      insertedPlayers[0].id,
+      insertedPlayers[1].id,
+      insertedPlayers[2].id,
+      insertedPlayers[3].id,
       signupDate,
     );
-    const mappedPlayers: Player[] = convertedPlayers.map((player, index) => ({
-      id: playerIds[index],
-      displayName: player.displayName,
-      discordId: player.discordId,
-      overstatLink: player.overstatId,
-      elo: player.elo,
-    }));
-    scrimSignups.push({
+    const scrimSignup: ScrimSignup = {
       teamName: teamName,
-      players: mappedPlayers.slice(1),
-      signupPlayer: mappedPlayers[0],
+      players: insertedPlayers.slice(1),
+      signupPlayer: insertedPlayers[0],
       signupId,
       date: signupDate,
-    });
+    };
+    scrimSignups.push(scrimSignup);
     this.cache.setSignups(scrim.id, scrimSignups);
-    return signupId;
+    return scrimSignup;
+  }
+
+  private async checkForMissingOverstat(
+    players: Player[],
+    scrim: Scrim,
+    commandMember: GuildMember,
+  ) {
+    if (await this.authService.memberIsAdmin(commandMember)) {
+      return;
+    }
+    const deadline = new Date(1742799600000);
+    if (scrim.dateTime < deadline) {
+      return;
+    }
+    for (const player of players) {
+      if (!player.overstatId) {
+        throw Error(
+          `No overstat linked for ${player.displayName}. Use /link-overstat in https://discord.com/channels/1043350338574495764/1341877592139104376. Don't have an overstat? Create a https://discord.com/channels/1043350338574495764/1335824833757450263 and let an admin know your signup information so they can complete it for you`,
+        );
+      }
+    }
   }
 
   async getSignups(
     discordChannelID: string,
+    discordIdsWithScrimPass?: string[],
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }> {
     const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
@@ -183,7 +206,11 @@ export class ScrimSignups {
         ScrimSignups.convertDbToScrimSignup(signupData);
       teams.push(teamData);
     }
-    const prioTeams = await this.prioService.getTeamPrioForScrim(scrim, teams);
+    const prioTeams = await this.prioService.getTeamPrioForScrim(
+      scrim,
+      teams,
+      discordIdsWithScrimPass ?? [],
+    );
     this.cache.setSignups(scrim.id, prioTeams);
     return this.sortTeams(teams);
   }

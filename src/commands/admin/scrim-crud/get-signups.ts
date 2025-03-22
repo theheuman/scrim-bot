@@ -4,11 +4,15 @@ import { CustomInteraction } from "../../interaction";
 import { ScrimSignups } from "../../../services/signups";
 import { AuthService } from "../../../services/auth";
 import * as fs from "node:fs";
+import { StaticValueService } from "../../../services/static-values";
+import { Player } from "../../../models/Player";
+import { getPlayerOverstatUrl } from "../../../services/overstat";
 
 export class GetSignupsCommand extends AdminCommand {
   constructor(
     authService: AuthService,
     private signupService: ScrimSignups,
+    private staticValueService: StaticValueService,
   ) {
     super(
       authService,
@@ -22,12 +26,16 @@ export class GetSignupsCommand extends AdminCommand {
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
     await interaction.editReply("Fetching teams, command in progress");
-
+    const scrimPassMemberIds: string[] =
+      await this.getScrimPassMemberIds(interaction);
     const channelId = interaction.channelId;
 
     let channelSignups: { mainList: ScrimSignup[]; waitList: ScrimSignup[] };
     try {
-      channelSignups = await this.signupService.getSignups(channelId);
+      channelSignups = await this.signupService.getSignups(
+        channelId,
+        scrimPassMemberIds,
+      );
     } catch (e) {
       await interaction.editReply(`Could not fetch signups. ${e}`);
       return;
@@ -54,6 +62,40 @@ export class GetSignupsCommand extends AdminCommand {
     } catch (e) {
       await interaction.editReply("Problem generating csv. " + e);
     }
+  }
+
+  async getScrimPassMemberIds(
+    interaction: CustomInteraction,
+  ): Promise<string[]> {
+    const scrimPassRoleId = await this.staticValueService.getScrimPassRoleId();
+    let scrimPassMemberIds: string[] = [];
+    if (scrimPassRoleId) {
+      const scrimPassRole = await interaction.guild?.roles.fetch(
+        scrimPassRoleId,
+        {
+          cache: true,
+          force: true,
+        },
+      );
+      if (scrimPassRole) {
+        scrimPassMemberIds = [...scrimPassRole.members].map(
+          (collectionItem) => collectionItem[0],
+        );
+      } else {
+        console.error(
+          "Can't fetch scrim pass role members from discord for: guild, role id",
+          interaction.guild,
+          scrimPassRoleId,
+        );
+        await interaction.editReply(
+          "Can't fetch scrim pass role members from discord",
+        );
+      }
+    } else {
+      console.error("Unable to get scrim pass role id from db");
+      await interaction.editReply("Unable to get scrim pass role id from db");
+    }
+    return scrimPassMemberIds;
   }
 
   // Break long strings into chunks for discord
@@ -92,12 +134,9 @@ export class GetSignupsCommand extends AdminCommand {
     waitList: ScrimSignup[],
   ): Promise<string> {
     const teamCsvStringConverter = (team: ScrimSignup) => {
-      return [
-        team.teamName,
-        ...team.players.map(
-          (player) => `${player.displayName} <@${player.discordId}>`,
-        ),
-      ].join(",");
+      return [team.teamName, ...team.players.map(this.getPlayerCsvFields)].join(
+        ",",
+      );
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
     const separator = "\n,,,\n";
@@ -106,5 +145,14 @@ export class GetSignupsCommand extends AdminCommand {
     const fileName = "temp-signup-" + channelId + ".csv";
     fs.writeFileSync(fileName, content);
     return fileName;
+  }
+
+  getPlayerCsvFields(player: Player) {
+    const requiredFields = `${player.displayName} <@${player.discordId}>`;
+    let overstatField = "";
+    if (player.overstatId) {
+      overstatField = " " + getPlayerOverstatUrl(player.overstatId);
+    }
+    return requiredFields + overstatField;
   }
 }

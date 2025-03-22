@@ -166,6 +166,9 @@ interval = '1m'
 [postgres]
 version = '14.13-20240909-1'
 
+[postgres.resources.storage]
+capacity = 20
+
 [provider]
 
 [storage]

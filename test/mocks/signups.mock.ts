@@ -36,7 +36,7 @@ export class ScrimSignupMock {
     teamName: string,
     commandUser: User,
     players: User[],
-  ): Promise<string> {
+  ): Promise<ScrimSignup> {
     console.log(
       "Adding team in signup mock",
       channelId,
@@ -44,7 +44,21 @@ export class ScrimSignupMock {
       commandUser,
       players,
     );
-    return "";
+    return {
+      date: new Date(),
+      players: players.map((player, index) => ({
+        displayName: player.displayName,
+        discordId: player.id,
+        id: "db player id " + index,
+      })),
+      signupId: "scrim signup db id",
+      signupPlayer: {
+        displayName: commandUser.displayName,
+        discordId: commandUser.id,
+        id: "db player id",
+      },
+      teamName: teamName,
+    };
   }
 
   async getSignups(

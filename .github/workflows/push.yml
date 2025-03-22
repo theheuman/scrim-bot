@@ -12,24 +12,6 @@ jobs:
     steps:
       - name: 'Checkout source code'
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          ssh-key: ${{ secrets.DEPLOY_KEY }} # Private ssh key
-      - name: 'Automated Version Bump'
-        id: version-bump
-        uses: 'phips28/gh-action-bump-version@master'
-        with:
-          tag-prefix: 'v'
-          commit-message: 'CI: bump version to {{version}} [skip ci]'
-          # Skip commit and push here, because you can't pass a deploy-key in to bypass branch protections.
-          skip-commit: true
-          skip-push: true
-      - name: Get package version
-        run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-      - name: Commit and Push Version Bump
-        run: |
-          git commit -am "Bump version to $VERSION [skip ci]"
-          git push
       - name: "Create release"
         uses: softprops/action-gh-release@v2
         with:
