@@ -101,7 +101,7 @@ export abstract class Command extends SlashCommandBuilder {
     this.loggableArguments.push({
       required: config.isRequired ?? false,
       name,
-      methodName: "getUser",
+      methodName: "getChannel",
     });
   }
 
@@ -173,17 +173,20 @@ export abstract class Command extends SlashCommandBuilder {
 
   private logInteraction(interaction: ChatInputCommandInteraction) {
     const informationArray = [];
-    informationArray.push("Command issued");
-    informationArray.push(`Name and id: ${this.name} ${interaction.id}`);
-    const userArguments = this.loggableArguments.map((argument) => ({
-      name: argument.name,
-      required: argument.required,
+    informationArray.push(`Command issued: ${interaction.id}`);
+    informationArray.push(`Name: ${this.name}`);
+    const userArguments = this.loggableArguments.map((argument) => {
       // @ts-expect-error right now this type isn't indexed correctly, fix when we have internet
-      value: interaction.options[argument.methodName](argument.name),
-    }));
-    informationArray.push(`User arguments: ${userArguments.join(", ")}`);
-    informationArray.push(`Member: ${interaction.user?.username}`);
+      const value = interaction.options[argument.methodName](argument.name);
+      return `{ name: ${argument.name}, required: ${argument.required}, value: ${value}}`;
+    });
+    const userArgumentString =
+      userArguments.length > 0 ? userArguments.join(", ") : "None";
+    informationArray.push(
+      `Member: ${interaction.user?.username}, ${interaction.user?.id}`,
+    );
     informationArray.push(`Sent at: ${new Date(interaction.createdTimestamp)}`);
+    informationArray.push(`User arguments: ${userArgumentString}`);
 
     console.log(informationArray.join("\n\t"));
   }

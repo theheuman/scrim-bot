@@ -2,6 +2,7 @@ import {
   CacheType,
   ChatInputCommandInteraction,
   CommandInteractionOptionResolver,
+  Guild,
   GuildMember,
   InteractionEditReplyOptions,
   InteractionReplyOptions,
@@ -47,6 +48,7 @@ export class CustomInteraction {
   user: User;
   channelId: string;
   channel: TextBasedChannel | null;
+  guild: Guild | null;
 
   constructor(interaction: ChatInputCommandInteraction) {
     this.ogInteraction = interaction;
@@ -57,6 +59,7 @@ export class CustomInteraction {
     this.user = interaction.user;
     this.channelId = interaction.channelId;
     this.channel = interaction.channel;
+    this.guild = interaction.guild;
     this.options = this.getOptionResolver(interaction.options);
   }
 
@@ -88,7 +91,10 @@ export class CustomInteraction {
   reply(
     argument: string | MessagePayload | InteractionReplyOptions,
   ): Promise<InteractionResponse<boolean>> {
-    console.log(`Replying to interaction ${this.ogInteraction.id}: `, argument);
+    console.log(
+      `\tReplying to interaction ${this.ogInteraction.id}: `,
+      argument,
+    );
     return this.ogInteraction.reply(argument);
   }
 
@@ -96,7 +102,7 @@ export class CustomInteraction {
     argument: string | MessagePayload | InteractionEditReplyOptions,
   ): Promise<Message<boolean>> {
     console.log(
-      `Editing reply to interaction ${this.ogInteraction.id}: `,
+      `\tEditing reply to interaction ${this.ogInteraction.id}: `,
       argument,
     );
     return this.ogInteraction.editReply(argument);
@@ -106,7 +112,7 @@ export class CustomInteraction {
     argument: string | MessagePayload | InteractionReplyOptions,
   ): Promise<Message<boolean>> {
     console.log(
-      `Following up to interaction ${this.ogInteraction.id}: `,
+      `\tFollowing up to interaction ${this.ogInteraction.id}: `,
       argument,
     );
     return this.ogInteraction.followUp(argument);
@@ -118,7 +124,7 @@ export class CustomInteraction {
       ephemeral: true,
     };
     console.log(
-      `Invisible reply to interaction ${this.ogInteraction.id}: `,
+      `\tInvisible reply to interaction ${this.ogInteraction.id}: `,
       message,
     );
     return this.ogInteraction.reply(replyData);
