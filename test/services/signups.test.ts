@@ -440,7 +440,7 @@ describe("Signups", () => {
           overstatId: undefined,
         } as unknown as Player;
       };
-      const generateScrimSignupFromWithPlayers = (
+      const generateScrimSignupWithPlayers = (
         team: ScrimSignupsWithPlayers,
         prio: {
           amount: number;
@@ -461,21 +461,21 @@ describe("Signups", () => {
         };
       };
       const expectedMainTeams: ScrimSignup[] = [
-        generateScrimSignupFromWithPlayers(highPrioTeam, {
+        generateScrimSignupWithPlayers(highPrioTeam, {
           amount: 1,
           reasons: "Player 1 has league prio",
         }),
-        generateScrimSignupFromWithPlayers(mediumPrioTeam1, {
+        generateScrimSignupWithPlayers(mediumPrioTeam1, {
           amount: 0,
           reasons: "",
         }),
-        generateScrimSignupFromWithPlayers(mediumPrioTeam2, {
+        generateScrimSignupWithPlayers(mediumPrioTeam2, {
           amount: 0,
           reasons: "",
         }),
       ];
       const expectedWaitTeams: ScrimSignup[] = [
-        generateScrimSignupFromWithPlayers(lowPrioTeam, {
+        generateScrimSignupWithPlayers(lowPrioTeam, {
           amount: -5,
           reasons: "Player 1 is an enemy of the people",
         }),

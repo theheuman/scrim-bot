@@ -1,8 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { isGuildMember } from "../utility/utility";
 import {
   CustomInteraction,
-  getCustomInteraction,
   OptionConfig,
   SlashCommandOption,
 } from "./interaction";
@@ -12,6 +10,12 @@ import { ScrimSignup } from "../models/Scrims";
 import { Player } from "../models/Player";
 
 export abstract class Command extends SlashCommandBuilder {
+  private loggableArguments: {
+    methodName: keyof ChatInputCommandInteraction["options"];
+    name: string;
+    required: boolean;
+  }[] = [];
+
   protected constructor(name: string, description: string) {
     super();
     this.setName(name);
@@ -22,6 +26,11 @@ export abstract class Command extends SlashCommandBuilder {
     this.addUserOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getUser",
+    });
   }
 
   addStringInput(name: string, description: string, config?: OptionConfig) {
@@ -40,6 +49,11 @@ export abstract class Command extends SlashCommandBuilder {
       }
       return option;
     });
+    this.loggableArguments.push({
+      required: config?.isRequired ?? false,
+      name,
+      methodName: "getString",
+    });
   }
 
   addNumberInput(
@@ -50,12 +64,22 @@ export abstract class Command extends SlashCommandBuilder {
     this.addNumberOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getNumber",
+    });
   }
 
   addRoleInput(name: string, description: string, isRequired: boolean = false) {
     this.addRoleOption((option) =>
       this.addOption(option, name, description, isRequired),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getRole",
+    });
   }
 
   addChannelInput(
@@ -74,6 +98,11 @@ export abstract class Command extends SlashCommandBuilder {
         config.isRequired ?? false,
       ).addChannelTypes(config.channelTypes);
     });
+    this.loggableArguments.push({
+      required: config.isRequired ?? false,
+      name,
+      methodName: "getChannel",
+    });
   }
 
   // at some point discord might actually implement this, for now just use string
@@ -83,6 +112,11 @@ export abstract class Command extends SlashCommandBuilder {
         .setMinLength(3)
         .setMaxLength(17),
     );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getString",
+    });
   }
 
   addOption<T extends SlashCommandOption>(
@@ -122,19 +156,40 @@ export abstract class Command extends SlashCommandBuilder {
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    this.logInteraction(interaction);
     try {
-      const customInteraction = getCustomInteraction(interaction);
+      const customInteraction = new CustomInteraction(interaction);
       await this.childExecute(customInteraction);
     } catch (e) {
       console.error(e);
       await interaction.followUp({
-        content: `Error executing "${interaction.commandName}. ` + e,
+        content: `Error executing ${interaction.commandName}. ` + e,
         ephemeral: true,
       });
     }
   }
 
   abstract childExecute(interaction: CustomInteraction): Promise<void>;
+
+  private logInteraction(interaction: ChatInputCommandInteraction) {
+    const informationArray = [];
+    informationArray.push(`Command issued: ${interaction.id}`);
+    informationArray.push(`Name: ${this.name}`);
+    const userArguments = this.loggableArguments.map((argument) => {
+      // @ts-expect-error right now this type isn't indexed correctly, fix when we have internet
+      const value = interaction.options[argument.methodName](argument.name);
+      return `{ name: ${argument.name}, required: ${argument.required}, value: ${value}}`;
+    });
+    const userArgumentString =
+      userArguments.length > 0 ? userArguments.join(", ") : "None";
+    informationArray.push(
+      `Member: ${interaction.user?.username}, ${interaction.user?.id}`,
+    );
+    informationArray.push(`Sent at: ${new Date(interaction.createdTimestamp)}`);
+    informationArray.push(`User arguments: ${userArgumentString}`);
+
+    console.log(informationArray.join("\n\t"));
+  }
 }
 
 export abstract class AdminCommand extends Command {
@@ -148,12 +203,7 @@ export abstract class AdminCommand extends Command {
 
   async childExecute(interaction: CustomInteraction) {
     await interaction.invisibleReply("Checking if user is authorized");
-    if (!isGuildMember(interaction.member)) {
-      await interaction.editReply(
-        "Can't find the member issuing the command or this is an api command, no command executed",
-      );
-      return;
-    } else if (!(await this.authService.memberIsAdmin(interaction.member))) {
+    if (!(await this.authService.memberIsAdmin(interaction.member))) {
       await interaction.editReply("User calling command is not authorized");
       return;
     }

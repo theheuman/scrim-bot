@@ -1,6 +1,5 @@
 import { Command } from "./command";
 import { AddPrioCommand } from "./admin/prio/add-prio";
-import { ServerInfoCommand } from "./utility/server";
 import { PingCommand } from "./utility/ping";
 import { UserCommand } from "./utility/user";
 import { ExpungePrioCommand } from "./admin/prio/expunge-prio";
@@ -27,7 +26,6 @@ import { GetOverstatCommand } from "./overstat/get-overstat";
 
 export const commands: Command[] = [
   // test commands
-  new ServerInfoCommand(),
   new PingCommand(),
   new UserCommand(),
 
