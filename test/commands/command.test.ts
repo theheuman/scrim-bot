@@ -2,6 +2,7 @@ import {
   ChatInputCommandInteraction,
   GuildMember,
   InteractionEditReplyOptions,
+  InteractionReplyOptions,
   Message,
   MessagePayload,
   User,
@@ -10,6 +11,7 @@ import SpyInstance = jest.SpyInstance;
 import { MockAdminCommand, MockMemberCommand } from "../mocks/command.mock";
 import { AuthMock } from "../mocks/auth.mock";
 import { AuthService } from "../../src/services/auth";
+import { CustomInteraction } from "../../src/commands/interaction";
 
 describe("abstract command", () => {
   let basicInteraction: ChatInputCommandInteraction;
@@ -19,7 +21,7 @@ describe("abstract command", () => {
 
   let runSpy: SpyInstance<
     Promise<void>,
-    [interaction: ChatInputCommandInteraction],
+    [interaction: CustomInteraction],
     string
   >;
   let member: GuildMember;
@@ -30,6 +32,11 @@ describe("abstract command", () => {
   let editReplySpy: SpyInstance<
     Promise<Message<boolean>>,
     [reply: string | InteractionEditReplyOptions | MessagePayload],
+    string
+  >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
 
@@ -67,6 +74,7 @@ describe("abstract command", () => {
       invisibleReply: jest.fn(),
       editReply: jest.fn(),
       reply: jest.fn(),
+      followUp: jest.fn(),
     } as unknown as ChatInputCommandInteraction;
 
     unAuthorizedMemberInteraction = {
@@ -91,30 +99,36 @@ describe("abstract command", () => {
       );
   });
 
-  it("Should call child class run command because member is authorized", async () => {
+  it("Should call admin command run method", async () => {
     runSpy.mockClear();
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     await adminCommand.execute(basicInteraction);
-    expect(runSpy).toHaveBeenCalledWith(basicInteraction);
+    expect(runSpy).toHaveBeenCalledWith(
+      new CustomInteraction(basicInteraction),
+    );
   });
 
-  it("Should call child class run command because member does not need to be authorized", async () => {
+  it("Should call member command run method", async () => {
     runSpy = jest.spyOn(memberCommand, "run");
     runSpy.mockClear();
-    editReplySpy = jest.spyOn(noMemberInteraction, "editReply");
-    await memberCommand.execute(noMemberInteraction);
-    expect(runSpy).toHaveBeenCalledWith(noMemberInteraction);
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    await memberCommand.execute(basicInteraction);
+    expect(runSpy).toHaveBeenCalledWith(
+      new CustomInteraction(basicInteraction),
+    );
     expect(editReplySpy).not.toHaveBeenCalled();
   });
 
   describe("errors", () => {
     it("should not call run command because there is no member", async () => {
       runSpy.mockClear();
-      editReplySpy = jest.spyOn(noMemberInteraction, "editReply");
+      followUpSpy = jest.spyOn(noMemberInteraction, "followUp");
       await adminCommand.execute(noMemberInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
-        "Can't find the member issuing the command or this is an api command, no command executed",
-      );
+      expect(followUpSpy).toHaveBeenCalledWith({
+        content:
+          "Error executing undefined. Error: Interaction not triggered by guild member",
+        ephemeral: true,
+      });
       expect(runSpy).not.toHaveBeenCalled();
     });
 

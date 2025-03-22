@@ -1,8 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { isGuildMember } from "../utility/utility";
 import {
   CustomInteraction,
-  getCustomInteraction,
   OptionConfig,
   SlashCommandOption,
 } from "./interaction";
@@ -160,12 +158,12 @@ export abstract class Command extends SlashCommandBuilder {
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     this.logInteraction(interaction);
     try {
-      const customInteraction = getCustomInteraction(interaction);
+      const customInteraction = new CustomInteraction(interaction);
       await this.childExecute(customInteraction);
     } catch (e) {
       console.error(e);
       await interaction.followUp({
-        content: `Error executing "${interaction.commandName}. ` + e,
+        content: `Error executing ${interaction.commandName}. ` + e,
         ephemeral: true,
       });
     }
@@ -202,12 +200,7 @@ export abstract class AdminCommand extends Command {
 
   async childExecute(interaction: CustomInteraction) {
     await interaction.invisibleReply("Checking if user is authorized");
-    if (!isGuildMember(interaction.member)) {
-      await interaction.editReply(
-        "Can't find the member issuing the command or this is an api command, no command executed",
-      );
-      return;
-    } else if (!(await this.authService.memberIsAdmin(interaction.member))) {
+    if (!(await this.authService.memberIsAdmin(interaction.member))) {
       await interaction.editReply("User calling command is not authorized");
       return;
     }
