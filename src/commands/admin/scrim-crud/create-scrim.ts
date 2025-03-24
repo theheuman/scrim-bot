@@ -8,6 +8,7 @@ import { StaticValueService } from "../../../services/static-values";
 import { ForumThreadChannel } from "discord.js/typings";
 import { ChannelType } from "discord-api-types/v10";
 import {
+  getScrimInfoTimes,
   isForumChannel,
   replaceScrimVariables,
 } from "../../../utility/utility";
@@ -123,27 +124,16 @@ export class CreateScrimCommand extends AdminCommand {
     if (!instructionText) {
       throw Error("Can't get instruction text from db");
     }
-    const lobbyPostDate = new Date(scrimDate.valueOf());
-    // 2 hours before
-    lobbyPostDate.setTime(lobbyPostDate.valueOf() - 2 * 60 * 60 * 1000);
-    const lobbyPostTime = this.formatTime(lobbyPostDate);
 
-    const lowPrioDate = new Date(scrimDate.valueOf());
-    // 1.5 hours before
-    lowPrioDate.setTime(lowPrioDate.valueOf() - 1.5 * 60 * 60 * 1000);
-    const lowPrioTime = this.formatTime(lowPrioDate);
-
-    const draftDate = new Date(scrimDate.valueOf());
-    // 20 minutes before
-    draftDate.setTime(draftDate.valueOf() - 20 * 60 * 1000);
-    const draftTime = this.formatTime(draftDate);
+    const { lobbyPostDate, lowPrioDate, draftDate } =
+      getScrimInfoTimes(scrimDate);
 
     return replaceScrimVariables(instructionText, {
       scrimTime: this.formatTime(scrimDate),
       scrimDate: this.formatDate(scrimDate),
-      lobbyPostTime,
-      lowPrioTime,
-      draftTime,
+      lobbyPostTime: this.formatTime(lobbyPostDate),
+      lowPrioTime: this.formatTime(lowPrioDate),
+      draftTime: this.formatTime(draftDate),
       signupCount: "0",
     });
   }

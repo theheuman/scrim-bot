@@ -3,16 +3,15 @@ import { DB } from "../db/db";
 import { CacheService } from "./cache";
 import { ScrimSignup } from "../models/Scrims";
 import { AuthService } from "./auth";
+import { DiscordService } from "./discord";
 
 export class RosterService {
   constructor(
     private db: DB,
     private cache: CacheService,
     private authService: AuthService,
-  ) {
-    this.db = db;
-    this.cache = cache;
-  }
+    private discordService: DiscordService,
+  ) {}
 
   async replaceTeammate(
     memberUsingCommand: GuildMember,
@@ -76,6 +75,7 @@ export class RosterService {
       );
     await this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
     signups.splice(signups.indexOf(teamToBeChanged), 1);
+    this.updateScrimSignupCount(scrimId);
   }
 
   async changeTeamName(
@@ -143,5 +143,24 @@ export class RosterService {
     );
     const isAdmin = await this.authService.memberIsAdmin(member);
     return isAdmin || foundPlayer;
+  }
+
+  private async updateScrimSignupCount(discordChannel: string) {
+    const scrim = this.cache.getScrim(discordChannel);
+
+    try {
+      if (!scrim) {
+        throw Error("No scrim for that channel");
+      }
+      const count = this.cache.getSignups(scrim.id)?.length ?? 0;
+      await this.discordService.updateSignupPostDescription(scrim, count);
+    } catch (e) {
+      console.error(
+        "Unable to update scrim signup count for ",
+        scrim?.id,
+        scrim?.discordChannel,
+        e,
+      );
+    }
   }
 }

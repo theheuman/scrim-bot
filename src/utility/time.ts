@@ -113,3 +113,11 @@ const getUtcOffset = (date: Date) => {
     getTimezoneOffset("America/New_York", date) / 60 / 60 / 1000;
   return `-${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
 };
+
+export const formatDateForDiscord = (date: Date): string => {
+  return `<t:${Math.floor(date.valueOf() / 1000)}:f>`;
+};
+
+export const formatTimeForDiscord = (date: Date): string => {
+  return `<t:${Math.floor(date.valueOf() / 1000)}:t>`;
+};

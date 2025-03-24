@@ -8,6 +8,7 @@ import { AuthService } from "../services/auth";
 import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
 import { ScrimSignup } from "../models/Scrims";
 import { Player } from "../models/Player";
+import { formatDateForDiscord, formatTimeForDiscord } from "../utility/time";
 
 export abstract class Command extends SlashCommandBuilder {
   private loggableArguments: {
@@ -131,15 +132,15 @@ export abstract class Command extends SlashCommandBuilder {
       .setRequired(isRequired) as T;
   }
 
-  formatDate(date: Date) {
-    return `<t:${Math.floor(date.valueOf() / 1000)}:f>`;
+  formatDate(date: Date): string {
+    return formatDateForDiscord(date);
   }
 
-  formatTime(date: Date) {
-    return `<t:${Math.floor(date.valueOf() / 1000)}:t>`;
+  formatTime(date: Date): string {
+    return formatTimeForDiscord(date);
   }
 
-  formatTeam(team: ScrimSignup) {
+  formatTeam(team: ScrimSignup): string {
     const playerString = team.players
       .map((player) => this.formatPlayer(player))
       .join(" ");
@@ -151,7 +152,7 @@ export abstract class Command extends SlashCommandBuilder {
     return teamString + prioString;
   }
 
-  formatPlayer(player: Player) {
+  formatPlayer(player: Player): string {
     return `<@${player.discordId}>`;
   }
 

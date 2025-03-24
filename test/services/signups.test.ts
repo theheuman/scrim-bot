@@ -14,6 +14,8 @@ import { PrioServiceMock } from "../mocks/prio.mock";
 import { AuthMock } from "../mocks/auth.mock";
 import { AuthService } from "../../src/services/auth";
 import { OverstatServiceMock } from "../mocks/overstat.mock";
+import { DiscordService } from "../../src/services/discord";
+import { DiscordServiceMock } from "../mocks/discord-service.mock";
 
 describe("Signups", () => {
   let dbMock: DbMock;
@@ -30,6 +32,7 @@ describe("Signups", () => {
     cache = new CacheService();
     overstatService = new OverstatServiceMock();
     prioServiceMock = new PrioServiceMock();
+
     authServiceMock = new AuthMock();
     signups = new ScrimSignups(
       dbMock,
@@ -37,6 +40,7 @@ describe("Signups", () => {
       overstatService as OverstatService,
       prioServiceMock as PrioService,
       authServiceMock as AuthService,
+      new DiscordServiceMock() as DiscordService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(

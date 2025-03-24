@@ -6,11 +6,15 @@ import { OverstatService } from "./overstat";
 import { PrioService } from "./prio";
 import { AuthService } from "./auth";
 import { StaticValueService } from "./static-values";
+import { DiscordService } from "./discord";
+import { client } from "../index";
 
 // This file creates all the singleton services
 export const cache = new CacheService();
 export const overstatService = new OverstatService(nhostDb);
 export const staticValueService = new StaticValueService(nhostDb);
+
+export const discordService = new DiscordService(client, staticValueService);
 
 export const authService = new AuthService(nhostDb, cache);
 export const prioService = new PrioService(nhostDb, cache);
@@ -20,5 +24,11 @@ export const signupsService = new ScrimSignups(
   overstatService,
   prioService,
   authService,
+  discordService,
 );
-export const rosterService = new RosterService(nhostDb, cache, authService);
+export const rosterService = new RosterService(
+  nhostDb,
+  cache,
+  authService,
+  discordService,
+);

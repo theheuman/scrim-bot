@@ -8,6 +8,7 @@ import { Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
 import { AuthService } from "./auth";
+import { DiscordService } from "./discord";
 
 export class ScrimSignups {
   constructor(
@@ -16,6 +17,7 @@ export class ScrimSignups {
     private overstatService: OverstatService,
     private prioService: PrioService,
     private authService: AuthService,
+    private discordService: DiscordService,
   ) {
     this.updateActiveScrims();
   }
@@ -167,6 +169,7 @@ export class ScrimSignups {
     };
     scrimSignups.push(scrimSignup);
     this.cache.setSignups(scrim.id, scrimSignups);
+    this.updateScrimSignupCount(scrim);
     return scrimSignup;
   }
 
@@ -286,5 +289,19 @@ export class ScrimSignups {
         },
       ],
     };
+  }
+
+  private async updateScrimSignupCount(scrim: Scrim) {
+    const count = this.cache.getSignups(scrim.id)?.length ?? 0;
+    try {
+      await this.discordService.updateSignupPostDescription(scrim, count);
+    } catch (e) {
+      console.error(
+        "Unable to update scrim signup count for ",
+        scrim.id,
+        scrim.discordChannel,
+        e,
+      );
+    }
   }
 }

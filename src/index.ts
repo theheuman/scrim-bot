@@ -1,11 +1,11 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { Events, GatewayIntentBits } from "discord.js";
+import { GatewayIntentBits } from "discord.js";
 import ExtendedClient from "./ExtendedClient";
 import { commands } from "./commands";
 import { appConfig } from "./config";
 
-const client = new ExtendedClient({
+export const client = new ExtendedClient({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildPresences,
