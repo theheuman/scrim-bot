@@ -1,4 +1,9 @@
-import { Client, ClientOptions, Collection } from "discord.js";
+import {
+  Client,
+  ClientOptions,
+  Collection,
+  GatewayIntentBits,
+} from "discord.js";
 import { Command } from "./commands/command";
 
 class ExtendedClient extends Client {
@@ -10,4 +15,10 @@ class ExtendedClient extends Client {
   }
 }
 
-export default ExtendedClient;
+export const client = new ExtendedClient({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildMembers,
+  ],
+});

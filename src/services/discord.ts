@@ -3,6 +3,7 @@ import { appConfig } from "../config";
 import { StaticValueService } from "./static-values";
 import { Scrim } from "../models/Scrims";
 import { replaceScrimVariablesFromScrim } from "../utility/utility";
+import { ForumThreadChannel } from "discord.js/typings";
 
 export class DiscordService {
   constructor(
@@ -25,17 +26,18 @@ export class DiscordService {
       throw Error("Guild not found");
     }
 
-    const forumThread = guild.channels.cache.get(scrim.discordChannel);
+    const forumThread = guild.channels.cache.get(
+      scrim.discordChannel,
+    ) as ForumThreadChannel;
     if (!forumThread || forumThread.isThread() === false) {
       throw Error("Forum thread not found or not a valid thread");
     }
+    const description = await forumThread.fetchStarterMessage();
 
-    const messages = await forumThread.messages.fetch({ limit: 1 }); // Fetch the first message
-    const firstMessage = messages.first();
-
-    if (!firstMessage) {
+    if (!description) {
       throw Error("No messages found in the thread");
     }
-    firstMessage.edit(updatedMessage);
+
+    await description.edit(updatedMessage);
   }
 }

@@ -75,7 +75,7 @@ export class RosterService {
       );
     await this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
     signups.splice(signups.indexOf(teamToBeChanged), 1);
-    this.updateScrimSignupCount(scrimId);
+    this.updateScrimSignupCount(discordChannel);
   }
 
   async changeTeamName(
