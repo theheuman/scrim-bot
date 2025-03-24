@@ -7,7 +7,10 @@ import { AuthService } from "../../../services/auth";
 import { StaticValueService } from "../../../services/static-values";
 import { ForumThreadChannel } from "discord.js/typings";
 import { ChannelType } from "discord-api-types/v10";
-import { isForumChannel } from "../../../utility/utility";
+import {
+  isForumChannel,
+  replaceScrimVariables,
+} from "../../../utility/utility";
 
 export class CreateScrimCommand extends AdminCommand {
   inputNames = {
@@ -135,11 +138,13 @@ export class CreateScrimCommand extends AdminCommand {
     draftDate.setTime(draftDate.valueOf() - 20 * 60 * 1000);
     const draftTime = this.formatTime(draftDate);
 
-    return instructionText
-      .replace("${scrimTime}", this.formatTime(scrimDate))
-      .replace("${draftTime}", draftTime)
-      .replace("${lobbyPostTime}", lobbyPostTime)
-      .replace("${lowPrioTime}", lowPrioTime)
-      .replace(/\\n/g, "\n");
+    return replaceScrimVariables(instructionText, {
+      scrimTime: this.formatTime(scrimDate),
+      scrimDate: this.formatDate(scrimDate),
+      lobbyPostTime,
+      lowPrioTime,
+      draftTime,
+      signupCount: "0",
+    });
   }
 }

@@ -11,3 +11,24 @@ export function isGuildMember(
 export function isForumChannel(value: Channel): value is ForumChannel {
   return (value as ForumChannel)?.type === ChannelType.GuildForum;
 }
+
+export function replaceScrimVariables(
+  text: string,
+  replacements: {
+    scrimTime: string;
+    scrimDate: string;
+    draftTime: string;
+    lobbyPostTime: string;
+    lowPrioTime: string;
+    signupCount: string;
+  },
+) {
+  return text
+    .replace("${scrimTime}", replacements.scrimTime)
+    .replace("${scrimDate}", replacements.scrimDate)
+    .replace("${draftTime}", replacements.draftTime)
+    .replace("${lobbyPostTime}", replacements.lobbyPostTime)
+    .replace("${lowPrioTime}", replacements.lowPrioTime)
+    .replace("${signupCount}", replacements.signupCount)
+    .replace(/\\n/g, "\n");
+}
