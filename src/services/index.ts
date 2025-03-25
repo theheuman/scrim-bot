@@ -7,7 +7,7 @@ import { PrioService } from "./prio";
 import { AuthService } from "./auth";
 import { StaticValueService } from "./static-values";
 import { DiscordService } from "./discord";
-import { client } from "../ExtendedClient";
+import { client } from "../Client";
 
 // This file creates all the singleton services
 export const cache = new CacheService();

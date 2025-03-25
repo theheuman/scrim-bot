@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { client } from "./ExtendedClient";
+import { client } from "./Client";
 import { commands } from "./commands";
 import { appConfig } from "./config";
 

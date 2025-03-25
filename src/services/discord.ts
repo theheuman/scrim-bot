@@ -35,7 +35,7 @@ export class DiscordService {
     const description = await forumThread.fetchStarterMessage();
 
     if (!description) {
-      throw Error("No messages found in the thread");
+      throw Error("Signup post description not found");
     }
 
     await description.edit(updatedMessage);
