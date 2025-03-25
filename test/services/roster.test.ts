@@ -5,18 +5,26 @@ import { CacheService } from "../../src/services/cache";
 import { RosterService } from "../../src/services/rosters";
 import { ScrimSignup, Scrim } from "../../src/models/Scrims";
 import { AuthService } from "../../src/services/auth";
+import { AuthMock } from "../mocks/auth.mock";
+import { DiscordServiceMock } from "../mocks/discord-service.mock";
+import { DiscordService } from "../../src/services/discord";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
   let cache: CacheService;
   let rosters: RosterService;
-  let authService: AuthService;
+  let authService: AuthMock;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
-    authService = new AuthService(dbMock, cache);
-    rosters = new RosterService(dbMock, cache, authService);
+    authService = new AuthMock();
+    rosters = new RosterService(
+      dbMock,
+      cache,
+      authService as AuthService,
+      new DiscordServiceMock() as DiscordService,
+    );
     jest
       .spyOn(authService, "memberIsAdmin")
       .mockReturnValue(Promise.resolve(true));

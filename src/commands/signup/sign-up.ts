@@ -2,6 +2,8 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { ScrimSignups } from "../../services/signups";
 import { isGuildMember } from "../../utility/utility";
+import { ScrimSignup } from "../../models/Scrims";
+import { Player } from "../../models/Player";
 
 export class SignupCommand extends MemberCommand {
   constructor(private signupService: ScrimSignups) {
@@ -33,10 +35,9 @@ export class SignupCommand extends MemberCommand {
     }
     await interaction.reply("Fetched all input, working on request");
 
-    const overstatRequiredDeadline = new Date(1742799600000);
-
+    let signup: ScrimSignup;
     try {
-      const signup = await this.signupService.addTeam(
+      signup = await this.signupService.addTeam(
         channelId as string,
         teamName,
         signupPlayer,
@@ -45,21 +46,31 @@ export class SignupCommand extends MemberCommand {
       await interaction.editReply(
         `${teamName}\n<@${player1.id}>, <@${player2.id}>, <@${player3.id}>\nSigned up by <@${signupPlayer.id}>.\n${signup.signupId}`,
       );
-      const warnings = [];
-      for (const player of signup.players) {
-        if (!player.overstatId) {
-          warnings.push(`${player.displayName} is missing overstat id.`);
-        }
-      }
-      if (warnings.length > 0) {
-        await interaction.followUp({
-          content: `${warnings.join("\n")}\nScrims starting after ${this.formatDate(overstatRequiredDeadline)} will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376`,
-          ephemeral: true,
-        });
-      }
     } catch (error) {
       await interaction.editReply("Team not signed up. " + error);
       return;
+    }
+
+    await this.warnMissingOverstat(signup.players, interaction);
+  }
+
+  private async warnMissingOverstat(
+    players: Player[],
+    interaction: CustomInteraction,
+  ) {
+    const overstatRequiredDeadline = new Date(1742799600000);
+
+    const warnings = [];
+    for (const player of players) {
+      if (!player.overstatId) {
+        warnings.push(`${player.displayName} is missing overstat id.`);
+      }
+    }
+    if (warnings.length > 0) {
+      await interaction.followUp({
+        content: `${warnings.join("\n")}\nScrims starting after ${this.formatDate(overstatRequiredDeadline)} will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376`,
+        ephemeral: true,
+      });
     }
   }
 }
