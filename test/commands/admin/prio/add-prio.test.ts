@@ -84,6 +84,9 @@ describe("Add prio", () => {
       deleteReply: jest.fn(),
       channelId,
       member,
+      user: {
+        id: "command invoker",
+      },
     } as unknown as CustomInteraction;
 
     singleUserInteraction = {
@@ -113,6 +116,9 @@ describe("Add prio", () => {
       deleteReply: jest.fn(),
       channelId,
       member,
+      user: {
+        id: "command invoker",
+      },
     } as unknown as CustomInteraction;
 
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
@@ -148,7 +154,7 @@ describe("Add prio", () => {
     followUpSpy = jest.spyOn(singleUserInteraction, "followUp");
     await command.run(singleUserInteraction);
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\n<@1> prio id: db id`,
+      `Added -400 prio to 1 player from <t:${Math.floor(fakeDate.valueOf() / 1000)}:f> to <t:${Math.floor(new Date("2025-01-13T23:59:59-05:00").valueOf() / 1000)}:f>\nReason: Prio reason.\nID's:\n<@1> prio id: db id\nAdded by <@command invoker>`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);
@@ -174,7 +180,7 @@ describe("Add prio", () => {
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     await command.run(basicInteraction);
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\n<@1> prio id: db id\n<@1> prio id: db id 2\n<@1> prio id: db id 3`,
+      `Added -400 prio to 3 players from ${command.formatDate(new Date("2025-01-12T00:00:00-05:00"))} to ${command.formatDate(new Date("2025-01-13T23:59:59-05:00"))}\nReason: Prio reason.\nID's:\n<@1> prio id: db id\n<@1> prio id: db id 2\n<@1> prio id: db id 3\nAdded by <@command invoker>`,
     );
     // if this is failing, and you haven't changed the amount of assertions, take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
     expect.assertions(4);

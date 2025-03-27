@@ -79,7 +79,7 @@ export class AddPrioCommand extends AdminCommand {
       .join("\n");
     await interaction.deleteReply();
     await interaction.followUp(
-      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}`,
+      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}\nAdded by <@${interaction.user.id}>`,
     );
   }
 }
