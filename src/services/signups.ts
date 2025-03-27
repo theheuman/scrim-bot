@@ -145,11 +145,7 @@ export class ScrimSignups {
       }),
     );
     const insertedPlayers = await this.db.insertPlayers(convertedPlayers);
-    await this.checkForMissingOverstat(
-      insertedPlayers.slice(1),
-      scrim,
-      commandUser,
-    );
+    await this.checkForMissingOverstat(insertedPlayers.slice(1), commandUser);
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
       teamName,
@@ -175,14 +171,9 @@ export class ScrimSignups {
 
   private async checkForMissingOverstat(
     players: Player[],
-    scrim: Scrim,
     commandMember: GuildMember,
   ) {
     if (await this.authService.memberIsAdmin(commandMember)) {
-      return;
-    }
-    const deadline = new Date(1742799600000);
-    if (scrim.dateTime < deadline) {
       return;
     }
     for (const player of players) {

@@ -511,6 +511,10 @@ describe("DB connection", () => {
           }
         ) {
           id  # Return the ID of the player, whether newly inserted or found
+          overstat_id
+          display_name
+          discord_id
+          elo
         }
       }
     `;
@@ -519,15 +523,16 @@ describe("DB connection", () => {
           data: {
             insert_players_one: {
               id: "7605b2bf-1875-4415-a04b-75fe47768565",
+              overstat_id: "12345",
             },
           },
         });
       };
-      const newID = await nhostDb.insertPlayerIfNotExists(
+      const newPlayer = await nhostDb.insertPlayerIfNotExists(
         "316280734115430403",
         "zboy",
       );
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      expect(newPlayer.id).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
       expect.assertions(2);
     });
 
@@ -546,6 +551,10 @@ describe("DB connection", () => {
           }
         ) {
           id  # Return the ID of the player, whether newly inserted or found
+          overstat_id
+          display_name
+          discord_id
+          elo
         }
       }
     `;
@@ -558,12 +567,12 @@ describe("DB connection", () => {
           },
         });
       };
-      const newID = await nhostDb.insertPlayerIfNotExists(
+      const newPlayer = await nhostDb.insertPlayerIfNotExists(
         "316280734115430403",
         "zboy",
         "749174",
       );
-      expect(newID).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
+      expect(newPlayer.id).toEqual("7605b2bf-1875-4415-a04b-75fe47768565");
       expect.assertions(2);
     });
   });

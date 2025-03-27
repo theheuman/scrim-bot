@@ -118,7 +118,7 @@ describe("Overstat", () => {
 
   it("Should link a players overstat", async () => {
     const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
-    insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+    insertPlayerSpy.mockReturnValue(Promise.resolve({ id: "db id" } as Player));
     await overstatService.addPlayerOverstatLink(
       { id: "discord id", displayName: "TheHeuman" } as User,
       "https://overstat.gg/player/357606/overview",
@@ -133,7 +133,9 @@ describe("Overstat", () => {
   describe("Fail to link a players overstat", () => {
     it("Should fail because its not an valid link", async () => {
       const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
-      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+      insertPlayerSpy.mockReturnValue(
+        Promise.resolve({ id: "db id" } as Player),
+      );
 
       const causeException = async () => {
         await overstatService.addPlayerOverstatLink(
@@ -147,7 +149,9 @@ describe("Overstat", () => {
 
     it("Should fail because its not an overstat link", async () => {
       const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
-      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+      insertPlayerSpy.mockReturnValue(
+        Promise.resolve({ id: "db id" } as Player),
+      );
 
       const causeException = async () => {
         await overstatService.addPlayerOverstatLink(
@@ -161,7 +165,9 @@ describe("Overstat", () => {
 
     it("Should fail because its not a player link", async () => {
       const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
-      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+      insertPlayerSpy.mockReturnValue(
+        Promise.resolve({ id: "db id" } as Player),
+      );
 
       const causeException = async () => {
         await overstatService.addPlayerOverstatLink(
@@ -177,7 +183,9 @@ describe("Overstat", () => {
 
     it("Should fail because theres no player id", async () => {
       const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
-      insertPlayerSpy.mockReturnValue(Promise.resolve("db id"));
+      insertPlayerSpy.mockReturnValue(
+        Promise.resolve({ id: "db id" } as Player),
+      );
 
       const causeException = async () => {
         await overstatService.addPlayerOverstatLink(

@@ -16,7 +16,7 @@ export class DbMock extends DB {
   postResponse: string[];
   addScrimSignupResponse: string;
   insertPlayersResponse: Player[];
-  insertPlayerIfNotExistsResponse: string;
+  insertPlayerIfNotExistsResponse: Player;
 
   constructor() {
     super();
@@ -27,7 +27,9 @@ export class DbMock extends DB {
     this.postResponse = [""];
     this.addScrimSignupResponse = "";
     this.insertPlayersResponse = [];
-    this.insertPlayerIfNotExistsResponse = "";
+    this.insertPlayerIfNotExistsResponse = {
+      id: "valid id",
+    } as Player;
   }
 
   customQuery(query: string): Promise<JSONValue> {
@@ -69,7 +71,7 @@ export class DbMock extends DB {
     discordId: string,
     displayName: string,
     overstatLink?: string,
-  ): Promise<string> {
+  ): Promise<Player> {
     return Promise.resolve(this.insertPlayerIfNotExistsResponse);
   }
 

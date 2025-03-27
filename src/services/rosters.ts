@@ -20,7 +20,7 @@ export class RosterService {
     oldUser: User,
     newUser: User,
   ): Promise<void> {
-    const { teamToBeChanged, scrimId, signups } =
+    const { teamToBeChanged, scrimId, signups, isAdmin } =
       await this.getDataIfAuthorized(
         memberUsingCommand,
         discordChannel,
@@ -45,18 +45,21 @@ export class RosterService {
     if (!oldPlayerId) {
       throw Error("Player being replaced is not on this team");
     }
-    const newPlayerId = await this.db.insertPlayerIfNotExists(
+    const newPlayer = await this.db.insertPlayerIfNotExists(
       newUser.id as string,
       newUser.displayName,
     );
+    if (!newPlayer.overstatId && !isAdmin) {
+      throw Error("New player has no overstat set");
+    }
     await this.db.replaceTeammateNoAuth(
       scrimId,
       teamName,
       oldPlayerId,
-      newPlayerId,
+      newPlayer.id,
     );
     teamToBeChanged.players[oldPlayerIndex] = {
-      id: newPlayerId,
+      id: newPlayer.id,
       discordId: newUser.id as string,
       displayName: newUser.displayName,
     };
@@ -111,6 +114,7 @@ export class RosterService {
     scrimId: string;
     signups: ScrimSignup[];
     teamToBeChanged: ScrimSignup;
+    isAdmin: boolean;
   }> {
     const scrimId = this.cache.getScrim(discordChannel)?.id;
     if (!scrimId) {
@@ -126,23 +130,21 @@ export class RosterService {
     if (!teamToBeChanged) {
       throw Error("No team with that name");
     }
-    const isAuthorized = await this.memberIsAuthorized(
-      memberUsingCommand,
-      teamToBeChanged,
-    );
-    if (!isAuthorized) {
+    const isAdmin = await this.authService.memberIsAdmin(memberUsingCommand);
+    const isOnTeam = this.memberIsOnTeam(memberUsingCommand, teamToBeChanged);
+    if (!isOnTeam && !isAdmin) {
       throw Error("User issuing command not authorized to make changes");
     }
-    return { scrimId, signups, teamToBeChanged };
+    return { scrimId, signups, teamToBeChanged, isAdmin };
   }
 
-  private async memberIsAuthorized(member: GuildMember, team: ScrimSignup) {
+  private memberIsOnTeam(member: GuildMember, team: ScrimSignup): boolean {
     const authorizedPlayers = [team.signupPlayer, ...team.players];
     const foundPlayer = authorizedPlayers.find(
       (player) => player.discordId === member.id,
     );
-    const isAdmin = await this.authService.memberIsAdmin(member);
-    return isAdmin || foundPlayer;
+
+    return !!foundPlayer;
   }
 
   private async updateScrimSignupCount(discordChannel: string) {

@@ -187,7 +187,7 @@ export abstract class DB {
     discordId: string,
     displayName: string,
     overstatId?: string,
-  ): Promise<string> {
+  ): Promise<Player> {
     const overstatLinkObjectSuffix = overstatId
       ? `, overstat_id: "${overstatId}"`
       : "";
@@ -204,14 +204,30 @@ export abstract class DB {
           }
         ) {
           id  # Return the ID of the player, whether newly inserted or found
+          overstat_id
+          display_name
+          discord_id
+          elo
         }
       }
     `;
     const result: JSONValue = await this.customQuery(query);
-    const returnedData: { insert_players_one: { id: string } } = result as {
-      insert_players_one: { id: string };
+    const returnedData = result as {
+      insert_players_one: {
+        id: string;
+        display_name: string;
+        discord_id: string;
+        overstat_id: string | null;
+        elo: number | null;
+      };
     };
-    return returnedData.insert_players_one.id;
+    return {
+      id: returnedData.insert_players_one.id,
+      discordId: returnedData.insert_players_one.discord_id,
+      displayName: returnedData.insert_players_one.display_name,
+      overstatId: returnedData.insert_players_one.overstat_id ?? undefined,
+      elo: returnedData.insert_players_one.elo ?? undefined,
+    };
   }
 
   /*
