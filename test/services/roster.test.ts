@@ -33,7 +33,12 @@ describe("Rosters", () => {
   const zboy: { user: User; member: GuildMember; player: Player } = {
     user: { id: "0", displayName: "Zboy" } as User,
     member: { id: "0" } as GuildMember,
-    player: { discordId: "0", id: "1987254", displayName: "Zboy" },
+    player: {
+      discordId: "0",
+      id: "1987254",
+      displayName: "Zboy",
+      overstatId: "1234",
+    },
   };
   const theheuman: { user: User; member: GuildMember; player: Player } = {
     user: { id: "1", displayName: "TheHeuman" } as User,
@@ -367,6 +372,46 @@ describe("Rosters", () => {
 
       await expect(causeException).rejects.toThrow(
         "Player being replaced is not on this team",
+      );
+
+      expect(dbSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it("Should not replace teammate because new player does not have an overstat id", async () => {
+      jest
+        .spyOn(authService, "memberIsAdmin")
+        .mockReturnValueOnce(Promise.resolve(false));
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
+      const discordChannel = "034528";
+      const dudeCube: ScrimSignup = {
+        teamName: "Dude Cube",
+        players: [zboy.player, supreme, mikey],
+        signupId: "214",
+        signupPlayer: theheuman.player,
+        date: new Date(),
+      };
+      cache.clear();
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [dudeCube]);
+      const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
+
+      const causeException = async () => {
+        await rosters.replaceTeammate(
+          theheuman.member,
+          discordChannel,
+          dudeCube.teamName,
+          zboy.user,
+          theheuman.user,
+        );
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "New player has no overstat set",
       );
 
       expect(dbSpy).toHaveBeenCalledTimes(0);
