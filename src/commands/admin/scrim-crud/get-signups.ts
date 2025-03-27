@@ -134,9 +134,9 @@ export class GetSignupsCommand extends AdminCommand {
     waitList: ScrimSignup[],
   ): Promise<string> {
     const teamCsvStringConverter = (team: ScrimSignup) => {
-      return [team.teamName, ...team.players.map(this.getPlayerCsvFields)].join(
-        ",",
-      );
+      const teamNameColumn = `${team.teamName} ${this.formatPlayer(team.players[0])}`;
+      const playerColumns = team.players.map(this.getPlayerCsvFields);
+      return [teamNameColumn, ...playerColumns].join(",");
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
     const separator = "\n,,,\n";
@@ -148,7 +148,7 @@ export class GetSignupsCommand extends AdminCommand {
   }
 
   getPlayerCsvFields(player: Player) {
-    const requiredFields = `${player.displayName} <@${player.discordId}>`;
+    const requiredFields = `${player.displayName} ${this.formatPlayer(player)}`;
     let overstatField = "";
     if (player.overstatId) {
       overstatField = " " + getPlayerOverstatUrl(player.overstatId);
