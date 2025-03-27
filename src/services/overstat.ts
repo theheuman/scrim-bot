@@ -132,13 +132,13 @@ export class OverstatService {
   ): Promise<string> {
     const overstatId = this.getPlayerId(overstatLink);
 
-    const dbId = await this.db.insertPlayerIfNotExists(
+    const player = await this.db.insertPlayerIfNotExists(
       user.id,
       user.displayName,
       overstatId,
     );
 
-    return dbId;
+    return player.id;
   }
 
   async getPlayerOverstat(user: User) {

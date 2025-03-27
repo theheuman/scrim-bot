@@ -148,7 +148,7 @@ export class GetSignupsCommand extends AdminCommand {
   }
 
   getPlayerCsvFields(player: Player) {
-    const requiredFields = `${player.displayName} ${this.formatPlayer(player)}`;
+    const requiredFields = `${player.displayName} <@${player.discordId}>`;
     let overstatField = "";
     if (player.overstatId) {
       overstatField = " " + getPlayerOverstatUrl(player.overstatId);

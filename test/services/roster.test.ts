@@ -261,7 +261,7 @@ describe("Rosters", () => {
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest
         .spyOn(dbMock, "insertPlayerIfNotExists")
-        .mockReturnValue(Promise.resolve(zboy.player.id));
+        .mockReturnValue(Promise.resolve(zboy.player));
 
       let signups = cache.getSignups(scrim.id) ?? [];
       expect(signups[0]?.players[1].displayName).toEqual(
@@ -307,7 +307,7 @@ describe("Rosters", () => {
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest
         .spyOn(dbMock, "insertPlayerIfNotExists")
-        .mockReturnValue(Promise.resolve(zboy.player.id));
+        .mockReturnValue(Promise.resolve(zboy.player));
 
       const causeException = async () => {
         await rosters.replaceTeammate(
