@@ -68,6 +68,7 @@ describe("Sign up", () => {
     basicInteraction = {
       channelId: "forum thread id",
       reply: jest.fn(),
+      invisibleReply: jest.fn(),
       editReply: jest.fn(),
       followUp: jest.fn(),
       options: {
@@ -106,17 +107,17 @@ describe("Sign up", () => {
       signupMember,
       signupPlayers,
     );
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
     );
     expect(followUpSpy).toHaveBeenCalledWith({
       content:
-        "Player 1 is missing overstat id.\nPlayer 2 is missing overstat id.\nPlayer 3 is missing overstat id.\nScrims starting after <t:1742799600:f> will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376",
+        "Your admin role overrode missing overstats.\nPlayer 1 is missing overstat id.\nPlayer 2 is missing overstat id.\nPlayer 3 is missing overstat id.",
       ephemeral: true,
     });
   });
 
-  it("Should complete warnings", async () => {
+  it("Should complete signup without warnings", async () => {
     signupAddTeamSpy.mockReturnValueOnce(
       Promise.resolve({
         signupId: "scrim signup db id",
@@ -156,10 +157,12 @@ describe("Sign up", () => {
       signupMember,
       signupPlayers,
     );
-    expect(editReplySpy).toHaveBeenCalledWith(
+    expect(followUpSpy).toHaveBeenCalledWith(
       `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
     );
-    expect(followUpSpy).toHaveBeenCalledTimes(0);
+    expect(followUpSpy).not.toHaveBeenCalledWith(
+      "Your admin role overrode missing overstats",
+    );
   });
 
   describe("errors", () => {

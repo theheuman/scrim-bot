@@ -33,7 +33,7 @@ export class SignupCommand extends MemberCommand {
       );
       return;
     }
-    await interaction.reply("Fetched all input, working on request");
+    await interaction.invisibleReply("Fetched all input, working on request");
 
     let signup: ScrimSignup;
     try {
@@ -43,7 +43,7 @@ export class SignupCommand extends MemberCommand {
         signupPlayer,
         [player1, player2, player3],
       );
-      await interaction.editReply(
+      await interaction.followUp(
         `${teamName}\n<@${player1.id}>, <@${player2.id}>, <@${player3.id}>\nSigned up by <@${signupPlayer.id}>.\n${signup.signupId}`,
       );
     } catch (error) {
@@ -58,8 +58,6 @@ export class SignupCommand extends MemberCommand {
     players: Player[],
     interaction: CustomInteraction,
   ) {
-    const overstatRequiredDeadline = new Date(1742799600000);
-
     const warnings = [];
     for (const player of players) {
       if (!player.overstatId) {
@@ -68,7 +66,7 @@ export class SignupCommand extends MemberCommand {
     }
     if (warnings.length > 0) {
       await interaction.followUp({
-        content: `${warnings.join("\n")}\nScrims starting after ${this.formatDate(overstatRequiredDeadline)} will reject signups that include players without overstat id. Use the /link-overstat command in https://discord.com/channels/1043350338574495764/1341877592139104376`,
+        content: `Your admin role overrode missing overstats.\n${warnings.join("\n")}`,
         ephemeral: true,
       });
     }

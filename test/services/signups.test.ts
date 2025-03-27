@@ -280,16 +280,14 @@ describe("Signups", () => {
     });
 
     describe("Missing overstat id", () => {
-      const createScrim = (dateTime: Date) => {
+      beforeEach(() => {
         cache.createScrim("1", {
           id: "2",
           discordChannel: "1",
           active: true,
-          dateTime,
+          dateTime: new Date(),
         } as Scrim);
-      };
 
-      beforeEach(() => {
         insertPlayersSpy.mockReturnValueOnce(
           Promise.resolve([
             {
@@ -318,23 +316,7 @@ describe("Signups", () => {
           ]),
         );
       });
-
-      it("Should add a team because overstat required deadline not reached", async () => {
-        createScrim(new Date(174279960000));
-
-        const actualSignup = await signups.addTeam(
-          "1",
-          "Dude Cube",
-          supreme as unknown as GuildMember,
-          [theheuman, supreme, mikey],
-        );
-
-        expect(actualSignup).toBeDefined();
-      });
-
       it("Should add a team because signup member is an admin", async () => {
-        createScrim(new Date(174279960000));
-
         const actualSignup = await signups.addTeam(
           "1",
           "Dude Cube",
@@ -346,8 +328,6 @@ describe("Signups", () => {
       });
 
       it("Should not add a team because a player doesn't have an overstat id", async () => {
-        createScrim(new Date(17427996000000));
-
         const causeException = async () => {
           await signups.addTeam(
             "1",
