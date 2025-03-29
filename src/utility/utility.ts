@@ -28,8 +28,8 @@ export function getScrimInfoTimes(scrimDate: Date): {
   lowPrioDate.setTime(lowPrioDate.valueOf() - 1.5 * 60 * 60 * 1000);
 
   const draftDate = new Date(scrimDate.valueOf());
-  // 20 minutes before
-  draftDate.setTime(draftDate.valueOf() - 20 * 60 * 1000);
+  // 30 minutes before
+  draftDate.setTime(draftDate.valueOf() - 30 * 60 * 1000);
 
   return { lobbyPostDate, lowPrioDate, draftDate };
 }
