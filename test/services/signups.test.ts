@@ -17,6 +17,14 @@ import { OverstatServiceMock } from "../mocks/overstat.mock";
 import { DiscordService } from "../../src/services/discord";
 import { DiscordServiceMock } from "../mocks/discord-service.mock";
 
+jest.mock("../../src/config", () => {
+  return {
+    appConfig: {
+      lobbySize: 3,
+    },
+  };
+});
+
 describe("Signups", () => {
   let dbMock: DbMock;
   let cache: CacheService;
