@@ -43,7 +43,7 @@ export const commands: Command[] = [
 
   new ChangeTeamNameCommand(rosterService),
   new DropoutCommand(rosterService),
-  new SignupCommand(signupsService),
+  new SignupCommand(signupsService, prioService),
   new SubPlayerCommand(rosterService),
 
   new LinkOverstatCommand(authService, overstatService),

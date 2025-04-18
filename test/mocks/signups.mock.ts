@@ -1,4 +1,4 @@
-import { ScrimSignup } from "../../src/models/Scrims";
+import { Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { User } from "discord.js";
 
 export class ScrimSignupMock {
@@ -29,6 +29,11 @@ export class ScrimSignupMock {
   async closeScrim(discordChannelID: string) {
     console.log("Closing scrim in signup mock", discordChannelID);
     return Promise.resolve();
+  }
+
+  getScrim(discordChannelID: string): Scrim | undefined {
+    console.log("Getting scrim in signup mock", discordChannelID);
+    return undefined;
   }
 
   async addTeam(

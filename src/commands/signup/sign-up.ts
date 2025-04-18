@@ -4,9 +4,13 @@ import { ScrimSignups } from "../../services/signups";
 import { isGuildMember } from "../../utility/utility";
 import { ScrimSignup } from "../../models/Scrims";
 import { Player } from "../../models/Player";
+import { PrioService } from "../../services/prio";
 
 export class SignupCommand extends MemberCommand {
-  constructor(private signupService: ScrimSignups) {
+  constructor(
+    private signupService: ScrimSignups,
+    private prioService: PrioService,
+  ) {
     super("signup", "Creates a new scrim signup");
     this.addStringInput("teamname", "Team name", {
       isRequired: true,
@@ -52,6 +56,7 @@ export class SignupCommand extends MemberCommand {
     }
 
     await this.warnMissingOverstat(signup.players, interaction);
+    await this.warnPrioEntries(interaction, signup);
   }
 
   private async warnMissingOverstat(
@@ -67,6 +72,34 @@ export class SignupCommand extends MemberCommand {
     if (warnings.length > 0) {
       await interaction.followUp({
         content: `Your admin role overrode missing overstats.\n${warnings.join("\n")}`,
+        ephemeral: true,
+      });
+    }
+  }
+
+  private async warnPrioEntries(
+    interaction: CustomInteraction,
+    signup: ScrimSignup,
+  ) {
+    const scrim = this.signupService.getScrim(interaction.channelId);
+    if (!scrim) {
+      console.error(
+        "Unable to get applicable prio on a signup because there is no scrim for this channel",
+      );
+      return;
+    }
+    const scrimSignupsWithPrio = await this.prioService.getTeamPrioForScrim(
+      scrim,
+      [signup],
+      [],
+    );
+    const teamPrio = scrimSignupsWithPrio[0]?.prio;
+    if (teamPrio?.reasons) {
+      const prioMessage = `${teamPrio.reasons}\nTotal prio amount: ${teamPrio.amount}`;
+      await interaction.followUp({
+        content:
+          "This team has prio entries which will be in effect for the scrim.\n" +
+          prioMessage,
         ephemeral: true,
       });
     }

@@ -53,6 +53,10 @@ export class ScrimSignups {
     return scrimId;
   }
 
+  getScrim(discordChannelID: string): Scrim | undefined {
+    return this.cache.getScrim(discordChannelID);
+  }
+
   // this is a dynamic method that checks if scores have already been computed for a given discordChannel
   // if they have been computed it creates a new scrim entry in the db and computes stats for that one
   // this solves the problem of having multiple lobbies in one scrim.
