@@ -12,7 +12,9 @@ import { CustomInteraction } from "../../../src/commands/interaction";
 import { ScrimSignupMock } from "../../mocks/signups.mock";
 import { ScrimSignups } from "../../../src/services/signups";
 import { SignupCommand } from "../../../src/commands/signup/sign-up";
-import { ScrimSignup } from "../../../src/models/Scrims";
+import { Scrim, ScrimSignup } from "../../../src/models/Scrims";
+import { PrioServiceMock } from "../../mocks/prio.mock";
+import { PrioService } from "../../../src/services/prio";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -46,6 +48,7 @@ describe("Sign up", () => {
   } as GuildMember;
 
   const mockScrimSignups = new ScrimSignupMock();
+  const mockPrioService = new PrioServiceMock();
 
   const player1 = {
     displayName: "Player 1",
@@ -96,10 +99,13 @@ describe("Sign up", () => {
     editReplySpy.mockClear();
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
-    command = new SignupCommand(mockScrimSignups as unknown as ScrimSignups);
+    command = new SignupCommand(
+      mockScrimSignups as unknown as ScrimSignups,
+      mockPrioService as PrioService,
+    );
   });
 
-  it("Should complete signup but include warnings", async () => {
+  it("Should complete signup but include overstat warnings", async () => {
     await command.run(basicInteraction);
     expect(signupAddTeamSpy).toHaveBeenCalledWith(
       "forum thread id",
@@ -113,6 +119,32 @@ describe("Sign up", () => {
     expect(followUpSpy).toHaveBeenCalledWith({
       content:
         "Your admin role overrode missing overstats.\nPlayer 1 is missing overstat id.\nPlayer 2 is missing overstat id.\nPlayer 3 is missing overstat id.",
+      ephemeral: true,
+    });
+  });
+
+  it("Should complete signup but include prio warnings", async () => {
+    jest.spyOn(mockScrimSignups, "getScrim").mockReturnValueOnce({} as Scrim);
+    jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
+      Promise.resolve([
+        {
+          prio: { amount: -1, reasons: "TheHeuman: Broke rules;" },
+        } as ScrimSignup,
+      ]),
+    );
+    await command.run(basicInteraction);
+    expect(signupAddTeamSpy).toHaveBeenCalledWith(
+      "forum thread id",
+      "team name",
+      signupMember,
+      signupPlayers,
+    );
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
+    );
+    expect(followUpSpy).toHaveBeenCalledWith({
+      content:
+        "This team has prio entries which will be in effect for the scrim.\nTheHeuman: Broke rules;\nTotal prio amount: -1",
       ephemeral: true,
     });
   });
