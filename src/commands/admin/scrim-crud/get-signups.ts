@@ -7,6 +7,7 @@ import * as fs from "node:fs";
 import { StaticValueService } from "../../../services/static-values";
 import { Player } from "../../../models/Player";
 import { getPlayerOverstatUrl } from "../../../services/overstat";
+import { GetSignupsHelper } from "../../utility/get-signups";
 
 export class GetSignupsCommand extends AdminCommand {
   constructor(
@@ -26,18 +27,15 @@ export class GetSignupsCommand extends AdminCommand {
     // Discord only gives us 3 seconds to acknowledge an interaction before
     // the interaction gets voided and can't be used anymore.
     await interaction.editReply("Fetching teams, command in progress");
-    const scrimPassMemberIds: string[] =
-      await this.getScrimPassMemberIds(interaction);
+
     const channelId = interaction.channelId;
 
-    let channelSignups: { mainList: ScrimSignup[]; waitList: ScrimSignup[] };
-    try {
-      channelSignups = await this.signupService.getSignups(
-        channelId,
-        scrimPassMemberIds,
-      );
-    } catch (e) {
-      await interaction.editReply(`Could not fetch signups. ${e}`);
+    const channelSignups = await GetSignupsHelper.getSignupsForChannel(
+      this.signupService,
+      this.staticValueService,
+      interaction,
+    );
+    if (!channelSignups) {
       return;
     }
 
