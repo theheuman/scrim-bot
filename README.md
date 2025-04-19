@@ -1,4 +1,4 @@
-#  Void scrim bot
+#  VESA apex scrim bot
 A multipurpose bot to track scrim signups, low prio and player performance among other things
 
 ## Usage
