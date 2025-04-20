@@ -10,7 +10,7 @@ describe("Overstat", () => {
   let overstatService: OverstatService;
   let dbMock: DbMock;
   const overstatLink =
-    "https://overstat.gg/tournament/thevoidesports/9994.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard";
+    "https://overstat.gg/tournament/vesa/9994.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard";
 
   beforeEach(() => {
     dbMock = new DbMock();
@@ -46,7 +46,7 @@ describe("Overstat", () => {
       it("Should throw no tournament code error", async () => {
         const causeException = async () => {
           await overstatService.getOverallStats(
-            "https://overstat.gg/tournament/thevoidesports/.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard",
+            "https://overstat.gg/tournament/vesa/.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard",
           );
         };
         await expect(causeException).rejects.toThrow(
@@ -176,7 +176,7 @@ describe("Overstat", () => {
         );
       };
       await expect(causeException).rejects.toThrow(
-        "Not a link to a player profile",
+        "Not a link to a player overview",
       );
       expect(insertPlayerSpy).not.toHaveBeenCalled();
     });

@@ -14,7 +14,7 @@ export class LinkOverstatCommand extends MemberCommand {
     private authService: AuthService,
     private overstatService: OverstatService,
   ) {
-    super("link-overstat", "Links an overstat page to a player");
+    super("link-overstat", "Links an overstat overview url to a player");
     this.addStringInput(this.inputNames.overstat, "The overstat link", {
       isRequired: true,
     });

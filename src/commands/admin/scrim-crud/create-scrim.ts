@@ -28,7 +28,7 @@ export class CreateScrimCommand extends AdminCommand {
     super(
       authService,
       "create-scrim",
-      "Creates a new scrim, including a new text channel and signup instructions",
+      "Creates a new scrim, including a new forum post and signup instructions",
     );
     this.addDateInput(this.inputNames.date, "Choose date of the scrim. ", true);
     this.addChannelInput(this.inputNames.channel, "Forum to post in", {

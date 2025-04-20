@@ -1,6 +1,5 @@
 import { GuildMember, User } from "discord.js";
-import { ExpungedPlayerPrio } from "../../src/models/Prio";
-import { Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { ScrimSignup } from "../../src/models/Scrims";
 
 export class RosterServiceMock {
   async replaceTeammate(
@@ -9,7 +8,7 @@ export class RosterServiceMock {
     teamName: string,
     oldUser: User,
     newUser: User,
-  ): Promise<void> {
+  ): Promise<ScrimSignup> {
     console.log(
       "Replacing teammate",
       memberUsingCommand,
@@ -18,6 +17,7 @@ export class RosterServiceMock {
       oldUser,
       newUser,
     );
+    return {} as ScrimSignup;
   }
 
   async removeSignup(

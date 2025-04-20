@@ -12,7 +12,6 @@ import { LinkOverstatCommand } from "../../../src/commands/overstat/link-oversta
 import { OverstatService } from "../../../src/services/overstat";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { AuthService } from "../../../src/services/auth";
-import { DbMock } from "../../mocks/db.mock";
 
 describe("Link overstat", () => {
   let basicInteraction: CustomInteraction;

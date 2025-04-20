@@ -41,7 +41,7 @@ describe("Add admin role", () => {
       options: {
         getRole: () => ({
           id: "discord role id",
-          name: "Void Admin",
+          name: "VESA Admin",
         }),
       },
       editReply: jest.fn(),
@@ -61,7 +61,7 @@ describe("Add admin role", () => {
     addAdminRoleSpy.mockReturnValueOnce(Promise.resolve(["db id"]));
     await command.run(basicInteraction);
     expect(addAdminRoleSpy).toHaveBeenCalledWith([
-      { discordRoleId: "discord role id", roleName: "Void Admin" },
+      { discordRoleId: "discord role id", roleName: "VESA Admin" },
     ]);
     expect(followUpSpy).toHaveBeenCalledWith(
       "Scrim bot admin role <@&discord role id> added",

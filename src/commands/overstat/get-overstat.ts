@@ -12,7 +12,7 @@ export class GetOverstatCommand extends MemberCommand {
     private authService: AuthService,
     private overstatService: OverstatService,
   ) {
-    super("get-overstat", "Returns the overstat for a given player");
+    super("get-overstat", "Returns the overstat url for a given player");
     this.addUserInput("player", "@player", false);
   }
 
@@ -31,6 +31,7 @@ export class GetOverstatCommand extends MemberCommand {
         await interaction.editReply(
           "Admin permissions not found for this user. You may only run this command for yourself.",
         );
+        return;
       }
 
       const player = otherPlayer === null ? overstatUser : otherPlayer;

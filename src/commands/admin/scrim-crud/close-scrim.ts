@@ -11,7 +11,7 @@ export class CloseScrimCommand extends AdminCommand {
     super(
       authService,
       "close-scrim",
-      "Creates a new scrim signup text channel",
+      "Closes the scrim, deletes the channel and all signups for the scrim",
     );
   }
 

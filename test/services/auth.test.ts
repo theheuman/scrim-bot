@@ -36,7 +36,7 @@ describe("Auth", () => {
 
     it("Should return false when member does not have admin role", async () => {
       cacheService.setAdminRolesMap([
-        { discordRoleId: "admin role", roleName: "Void Admin" },
+        { discordRoleId: "admin role", roleName: "VESA Admin" },
       ]);
       const isAdmin = await service.memberIsAdmin(member);
       expect(isAdmin).toEqual(false);
@@ -50,13 +50,13 @@ describe("Auth", () => {
       member.roles.cache.push({ id: "admin role" });
       cacheService.setAdminRolesMap([]);
       await service.addAdminRoles([
-        { discordRoleId: "admin role", roleName: "Void Admin" },
+        { discordRoleId: "admin role", roleName: "VESA Admin" },
       ]);
       const isAdmin = await service.memberIsAdmin(member);
       expect(dbAddSpy).toHaveBeenCalledWith([
         {
           discordRoleId: "admin role",
-          roleName: "Void Admin",
+          roleName: "VESA Admin",
         },
       ]);
       expect(isAdmin).toEqual(true);
@@ -68,7 +68,7 @@ describe("Auth", () => {
       .spyOn(dbMock, "removeAdminRoles")
       .mockReturnValue(Promise.resolve(["db id"]));
     cacheService.setAdminRolesMap([
-      { discordRoleId: "admin role", roleName: "Void Admin" },
+      { discordRoleId: "admin role", roleName: "VESA Admin" },
     ]);
     const dbIds = await service.removeAdminRoles(["admin role"]);
     expect(dbRemoveSpy).toHaveBeenCalledWith(["admin role"]);

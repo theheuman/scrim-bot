@@ -39,7 +39,7 @@ export class OverstatService {
     }
     const pathParts = url.pathname.slice(1).split("/");
     if (pathParts[0] !== "player") {
-      throw Error("Not a link to a player profile");
+      throw Error("Not a link to a player overview");
     }
     const re = RegExp("[0-9]+", "g");
     const id = re.exec(pathParts[1]);

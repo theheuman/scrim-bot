@@ -961,7 +961,7 @@ describe("DB connection", () => {
             where: { id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } },
             _set: {
               skill: 1,
-              overstat_link: "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
+              overstat_link: "https://overstat.gg/tournament/vesa/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
             }
           ) {
            returning { id }
@@ -1020,7 +1020,7 @@ describe("DB connection", () => {
       };
       const returnedData = await nhostDb.computeScrim(
         "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-        "https://overstat.gg/tournament/thevoidesports/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
+        "https://overstat.gg/tournament/vesa/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
         1,
         [theHeumanPlayerStats],
       );
@@ -1169,13 +1169,13 @@ describe("DB connection", () => {
   it("Should add admin role", async () => {
     const voidAdminRole = {
       discordRoleId: "1060737998423072778",
-      roleName: "The Void Admin",
+      roleName: "VESA Admin",
     };
 
     mockRequest = (query) => {
       const expected = `
       mutation {
-        insert_scrim_admin_roles(objects: [{ discord_role_id: "1060737998423072778", role_name: "The Void Admin" }]) {
+        insert_scrim_admin_roles(objects: [{ discord_role_id: "1060737998423072778", role_name: "VESA Admin" }]) {
           returning {
             id
           }
@@ -1216,7 +1216,7 @@ describe("DB connection", () => {
           scrim_admin_roles: [
             {
               discord_role_id: "1060737998423072778",
-              role_name: "The Void Admin",
+              role_name: "VESA Admin",
             },
           ],
         },
@@ -1226,7 +1226,7 @@ describe("DB connection", () => {
     expect(adminRoles).toEqual([
       {
         discordRoleId: "1060737998423072778",
-        roleName: "The Void Admin",
+        roleName: "VESA Admin",
       },
     ]);
     expect.assertions(2);
