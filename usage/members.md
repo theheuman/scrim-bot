@@ -52,8 +52,19 @@ Will only work if you are a player on the team or signed up the team that you ar
 
 Fill out the required fields: team name, old player, new player
 
+## /current-position
+Gets the current priority position of your team for this scrim
+
+![current position example image](/usage/assets/current-position.png)
+
+![success image](/usage/assets/current-position-success.png)
+
+Can only be used in a scrim signup post created by the bot
+
+Will work if you are a player on the team or signed up the team
+
 ## /link-overstat
-Links an overstat to your discord account
+Links an overstat overview url to your discord account so we can gauge your skill level
 
 ![link overstat example image](/usage/assets/link-overstat.png)
 

@@ -10,10 +10,9 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { RosterServiceMock } from "../../mocks/roster.mock";
 import { RosterService } from "../../../src/services/rosters";
-import { ChangeTeamNameCommand } from "../../../src/commands/signup/change-team-name";
 import { DropoutCommand } from "../../../src/commands/signup/droput-scrims";
 
-describe("Change team name", () => {
+describe("Drop out name", () => {
   let basicInteraction: CustomInteraction;
   let member: GuildMember;
   let replySpy: SpyInstance<

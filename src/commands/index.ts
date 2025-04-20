@@ -23,6 +23,7 @@ import {
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
+import { CurrentPositionCommand } from "./signup/current-position";
 
 export const commands: Command[] = [
   // test commands
@@ -45,6 +46,7 @@ export const commands: Command[] = [
   new DropoutCommand(rosterService),
   new SignupCommand(signupsService, prioService),
   new SubPlayerCommand(rosterService),
+  new CurrentPositionCommand(signupsService, staticValueService),
 
   new LinkOverstatCommand(authService, overstatService),
   new GetOverstatCommand(authService, overstatService),
