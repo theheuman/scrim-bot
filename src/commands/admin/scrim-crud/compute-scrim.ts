@@ -8,11 +8,7 @@ export class ComputeScrimCommand extends AdminCommand {
     authService: AuthService,
     private signupService: ScrimSignups,
   ) {
-    super(
-      authService,
-      "compute-scrim",
-      "Creates a new scrim signup text channel",
-    );
+    super(authService, "compute-scrim", "Computes stats for this scrim");
     this.addStringInput(
       "overstat-link",
       "Full length url of the completed scrim (not short url)",

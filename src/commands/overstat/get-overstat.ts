@@ -12,7 +12,7 @@ export class GetOverstatCommand extends MemberCommand {
     private authService: AuthService,
     private overstatService: OverstatService,
   ) {
-    super("get-overstat", "Returns the overstat for a given player");
+    super("get-overstat", "Returns the overstat url for a given player");
     this.addUserInput("player", "@player", false);
   }
 

@@ -15,11 +15,7 @@ export class GetSignupsCommand extends AdminCommand {
     private signupService: ScrimSignups,
     private staticValueService: StaticValueService,
   ) {
-    super(
-      authService,
-      "get-signups",
-      "Creates a new scrim signup text channel",
-    );
+    super(authService, "get-signups", "Gets signups for this scrim");
   }
 
   async run(interaction: CustomInteraction) {
