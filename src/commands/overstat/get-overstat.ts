@@ -31,6 +31,7 @@ export class GetOverstatCommand extends MemberCommand {
         await interaction.editReply(
           "Admin permissions not found for this user. You may only run this command for yourself.",
         );
+        return;
       }
 
       const player = otherPlayer === null ? overstatUser : otherPlayer;

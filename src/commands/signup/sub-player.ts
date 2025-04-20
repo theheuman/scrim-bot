@@ -41,7 +41,7 @@ export class SubPlayerCommand extends MemberCommand {
     await interaction.reply("Fetched all input and working on your request!");
 
     try {
-      await this.rosterService.replaceTeammate(
+      const team = await this.rosterService.replaceTeammate(
         interaction.member,
         interaction.channelId,
         teamName,
@@ -49,7 +49,8 @@ export class SubPlayerCommand extends MemberCommand {
         playerToAdd,
       );
       await interaction.editReply(
-        `Sub made. <@${playerToRemove.id}> replaced by <@${playerToAdd.id}>.`,
+        `Sub made. <@${playerToRemove.id}> replaced by <@${playerToAdd.id}>.\n` +
+          `Roster: ${team.players.map((player) => this.formatPlayer(player)).join(", ")}`,
       );
     } catch (error) {
       await interaction.editReply("Sub not made. " + error);

@@ -19,7 +19,7 @@ export class RosterService {
     teamName: string,
     oldUser: User,
     newUser: User,
-  ): Promise<void> {
+  ): Promise<ScrimSignup> {
     const { teamToBeChanged, scrimId, signups, isAdmin } =
       await this.getDataIfAuthorized(
         memberUsingCommand,
@@ -63,6 +63,7 @@ export class RosterService {
       discordId: newUser.id as string,
       displayName: newUser.displayName,
     };
+    return teamToBeChanged;
   }
 
   async removeSignup(

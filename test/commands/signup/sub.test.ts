@@ -12,6 +12,8 @@ import { CustomInteraction } from "../../../src/commands/interaction";
 import { SubPlayerCommand } from "../../../src/commands/signup/sub-player";
 import { RosterServiceMock } from "../../mocks/roster.mock";
 import { RosterService } from "../../../src/services/rosters";
+import { ScrimSignup } from "../../../src/models/Scrims";
+import { Player } from "../../../src/models/Player";
 
 describe("Sub player", () => {
   let basicInteraction: CustomInteraction;
@@ -27,7 +29,7 @@ describe("Sub player", () => {
     string
   >;
   let replaceTeammateSpy: SpyInstance<
-    Promise<void>,
+    Promise<ScrimSignup>,
     [
       member: GuildMember,
       channelId: string,
@@ -78,9 +80,19 @@ describe("Sub player", () => {
     replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     replaceTeammateSpy = jest.spyOn(mockRosterService, "replaceTeammate");
-    replaceTeammateSpy.mockImplementation(() => {
-      return Promise.resolve();
-    });
+    replaceTeammateSpy.mockReturnValue(
+      Promise.resolve({
+        teamName: "team name",
+        players: [
+          { discordId: "unchangedPlayer1" },
+          { discordId: "unchangedPlayer2" },
+          { discordId: "player2id" },
+        ] as Player[],
+        signupPlayer: player1 as unknown as Player,
+        signupId: "",
+        date: new Date(),
+      }),
+    );
   });
 
   beforeEach(() => {
@@ -102,7 +114,8 @@ describe("Sub player", () => {
       player2,
     );
     expect(editReplySpy).toHaveBeenCalledWith(
-      `Sub made. <@player1id> replaced by <@player2id>.`,
+      `Sub made. <@player1id> replaced by <@player2id>\n.` +
+        `Roster: <@unchangedPlayer1>, <@unchangedPlayer2>, <@player2id>`,
     );
   });
 
