@@ -176,7 +176,7 @@ describe("Overstat", () => {
         );
       };
       await expect(causeException).rejects.toThrow(
-        "Not a link to a player profile",
+        "Not a link to a player overview",
       );
       expect(insertPlayerSpy).not.toHaveBeenCalled();
     });
