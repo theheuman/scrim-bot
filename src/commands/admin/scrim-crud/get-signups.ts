@@ -62,40 +62,6 @@ export class GetSignupsCommand extends AdminCommand {
     }
   }
 
-  async getScrimPassMemberIds(
-    interaction: CustomInteraction,
-  ): Promise<string[]> {
-    const scrimPassRoleId = await this.staticValueService.getScrimPassRoleId();
-    let scrimPassMemberIds: string[] = [];
-    if (scrimPassRoleId) {
-      const scrimPassRole = await interaction.guild?.roles.fetch(
-        scrimPassRoleId,
-        {
-          cache: true,
-          force: true,
-        },
-      );
-      if (scrimPassRole) {
-        scrimPassMemberIds = [...scrimPassRole.members].map(
-          (collectionItem) => collectionItem[0],
-        );
-      } else {
-        console.error(
-          "Can't fetch scrim pass role members from discord for: guild, role id",
-          interaction.guild,
-          scrimPassRoleId,
-        );
-        await interaction.editReply(
-          "Can't fetch scrim pass role members from discord",
-        );
-      }
-    } else {
-      console.error("Unable to get scrim pass role id from db");
-      await interaction.editReply("Unable to get scrim pass role id from db");
-    }
-    return scrimPassMemberIds;
-  }
-
   // Break long strings into chunks for discord
   async replyWithString(interaction: CustomInteraction, replyString: string) {
     let stringToReplyWith = replyString;

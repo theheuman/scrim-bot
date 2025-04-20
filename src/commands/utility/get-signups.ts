@@ -8,7 +8,7 @@ export class GetSignupsHelper {
     signupsService: ScrimSignups,
     staticValueService: StaticValueService,
     interaction: CustomInteraction,
-  ) {
+  ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] } | undefined> {
     const scrimPassMemberIds: string[] =
       await GetSignupsHelper.getScrimPassMemberIds(
         staticValueService,
