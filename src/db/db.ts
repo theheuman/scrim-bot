@@ -436,7 +436,31 @@ export abstract class DB {
     );
   }
 
+  async addBans(
+    playerIds: string[],
+    startDate: Date,
+    endDate: Date,
+    reason: string,
+  ): Promise<string[]> {
+    return this.post(
+      DbTable.scrimBans,
+      playerIds.map((playerId) => ({
+        player_id: playerId,
+        start_date: startDate,
+        end_date: endDate,
+        reason,
+      })),
+    );
+  }
+
   abstract expungePrio(prioIds: string[]): Promise<ExpungedPlayerPrio[]>;
+  abstract expungeBans(banIds: string[]): Promise<
+    {
+      playerDiscordId: string;
+      playerDisplayName: string;
+      endDate: Date;
+    }[]
+  >;
 
   async getPrio(
     date: Date,
@@ -466,6 +490,44 @@ export abstract class DB {
       id: player.id as string,
       discordId: player.discord_id as string,
       amount: amount as number,
+      reason: reason as string,
+    }));
+  }
+
+  async getBans(
+    date: Date,
+    players: Player[],
+  ): Promise<{ id: string; name: string; reason: string }[]> {
+    const dbData = await this.get(
+      DbTable.scrimBans,
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "start_date",
+            comparator: "lte",
+            value: date,
+          },
+          {
+            fieldName: "end_date",
+            comparator: "gte",
+            value: date,
+          },
+          {
+            operator: "or",
+            expressions: players.map((player) => ({
+              fieldName: "player_id",
+              comparator: "eq",
+              value: player.id,
+            })),
+          },
+        ],
+      },
+      [{ player: ["name", "id"] }, "reason"],
+    );
+    return dbData.map(({ player, reason }) => ({
+      id: player.id as string,
+      name: player.name as string,
       reason: reason as string,
     }));
   }

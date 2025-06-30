@@ -21,7 +21,9 @@ export class BanService {
 
   async expungeBans(
     banIds: string[],
-  ): Promise<{ id: string; name: string; endDate: Date }[]> {
+  ): Promise<
+    { playerDiscordId: string; playerDisplayName: string; endDate: Date }[]
+  > {
     return await this.db.expungeBans(banIds);
   }
 
@@ -29,8 +31,7 @@ export class BanService {
     scrim: Scrim,
     team: ScrimSignup,
   ): Promise<{ hasBan: boolean; reason: string }> {
-    const playersBanned: { name: string; reason: string }[] =
-      await this.db.getBans(scrim.dateTime, team.players);
+    const playersBanned = await this.db.getBans(scrim.dateTime, team.players);
     if (playersBanned.length > 0) {
       return {
         hasBan: true,

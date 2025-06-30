@@ -22,7 +22,9 @@ export class BanServiceMock {
 
   async expungeBans(
     banIds: string[],
-  ): Promise<{ id: string; name: string; endDate: Date }[]> {
+  ): Promise<
+    { playerDiscordId: string; playerDisplayName: string; endDate: Date }[]
+  > {
     console.log("Expunging bans in ban mock", banIds);
     return [];
   }

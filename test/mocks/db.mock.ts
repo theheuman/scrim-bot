@@ -97,7 +97,7 @@ export class DbMock extends DB {
 
   delete<K extends string>(
     tableName: string,
-    logicalEpression: LogicalExpression,
+    logicalExpression: LogicalExpression,
     fieldsToReturn: K[],
   ): Promise<Array<Record<K, DbValue>>> {
     return Promise.resolve([{ id: "" }] as unknown as Array<
@@ -167,6 +167,12 @@ export class DbMock extends DB {
   }
 
   async expungePrio() {
+    return Promise.resolve([]);
+  }
+
+  expungeBans(): Promise<
+    { playerDiscordId: string; playerDisplayName: string; endDate: Date }[]
+  > {
     return Promise.resolve([]);
   }
 }

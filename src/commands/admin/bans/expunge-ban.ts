@@ -40,7 +40,7 @@ export class ExpungeBanCommand extends AdminCommand {
       const expungedBans = await this.banService.expungeBans(bans);
       const expungeMessageArray = expungedBans.map(
         (ban) =>
-          `Expunged ban on player <@${ban.id}> (${ban.name}) that was set to end on ${this.formatDate(ban.endDate)}`,
+          `Expunged ban on player <@${ban.playerDiscordId}> (${ban.playerDisplayName}) that was set to end on ${this.formatDate(ban.endDate)}`,
       );
       await interaction.deleteReply();
       await interaction.followUp(expungeMessageArray.join("\n"));
