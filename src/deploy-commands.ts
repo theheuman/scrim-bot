@@ -1,5 +1,5 @@
 import { REST, Routes } from "discord.js";
-import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from "../node_modules/@discordjs/builders/node_modules/discord-api-types/rest/v10/interactions.d.ts";
+import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from "../node_modules/discord-api-types/rest/v10/interactions.d.ts";
 
 import { commands } from "./commands";
 import { appConfig } from "./config";
