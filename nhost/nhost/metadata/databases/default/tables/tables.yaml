@@ -11,6 +11,7 @@
 - "!include public_players.yaml"
 - "!include public_prio.yaml"
 - "!include public_scrim_admin_roles.yaml"
+- "!include public_scrim_bans.yaml"
 - "!include public_scrim_player_stats.yaml"
 - "!include public_scrim_signups.yaml"
 - "!include public_scrims.yaml"

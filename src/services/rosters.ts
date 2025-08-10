@@ -1,9 +1,10 @@
 import { GuildMember, User } from "discord.js";
 import { DB } from "../db/db";
 import { CacheService } from "./cache";
-import { ScrimSignup } from "../models/Scrims";
+import { Scrim, ScrimSignup } from "../models/Scrims";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
+import { BanService } from "./ban";
 
 export class RosterService {
   constructor(
@@ -11,6 +12,7 @@ export class RosterService {
     private cache: CacheService,
     private authService: AuthService,
     private discordService: DiscordService,
+    private banService: BanService,
   ) {}
 
   async replaceTeammate(
@@ -20,7 +22,7 @@ export class RosterService {
     oldUser: User,
     newUser: User,
   ): Promise<ScrimSignup> {
-    const { teamToBeChanged, scrimId, signups, isAdmin } =
+    const { teamToBeChanged, scrim, signups, isAdmin } =
       await this.getDataIfAuthorized(
         memberUsingCommand,
         discordChannel,
@@ -49,11 +51,15 @@ export class RosterService {
       newUser.id as string,
       newUser.displayName,
     );
+    const ban = await this.banService.teamHasBan(scrim, [newPlayer]);
+    if (ban.hasBan) {
+      throw Error("New player is scrim banned. " + ban.reason);
+    }
     if (!newPlayer.overstatId && !isAdmin) {
       throw Error("New player has no overstat set");
     }
     await this.db.replaceTeammateNoAuth(
-      scrimId,
+      scrim.id,
       teamName,
       oldPlayerId,
       newPlayer.id,
@@ -71,13 +77,12 @@ export class RosterService {
     discordChannel: string,
     teamName: string,
   ): Promise<void> {
-    const { teamToBeChanged, signups, scrimId } =
-      await this.getDataIfAuthorized(
-        memberUsingCommand,
-        discordChannel,
-        teamName,
-      );
-    await this.db.removeScrimSignup(teamToBeChanged.teamName, scrimId);
+    const { teamToBeChanged, signups, scrim } = await this.getDataIfAuthorized(
+      memberUsingCommand,
+      discordChannel,
+      teamName,
+    );
+    await this.db.removeScrimSignup(teamToBeChanged.teamName, scrim.id);
     signups.splice(signups.indexOf(teamToBeChanged), 1);
     this.updateScrimSignupCount(discordChannel);
   }
@@ -88,19 +93,18 @@ export class RosterService {
     oldTeamName: string,
     newTeamName: string,
   ): Promise<void> {
-    const { teamToBeChanged, scrimId, signups } =
-      await this.getDataIfAuthorized(
-        memberUsingCommand,
-        discordChannel,
-        oldTeamName,
-      );
+    const { teamToBeChanged, scrim, signups } = await this.getDataIfAuthorized(
+      memberUsingCommand,
+      discordChannel,
+      oldTeamName,
+    );
     for (const team of signups) {
       if (team.teamName === newTeamName) {
         throw Error("Team name already taken in this scrim set");
       }
     }
     await this.db.changeTeamNameNoAuth(
-      scrimId,
+      scrim.id,
       teamToBeChanged.teamName,
       newTeamName,
     );
@@ -112,18 +116,18 @@ export class RosterService {
     discordChannel: string,
     teamName: string,
   ): Promise<{
-    scrimId: string;
+    scrim: Scrim;
     signups: ScrimSignup[];
     teamToBeChanged: ScrimSignup;
     isAdmin: boolean;
   }> {
-    const scrimId = this.cache.getScrim(discordChannel)?.id;
-    if (!scrimId) {
+    const scrim = this.cache.getScrim(discordChannel);
+    if (!scrim) {
       throw Error(
-        "No scrim id matching that scrim channel present, contact admin",
+        "No scrim matching that scrim channel present, contact admin",
       );
     }
-    const signups = this.cache.getSignups(scrimId);
+    const signups = this.cache.getSignups(scrim.id);
     if (!signups) {
       throw Error("No teams signed up for this scrim");
     }
@@ -136,7 +140,7 @@ export class RosterService {
     if (!isOnTeam && !isAdmin) {
       throw Error("User issuing command not authorized to make changes");
     }
-    return { scrimId, signups, teamToBeChanged, isAdmin };
+    return { scrim, signups, teamToBeChanged, isAdmin };
   }
 
   private memberIsOnTeam(member: GuildMember, team: ScrimSignup): boolean {

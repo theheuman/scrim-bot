@@ -1,0 +1,7 @@
+table:
+  name: scrim_bans
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: player_id

@@ -1,15 +1,14 @@
 import { AdminCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
-import { PrioService } from "../../../services/prio";
+import { BanService } from "../../../services/ban";
 import { setEasternHours } from "../../../utility/time";
 import { AuthService } from "../../../services/auth";
 
-export class AddPrioCommand extends AdminCommand {
+export class ScrimBanCommand extends AdminCommand {
   inputNames = {
     user1: "user1",
     user2: "user2",
     user3: "user3",
-    amount: "amount",
     reason: "reason",
     startDate: "startdate",
     endDate: "enddate",
@@ -17,18 +16,13 @@ export class AddPrioCommand extends AdminCommand {
 
   constructor(
     authService: AuthService,
-    private prioService: PrioService,
+    private banService: BanService,
   ) {
-    super(authService, "add-prio", "Adds a prio entry for up to three players");
+    super(authService, "scrim-ban", "Adds a ban entry for up to three players");
 
     this.addUserInput(this.inputNames.user1, "First user", true);
     this.addDateInput(this.inputNames.endDate, "End date", true);
-    this.addNumberInput(
-      this.inputNames.amount,
-      "Amount of prio, negative for low prio",
-      true,
-    );
-    this.addStringInput(this.inputNames.reason, "Reason for prio", {
+    this.addStringInput(this.inputNames.reason, "Reason for ban", {
       isRequired: true,
     });
     this.addUserInput(this.inputNames.user2, "Second user");
@@ -43,7 +37,6 @@ export class AddPrioCommand extends AdminCommand {
     const user1 = interaction.options.getUser(this.inputNames.user1, true);
     const user2 = interaction.options.getUser(this.inputNames.user2);
     const user3 = interaction.options.getUser(this.inputNames.user3);
-    const amount = interaction.options.getNumber(this.inputNames.amount, true);
     const reason = interaction.options.getString(this.inputNames.reason, true);
     const startDate =
       interaction.options.getDateTime(this.inputNames.startDate) ?? new Date();
@@ -62,24 +55,18 @@ export class AddPrioCommand extends AdminCommand {
     const users = [user1, user2, user3].filter((user) => !!user);
     let dbIds: string[];
     try {
-      dbIds = await this.prioService.setPlayerPrio(
-        users,
-        startDate,
-        endDate,
-        amount,
-        reason,
-      );
+      dbIds = await this.banService.addBans(users, startDate, endDate, reason);
     } catch (e) {
-      await interaction.editReply("Error while executing set prio: " + e);
+      await interaction.editReply("Error while executing scrim ban: " + e);
       return;
     }
 
-    const prioIdString = dbIds
-      .map((dbId, index) => `<@${users[index]?.id}> prio id: ${dbId}`)
+    const banIdString = dbIds
+      .map((dbId, index) => `<@${users[index]?.id}> ban id: ${dbId}`)
       .join("\n");
     await interaction.deleteReply();
     await interaction.followUp(
-      `Added ${amount} prio to ${users.length} player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${prioIdString}\nAdded by <@${interaction.user.id}>`,
+      `Scrim banned the following player${users.length === 1 ? "" : "s"} from ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\nReason: ${reason}.\nID's:\n${banIdString}\nAdded by <@${interaction.user.id}>`,
     );
   }
 }
