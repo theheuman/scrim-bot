@@ -27,6 +27,7 @@ export const signupsService = new ScrimSignups(
   prioService,
   authService,
   discordService,
+  banService,
 );
 export const rosterService = new RosterService(
   nhostDb,

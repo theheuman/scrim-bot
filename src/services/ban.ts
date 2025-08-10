@@ -1,7 +1,8 @@
 import { DB } from "../db/db";
 import { User } from "discord.js";
 import { CacheService } from "./cache";
-import { Scrim, ScrimSignup } from "../models/Scrims";
+import { Scrim } from "../models/Scrims";
+import { Player } from "../models/Player";
 
 export class BanService {
   constructor(
@@ -29,9 +30,9 @@ export class BanService {
 
   async teamHasBan(
     scrim: Scrim,
-    team: ScrimSignup,
+    players: Player[],
   ): Promise<{ hasBan: boolean; reason: string }> {
-    const playersBanned = await this.db.getBans(scrim.dateTime, team.players);
+    const playersBanned = await this.db.getBans(scrim.dateTime, players);
     if (playersBanned.length > 0) {
       return {
         hasBan: true,

@@ -1,5 +1,6 @@
 import { User } from "discord.js";
 import { Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { Player } from "../../src/models/Player";
 
 export class BanServiceMock {
   constructor() {}
@@ -31,9 +32,9 @@ export class BanServiceMock {
 
   async teamHasBan(
     scrim: Scrim,
-    team: ScrimSignup,
+    players: Player[],
   ): Promise<{ hasBan: boolean; reason: string }> {
-    console.log("Getting team has ban in ban mock", scrim, team);
+    console.log("Getting team has ban in ban mock", scrim, players);
     return { hasBan: false, reason: "" };
   }
 }

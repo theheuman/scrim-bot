@@ -523,11 +523,11 @@ export abstract class DB {
           },
         ],
       },
-      [{ player: ["name", "id"] }, "reason"],
+      [{ player: ["display_name", "id"] }, "reason"],
     );
     return dbData.map(({ player, reason }) => ({
       id: player.id as string,
-      name: player.name as string,
+      name: player.display_name as string,
       reason: reason as string,
     }));
   }

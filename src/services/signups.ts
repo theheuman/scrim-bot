@@ -9,6 +9,7 @@ import { PrioService } from "./prio";
 import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
+import { BanService } from "./ban";
 
 export class ScrimSignups {
   constructor(
@@ -18,6 +19,7 @@ export class ScrimSignups {
     private prioService: PrioService,
     private authService: AuthService,
     private discordService: DiscordService,
+    private banService: BanService,
   ) {
     this.updateActiveScrims();
   }
@@ -149,6 +151,7 @@ export class ScrimSignups {
       }),
     );
     const insertedPlayers = await this.db.insertPlayers(convertedPlayers);
+    await this.checkForBans(scrim, insertedPlayers.slice(1));
     await this.checkForMissingOverstat(insertedPlayers.slice(1), commandUser);
     const signupDate = new Date();
     const signupId = await this.db.addScrimSignup(
@@ -186,6 +189,13 @@ export class ScrimSignups {
           `No overstat linked for ${player.displayName}. Use /link-overstat in https://discord.com/channels/1043350338574495764/1341877592139104376. Don't have an overstat? Create a https://discord.com/channels/1043350338574495764/1335824833757450263 and let an admin know your signup information so they can complete it for you`,
         );
       }
+    }
+  }
+
+  private async checkForBans(scrim: Scrim, players: Player[]) {
+    const ban = await this.banService.teamHasBan(scrim, players);
+    if (ban.hasBan) {
+      throw Error(`One or more players are scrim banned. ${ban.reason}`);
     }
   }
 
