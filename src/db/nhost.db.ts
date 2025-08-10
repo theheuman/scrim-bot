@@ -517,6 +517,49 @@ class NhostDb extends DB {
     }));
   }
 
+  async expungeBans(banIds: string[]): Promise<
+    {
+      playerDiscordId: string;
+      playerDisplayName: string;
+      endDate: Date;
+    }[]
+  > {
+    const banIdLogicalExpression: LogicalExpression = {
+      operator: "or",
+      expressions: banIds.map((id) => ({
+        fieldName: "id",
+        comparator: "eq",
+        value: id,
+      })),
+    };
+    const query = `
+      mutation {
+        delete_scrim_bans(${this.generateWhereClause(banIdLogicalExpression)}) {
+          returning {
+            player {
+              discord_id
+              display_name
+            }
+            end_date
+          }
+        }
+      }
+    `;
+    const deletedEntries = (await this.customQuery(query)) as unknown as {
+      delete_scrim_bans: {
+        returning: {
+          player: { discord_id: string; display_name: string };
+          end_date: string;
+        }[];
+      };
+    };
+    return deletedEntries.delete_scrim_bans.returning.map((entry) => ({
+      playerDiscordId: entry.player.discord_id,
+      playerDisplayName: entry.player.display_name,
+      endDate: new Date(entry.end_date),
+    }));
+  }
+
   async customQuery(query: string): Promise<JSONValue> {
     const result: {
       data: JSONValue | null;

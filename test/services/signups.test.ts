@@ -16,6 +16,8 @@ import { AuthService } from "../../src/services/auth";
 import { OverstatServiceMock } from "../mocks/overstat.mock";
 import { DiscordService } from "../../src/services/discord";
 import { DiscordServiceMock } from "../mocks/discord-service.mock";
+import { BanService } from "../../src/services/ban";
+import { BanServiceMock } from "../mocks/ban.mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -32,6 +34,7 @@ describe("Signups", () => {
   let prioServiceMock: PrioServiceMock;
   let overstatService: OverstatServiceMock;
   let authServiceMock: AuthMock;
+  let mockBanService: BanService;
 
   let insertPlayersSpy: SpyInstance;
 
@@ -40,6 +43,7 @@ describe("Signups", () => {
     cache = new CacheService();
     overstatService = new OverstatServiceMock();
     prioServiceMock = new PrioServiceMock();
+    mockBanService = new BanServiceMock() as BanService;
 
     authServiceMock = new AuthMock();
     signups = new ScrimSignups(
@@ -49,6 +53,7 @@ describe("Signups", () => {
       prioServiceMock as PrioService,
       authServiceMock as AuthService,
       new DiscordServiceMock() as DiscordService,
+      mockBanService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -347,6 +352,28 @@ describe("Signups", () => {
 
         await expect(causeException).rejects.toThrow(
           "No overstat linked for TheHeuman",
+        );
+      });
+
+      it("Should not add a team because a player is scrim banned", async () => {
+        const causeException = async () => {
+          await signups.addTeam(
+            "1",
+            "Dude Cube",
+            supreme as unknown as GuildMember,
+            [theheuman, supreme, mikey],
+          );
+        };
+
+        jest.spyOn(mockBanService, "teamHasBan").mockReturnValue(
+          Promise.resolve({
+            hasBan: true,
+            reason: "Supreme: A valid reason for scrim ban",
+          }),
+        );
+
+        await expect(causeException).rejects.toThrow(
+          "One or more players are scrim banned. Supreme: A valid reason for scrim ban",
         );
       });
     });

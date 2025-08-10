@@ -15,7 +15,7 @@ export type Expression = {
 };
 export type CompoundExpression = {
   operator: Operator;
-  expressions: Expression[] | CompoundExpression[];
+  expressions: (Expression | CompoundExpression)[];
 };
 export type LogicalExpression = CompoundExpression | Expression;
 
@@ -26,6 +26,7 @@ export enum DbTable {
   scrimPlayerStats = "scrim_player_stats",
   scrimSignups = "scrim_signups",
   prio = "prio",
+  scrimBans = "scrim_bans",
   staticKeyValues = "static_key_value",
 }
 
