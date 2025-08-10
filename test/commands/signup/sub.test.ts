@@ -115,7 +115,7 @@ describe("Sub player", () => {
     );
     expect(editReplySpy).toHaveBeenCalledWith(
       `Sub made. <@player1id> replaced by <@player2id>.\n` +
-        `Roster: <@unchangedPlayer1>, <@unchangedPlayer2>, <@player2id>`,
+        `__team name__ new roster: <@unchangedPlayer1>, <@unchangedPlayer2>, <@player2id>`,
     );
   });
 

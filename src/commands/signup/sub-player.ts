@@ -50,7 +50,7 @@ export class SubPlayerCommand extends MemberCommand {
       );
       await interaction.editReply(
         `Sub made. <@${playerToRemove.id}> replaced by <@${playerToAdd.id}>.\n` +
-          `Roster: ${team.players.map((player) => this.formatPlayer(player)).join(", ")}`,
+          `__${teamName}__ new roster: ${team.players.map((player) => this.formatPlayer(player)).join(", ")}`,
       );
     } catch (error) {
       await interaction.editReply("Sub not made. " + error);
