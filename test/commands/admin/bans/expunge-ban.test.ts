@@ -109,11 +109,11 @@ describe("Expunge ban", () => {
     expect(followUpSpy).toHaveBeenCalledWith(
       `Expunged ban on player <@discordid> (TheHeuman) that was set to end on <t:1734134400:f>\nExpunged ban on player <@discordid2> (Oalios) that was set to end on <t:1734134400:f>\nExpunged ban on player <@discordid3> (Stinkerson) that was set to end on <t:1734134400:f>`,
     );
-    // if this is failing, and you haven't changed the amount of assertions take a look a little higher in the log to see if the setPlayerPrioSpy was called with differing values
+    // if this is failing, and you haven't changed the amount of assertions take a look a little higher in the log to see if the expungeBanSpy was called with differing values
     expect.assertions(2);
   });
 
-  it("Should expunge prio for one user", async () => {
+  it("Should expunge ban for one user", async () => {
     const endDate = new Date("2024-12-14");
     expungeBanSpy.mockReturnValueOnce(
       Promise.resolve([
