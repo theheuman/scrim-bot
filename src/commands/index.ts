@@ -20,10 +20,13 @@ import {
   rosterService,
   signupsService,
   staticValueService,
+  banService,
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
 import { CurrentPositionCommand } from "./signup/current-position";
+import { ScrimBanCommand } from "./admin/bans/scrim-ban";
+import { ExpungeBanCommand } from "./admin/bans/expunge-ban";
 
 export const commands: Command[] = [
   // test commands
@@ -33,6 +36,9 @@ export const commands: Command[] = [
   // custom commands
   new AddPrioCommand(authService, prioService),
   new ExpungePrioCommand(authService, prioService),
+
+  new ScrimBanCommand(authService, banService),
+  new ExpungeBanCommand(authService, banService),
 
   new AddAdminRoleCommand(authService),
   new RemoveAdminRoleCommand(authService),

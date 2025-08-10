@@ -1,0 +1,1 @@
+CREATE TABLE public.scrim_bans (id uuid DEFAULT gen_random_uuid() NOT NULL, player_id uuid NOT NULL, start_date date DEFAULT now() NOT NULL, end_date date NOT NULL, reason text NOT NULL, PRIMARY KEY (id), FOREIGN KEY (player_id) REFERENCES public.players (id) ON UPDATE RESTRICT ON DELETE RESTRICT);
