@@ -8,7 +8,6 @@ import { StaticValueService } from "../../../services/static-values";
 import { ForumThreadChannel } from "discord.js/typings";
 import { ChannelType } from "discord-api-types/v10";
 import {
-  getScrimInfoTimes,
   isForumChannel,
   replaceScrimVariables,
 } from "../../../utility/utility";
@@ -126,7 +125,7 @@ export class CreateScrimCommand extends AdminCommand {
     }
 
     const { lobbyPostDate, lowPrioDate, draftDate } =
-      getScrimInfoTimes(scrimDate);
+      await this.staticValueService.getScrimInfoTimes(scrimDate);
 
     return replaceScrimVariables(instructionText, {
       scrimTime: this.formatTime(scrimDate),

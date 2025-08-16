@@ -2,8 +2,9 @@ import { Client } from "discord.js";
 import { appConfig } from "../config";
 import { StaticValueService } from "./static-values";
 import { Scrim } from "../models/Scrims";
-import { replaceScrimVariablesFromScrim } from "../utility/utility";
+import { replaceScrimVariables } from "../utility/utility";
 import { ForumThreadChannel } from "discord.js/typings";
+import { formatDateForDiscord, formatTimeForDiscord } from "../utility/time";
 
 export class DiscordService {
   constructor(
@@ -16,7 +17,7 @@ export class DiscordService {
     if (!instructionText) {
       throw Error("Instruction text not found");
     }
-    const updatedMessage = replaceScrimVariablesFromScrim(
+    const updatedMessage = await this.replaceScrimVariablesFromScrim(
       instructionText,
       scrim,
       signupCount,
@@ -39,5 +40,23 @@ export class DiscordService {
     }
 
     await description.edit(updatedMessage);
+  }
+
+  private async replaceScrimVariablesFromScrim(
+    text: string,
+    scrim: Scrim,
+    signupCount: number,
+  ): Promise<string> {
+    const { draftDate, lobbyPostDate, lowPrioDate } =
+      await this.staticValueService.getScrimInfoTimes(scrim.dateTime);
+
+    return replaceScrimVariables(text, {
+      scrimTime: formatTimeForDiscord(scrim.dateTime),
+      scrimDate: formatDateForDiscord(scrim.dateTime),
+      draftTime: formatTimeForDiscord(draftDate),
+      lobbyPostTime: formatTimeForDiscord(lobbyPostDate),
+      lowPrioTime: formatTimeForDiscord(lowPrioDate),
+      signupCount: signupCount.toString(),
+    });
   }
 }
