@@ -81,7 +81,7 @@ class NhostDb extends DB {
   async get<K extends FieldSelection[]>(
     tableName: string,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: K,
+    fieldsToReturn: [...K],
   ): Promise<Array<ExtractReturnType<K>>> {
     let searchString = this.generateWhereClause(logicalExpression);
     if (searchString) {

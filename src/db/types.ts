@@ -28,6 +28,7 @@ export enum DbTable {
   prio = "prio",
   scrimBans = "scrim_bans",
   staticKeyValues = "static_key_value",
+  lobbyEventTimes = "lobby_event_times",
 }
 
 // Recursive type to infer the return structure
@@ -38,7 +39,7 @@ export type ExtractReturnType<T extends FieldSelection[]> = {
   [K in T[number] as K extends string ? K : keyof K]: K extends string
     ? DbValue
     : K extends Record<string, FieldSelection[]>
-      ? ExtractReturnType<K[keyof K]> // 🔥 Flattening the nesting
+      ? ExtractReturnType<K[keyof K]>
       : never;
 };
 

@@ -124,7 +124,7 @@ export class CreateScrimCommand extends AdminCommand {
       throw Error("Can't get instruction text from db");
     }
 
-    const { lobbyPostDate, lowPrioDate, draftDate } =
+    const { lobbyPostDate, lowPrioDate, draftDate, rosterLockDate } =
       await this.staticValueService.getScrimInfoTimes(scrimDate);
 
     return replaceScrimVariables(instructionText, {
@@ -133,6 +133,7 @@ export class CreateScrimCommand extends AdminCommand {
       lobbyPostTime: this.formatTime(lobbyPostDate),
       lowPrioTime: this.formatTime(lowPrioDate),
       draftTime: this.formatTime(draftDate),
+      rosterLockTime: this.formatTime(rosterLockDate),
       signupCount: "0",
     });
   }

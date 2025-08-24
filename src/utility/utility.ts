@@ -21,6 +21,7 @@ export function replaceScrimVariables(
     lobbyPostTime: string;
     lowPrioTime: string;
     signupCount: string;
+    rosterLockTime: string;
   },
 ) {
   return text
@@ -30,5 +31,6 @@ export function replaceScrimVariables(
     .replace("${lobbyPostTime}", replacements.lobbyPostTime)
     .replace("${lowPrioTime}", replacements.lowPrioTime)
     .replace("${signupCount}", replacements.signupCount)
+    .replace("${rosterLockTime}", replacements.rosterLockTime)
     .replace(/\\n/g, "\n");
 }

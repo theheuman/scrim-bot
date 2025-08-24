@@ -47,7 +47,7 @@ export class DiscordService {
     scrim: Scrim,
     signupCount: number,
   ): Promise<string> {
-    const { draftDate, lobbyPostDate, lowPrioDate } =
+    const { draftDate, lobbyPostDate, lowPrioDate, rosterLockDate } =
       await this.staticValueService.getScrimInfoTimes(scrim.dateTime);
 
     return replaceScrimVariables(text, {
@@ -56,6 +56,7 @@ export class DiscordService {
       draftTime: formatTimeForDiscord(draftDate),
       lobbyPostTime: formatTimeForDiscord(lobbyPostDate),
       lowPrioTime: formatTimeForDiscord(lowPrioDate),
+      rosterLockTime: formatTimeForDiscord(rosterLockDate),
       signupCount: signupCount.toString(),
     });
   }
