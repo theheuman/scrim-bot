@@ -1,0 +1,3 @@
+table:
+  name: lobby_event_times
+  schema: public
