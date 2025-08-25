@@ -10,6 +10,8 @@ import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { DiscordService } from "../../src/services/discord";
 import { BanService } from "../../src/services/ban";
 import { BanServiceMock } from "../mocks/ban.mock";
+import { StaticValueService } from "../../src/services/static-values";
+import { StaticValueServiceMock } from "../mocks/static-values.mock";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
@@ -17,18 +19,21 @@ describe("Rosters", () => {
   let rosters: RosterService;
   let authService: AuthMock;
   let banServiceMock: BanService;
+  let staticValueService: StaticValueService;
 
   beforeEach(() => {
     dbMock = new DbMock();
     cache = new CacheService();
     authService = new AuthMock();
     banServiceMock = new BanServiceMock() as BanService;
+    staticValueService = new StaticValueServiceMock() as StaticValueService;
     rosters = new RosterService(
       dbMock,
       cache,
       authService as AuthService,
       new DiscordServiceMock() as DiscordService,
       banServiceMock,
+      staticValueService,
     );
     jest
       .spyOn(authService, "memberIsAdmin")
@@ -425,6 +430,55 @@ describe("Rosters", () => {
     it("Should not replace teammate because new player is scrim banned", async () => {
       jest
         .spyOn(authService, "memberIsAdmin")
+        .mockReturnValueOnce(Promise.resolve(true));
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel: "",
+      };
+      const discordChannel = "034528";
+      const dudeCube: ScrimSignup = {
+        teamName: "Dude Cube",
+        players: [theheuman.player, supreme, mikey],
+        signupId: "214",
+        signupPlayer: theheuman.player,
+        date: new Date(),
+      };
+      cache.clear();
+      cache.createScrim(discordChannel, scrim);
+      cache.setSignups(scrim.id, [dudeCube]);
+      jest
+        .spyOn(dbMock, "insertPlayerIfNotExists")
+        .mockReturnValue(Promise.resolve(zboy.player));
+      const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
+      jest.spyOn(banServiceMock, "teamHasBan").mockReturnValue(
+        Promise.resolve({
+          hasBan: true,
+          reason: "Zboy: A valid reason for scrim ban",
+        }),
+      );
+
+      const causeException = async () => {
+        await rosters.replaceTeammate(
+          theheuman.member,
+          discordChannel,
+          dudeCube.teamName,
+          theheuman.user,
+          zboy.user,
+        );
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "New player is scrim banned. Zboy: A valid reason for scrim ban",
+      );
+
+      expect(dbSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it("Should not replace teammate because is is past roster lock date", async () => {
+      jest
+        .spyOn(authService, "memberIsAdmin")
         .mockReturnValueOnce(Promise.resolve(false));
       const scrim: Scrim = {
         id: "231478",
@@ -446,10 +500,13 @@ describe("Rosters", () => {
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest.spyOn(banServiceMock, "teamHasBan").mockReturnValue(
         Promise.resolve({
-          hasBan: true,
-          reason: "Zboy: A valid reason for scrim ban",
+          hasBan: false,
+          reason: "",
         }),
       );
+      jest
+        .spyOn(dbMock, "insertPlayerIfNotExists")
+        .mockReturnValue(Promise.resolve(zboy.player));
 
       const causeException = async () => {
         await rosters.replaceTeammate(
@@ -462,7 +519,7 @@ describe("Rosters", () => {
       };
 
       await expect(causeException).rejects.toThrow(
-        "New player is scrim banned. Zboy: A valid reason for scrim ban",
+        "It is past the roster lock time. Rosters are locked, please create a ticket if you need to sub",
       );
 
       expect(dbSpy).toHaveBeenCalledTimes(0);

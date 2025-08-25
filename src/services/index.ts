@@ -35,4 +35,5 @@ export const rosterService = new RosterService(
   authService,
   discordService,
   banService,
+  staticValueService,
 );
