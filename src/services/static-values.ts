@@ -38,7 +38,6 @@ export class StaticValueService {
     return dbResult[0]?.value as string;
   }
 
-  // TODO test if this correctly sets times if scrim is 1 am and dates need to be day before
   async getScrimInfoTimes(scrimDate: Date): Promise<{
     lobbyPostDate: Date;
     lowPrioDate: Date;
