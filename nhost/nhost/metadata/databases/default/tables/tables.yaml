@@ -8,6 +8,7 @@
 - "!include auth_user_security_keys.yaml"
 - "!include auth_users.yaml"
 - "!include public_dummy_scrim_signups_with_players.yaml"
+- "!include public_lobby_event_times.yaml"
 - "!include public_players.yaml"
 - "!include public_prio.yaml"
 - "!include public_scrim_admin_roles.yaml"

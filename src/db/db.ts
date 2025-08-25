@@ -17,7 +17,7 @@ export abstract class DB {
   abstract get<K extends FieldSelection[]>(
     tableName: DbTable,
     logicalExpression: LogicalExpression | undefined,
-    fieldsToReturn: K,
+    fieldsToReturn: [...K],
   ): Promise<Array<ExtractReturnType<K>>>;
 
   abstract update<K extends string>(
