@@ -97,6 +97,7 @@ export class ScrimSignups {
     }
 
     scrim.overstatId = lobbyOneInsert.overstatId;
+    return overstatLinksToCompute;
   }
 
   private async getUncomputedLinks(

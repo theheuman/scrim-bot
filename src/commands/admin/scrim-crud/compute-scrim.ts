@@ -50,10 +50,15 @@ export class ComputeScrimCommand extends AdminCommand {
     });
 
     try {
-      await this.signupService.computeScrim(channelId, overstatLinks);
+      const linksComputed = await this.signupService.computeScrim(
+        channelId,
+        overstatLinks,
+      );
       await interaction.deleteReply();
+      const prefix =
+        linksComputed.length === 1 ? "scrim lobby" : "scrim lobbies";
       await interaction.followUp(
-        "Scrim lobby successfully computed, you can now compute another lobby or close the scrim",
+        `${linksComputed.length} ${prefix} successfully computed, you can now close the scrim`,
       );
     } catch (error) {
       await interaction.editReply(`Scrim not computed. ${error}`);
