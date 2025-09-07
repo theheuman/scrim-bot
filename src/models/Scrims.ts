@@ -4,7 +4,7 @@ export interface Scrim {
   id: string;
   dateTime: Date;
   skill?: number;
-  overstatLink?: string;
+  overstatId?: string;
   discordChannel: string;
   active: boolean;
 }

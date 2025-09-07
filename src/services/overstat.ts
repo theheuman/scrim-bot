@@ -11,7 +11,7 @@ export class OverstatService {
     return `https://overstat.gg/api/stats/${tournamentId}/overall`;
   }
 
-  private getTournamentId(overstatLink: string): string {
+  public getTournamentId(overstatLink: string): string {
     const url = new URL(overstatLink);
     let tournamentId = undefined;
     try {
@@ -52,7 +52,7 @@ export class OverstatService {
 
   async getOverallStats(
     overstatLink: string,
-  ): Promise<OverstatTournamentResponse> {
+  ): Promise<{ id: string; stats: JSON }> {
     const tournamentId = this.getTournamentId(overstatLink);
     const url = this.getUrl(tournamentId);
     const response = await fetch(url);

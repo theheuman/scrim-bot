@@ -1,5 +1,5 @@
 import { GuildMember, User } from "discord.js";
-import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
+import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
 import { CacheService } from "./cache";
@@ -10,6 +10,7 @@ import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
+import { DbTable } from "../db/types";
 
 export class ScrimSignups {
   constructor(
@@ -59,43 +60,70 @@ export class ScrimSignups {
     return this.cache.getScrim(discordChannelID);
   }
 
-  // this is a dynamic method that checks if scores have already been computed for a given discordChannel
-  // if they have been computed it creates a new scrim entry in the db and computes stats for that one
-  // this solves the problem of having multiple lobbies in one scrim.
-  async computeScrim(
-    discordChannelID: string,
-    overstatLink: string,
-    skill: number,
-  ) {
+  // First overstat link stats get set to scrim representing this discord channel in the db
+  // other overstat links get new scrim entries created for them
+  async computeScrim(discordChannelID: string, overstatLinks: string[]) {
     const scrim = this.cache.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
     }
-    let scrimId = scrim.id;
-    const signups = this.cache.getSignups(scrimId);
-    if (!signups) {
-      throw Error("No signups for that scrim");
-    }
-    if (
-      scrim.skill &&
-      scrim.overstatLink &&
-      scrim.overstatLink !== overstatLink
-    ) {
-      scrimId = await this.db.createNewScrim(
-        scrim.dateTime,
-        scrim.discordChannel,
-      );
-    }
-    const stats = await this.overstatService.getOverallStats(overstatLink);
-    const playerStats: PlayerStatInsert[] = this.overstatService.matchPlayers(
-      scrimId,
-      signups,
-      stats,
+    const overstatLinksToCompute = await this.getUncomputedLinks(
+      scrim,
+      overstatLinks,
     );
 
-    await this.db.computeScrim(scrimId, overstatLink, skill, playerStats);
-    scrim.overstatLink = overstatLink;
-    scrim.skill = skill;
+    if (overstatLinksToCompute.length < 1) {
+      throw Error("Scrims already computed with those links");
+    }
+    const lobbyOneOverstatInfo = await this.overstatService.getOverallStats(
+      overstatLinksToCompute[0],
+    );
+    const lobbyOneInsert = {
+      scrimId: scrim.id,
+      overstatId: lobbyOneOverstatInfo.id,
+      overstatJson: lobbyOneOverstatInfo.stats,
+    };
+    await this.db.updateScrim(scrim.id, lobbyOneInsert);
+
+    const otherLobbyLinks = overstatLinksToCompute.slice(1);
+    for (const overstatLink of otherLobbyLinks) {
+      const info = await this.overstatService.getOverallStats(overstatLink);
+      await this.db.createNewScrim(
+        scrim.dateTime,
+        scrim.discordChannel,
+        info.id,
+        info.stats,
+      );
+    }
+
+    scrim.overstatId = lobbyOneInsert.overstatId;
+  }
+
+  private async getUncomputedLinks(
+    scrim: Scrim,
+    overstatLinks: string[],
+  ): Promise<string[]> {
+    if (scrim.overstatId) {
+      // get all the scrims from the db with this channel id, filter all out all overstatLinks that already have a scrim
+      // stick the links that haven't been computed in the overstatLinksToCompute list
+      const idsAlreadyComputed: string[] = (
+        await this.db.get(
+          DbTable.scrims,
+          {
+            fieldName: "discord_channel",
+            comparator: "eq",
+            value: scrim.discordChannel,
+          },
+          ["overstat_id"],
+        )
+      ).map((dbResult) => dbResult.overstat_id as string);
+      return overstatLinks.filter((link) => {
+        const id = this.overstatService.getTournamentId(link);
+        return !idsAlreadyComputed.includes(id);
+      });
+    } else {
+      return overstatLinks;
+    }
   }
 
   async closeScrim(discordChannelID: string) {

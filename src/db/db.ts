@@ -1,4 +1,4 @@
-import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
+import { Player, PlayerInsert } from "../models/Player";
 import { ScrimSignupsWithPlayers } from "./table.interfaces";
 import {
   Comparator,
@@ -63,44 +63,55 @@ export abstract class DB {
   async createNewScrim(
     dateTime: Date,
     discordChannelID: string,
-    skill: number | null = null,
-    overstatLink: string | null = null,
+    overstatId: string | null = null,
+    overstatJson: JSON | null = null,
   ): Promise<string> {
     const ids = await this.post(DbTable.scrims, [
       {
         date_time_field: dateTime,
-        skill,
-        overstat_link: overstatLink,
         discord_channel: discordChannelID,
+        overstat_id: overstatId,
+        overstat_json: overstatJson,
       },
     ]);
     return ids[0];
   }
 
-  async computeScrim(
+  async updateScrim(
     scrimId: string,
-    overstatLink: string,
-    skill: number,
-    playerStats: PlayerStatInsert[],
-  ): Promise<string[]> {
-    const updatedScrimInfo: { id: DbValue }[] = await this.update(
+    updatedData: {
+      dateTime?: Date;
+      discordChannelID?: string;
+      overstatId?: string;
+      overstatJson?: JSON;
+    },
+  ): Promise<void> {
+    const updatedDataInsert = this.removeUndefined({
+      date_time: updatedData.dateTime,
+      discord_channel: updatedData.discordChannelID,
+      overstat_id: updatedData.overstatId,
+      overstat_json: updatedData.overstatJson,
+    });
+    await this.update(
       DbTable.scrims,
-      {
-        fieldName: "id",
-        comparator: "eq",
-        value: scrimId,
-      },
-      { skill, overstat_link: overstatLink },
+      { fieldName: "id", comparator: "eq", value: scrimId },
+      updatedDataInsert,
       ["id"],
     );
-    if (!updatedScrimInfo[0].id) {
-      throw Error(
-        "Could not set skill level or overstat link on scrim, no updates made",
-      );
-    }
-    return this.post(
-      DbTable.scrimPlayerStats,
-      playerStats as unknown as Record<string, DbValue>[],
+  }
+
+  // removes any undefined values from the object
+  private removeUndefined(
+    obj: Record<string, DbValue | undefined>,
+  ): Record<string, DbValue> {
+    return Object.entries(obj).reduce(
+      (acc: Record<string, DbValue>, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
     );
   }
 

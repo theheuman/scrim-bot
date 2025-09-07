@@ -34,3 +34,11 @@ export function replaceScrimVariables(
     .replace("${rosterLockTime}", replacements.rosterLockTime)
     .replace(/\\n/g, "\n");
 }
+
+export function isJson(objectToCheck: unknown): objectToCheck is JSON {
+  return (
+    typeof objectToCheck === "object" &&
+    objectToCheck !== null &&
+    !Array.isArray(objectToCheck)
+  );
+}
