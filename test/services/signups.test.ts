@@ -552,13 +552,10 @@ describe("Signups", () => {
       cache.clear();
       jest
         .spyOn(dbMock, "createNewScrim")
-        .mockImplementation(
-          (_: Date, discordChannelID: string, skill?: number | null) => {
-            expect(discordChannelID).toEqual(channelId);
-            expect(skill).toEqual(undefined);
-            return Promise.resolve("a valid scrim id");
-          },
-        );
+        .mockImplementation((_: Date, discordChannelID: string) => {
+          expect(discordChannelID).toEqual(channelId);
+          return Promise.resolve("a valid scrim id");
+        });
 
       await signups.createScrim(channelId, new Date());
       expect(cache.getScrim(channelId)?.id).toEqual("a valid scrim id");

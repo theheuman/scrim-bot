@@ -52,12 +52,12 @@ export class OverstatService {
 
   async getOverallStats(
     overstatLink: string,
-  ): Promise<{ id: string; stats: JSON }> {
+  ): Promise<{ id: string; stats: OverstatTournamentResponse }> {
     const tournamentId = this.getTournamentId(overstatLink);
     const url = this.getUrl(tournamentId);
     const response = await fetch(url);
     const data = await response.text();
-    return JSON.parse(data);
+    return { id: tournamentId, stats: JSON.parse(data) };
   }
 
   matchPlayers(

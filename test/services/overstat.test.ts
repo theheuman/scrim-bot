@@ -25,9 +25,8 @@ describe("Overstat", () => {
         ok: true,
         text: async () => mockOverstatResponse,
       });
-      const tournamentStats =
-        await overstatService.getOverallStats(overstatLink);
-      expect(tournamentStats.analytics).toBeDefined();
+      const { id, stats } = await overstatService.getOverallStats(overstatLink);
+      expect(stats.analytics).toBeDefined();
       expect(global.fetch).toHaveBeenCalledWith(
         "https://overstat.gg/api/stats/9994/overall",
       );
