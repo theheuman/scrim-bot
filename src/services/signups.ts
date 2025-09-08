@@ -79,7 +79,6 @@ export class ScrimSignups {
       overstatLinksToCompute[0],
     );
     const lobbyOneInsert = {
-      scrimId: scrim.id,
       overstatId: lobbyOneOverstatInfo.id,
       overstatJson: lobbyOneOverstatInfo.stats,
     };

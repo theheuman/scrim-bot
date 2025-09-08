@@ -9,9 +9,17 @@ export class OverstatServiceMock {
 
   async getOverallStats(
     overstatLink: string,
-  ): Promise<OverstatTournamentResponse> {
+  ): Promise<{ id: string; stats: OverstatTournamentResponse }> {
     console.debug("Getting overal stats in overstat mock", overstatLink);
-    return Promise.resolve({} as OverstatTournamentResponse);
+    return Promise.resolve({
+      id: "12345",
+      stats: {} as OverstatTournamentResponse,
+    });
+  }
+
+  getTournamentId(overstatLink: string): string {
+    console.log("Mock overstat service getTournamentId", overstatLink);
+    return "12345";
   }
 
   matchPlayers(

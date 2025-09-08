@@ -1,6 +1,6 @@
 import { ScrimSignups } from "../../src/services/signups";
 import { DbMock } from "../mocks/db.mock";
-import { Player, PlayerStatInsert } from "../../src/models/Player";
+import { Player } from "../../src/models/Player";
 import { GuildMember, User } from "discord.js";
 import { CacheService } from "../../src/services/cache";
 import { OverstatService } from "../../src/services/overstat";
@@ -550,16 +550,14 @@ describe("Signups", () => {
     it("Should create scrim", async () => {
       const channelId = "a valid id";
       cache.clear();
-      jest
-        .spyOn(dbMock, "createNewScrim")
-        .mockImplementation((_: Date, discordChannelID: string) => {
-          expect(discordChannelID).toEqual(channelId);
-          return Promise.resolve("a valid scrim id");
-        });
 
-      await signups.createScrim(channelId, new Date());
+      const createNewSpy = jest.spyOn(dbMock, "createNewScrim");
+      createNewSpy.mockReturnValue(Promise.resolve("a valid scrim id"));
+
+      const now = new Date();
+      await signups.createScrim(channelId, now);
+      expect(createNewSpy).toHaveBeenCalledWith(now, channelId);
       expect(cache.getScrim(channelId)?.id).toEqual("a valid scrim id");
-      expect.assertions(3);
     });
   });
 
@@ -593,194 +591,186 @@ describe("Signups", () => {
     const channelId = "a valid id";
     const scrimId = "32451";
     const overstatLink = "overstat.gg";
-    const skill = 1;
+    const overstatId = "867235";
     const time = new Date();
-    const tournamentStats: OverstatTournamentResponse =
-      JSON.parse(mockOverstatResponse);
-    const playerStats: PlayerStatInsert[] = [];
+    const tournamentStats: OverstatTournamentResponse = {
+      total: 6,
+      source: "statscode",
+      games: [],
+      teams: [],
+      analytics: {
+        qualityScore: 7.8947900682011936,
+      },
+    } as unknown as OverstatTournamentResponse;
+    let overallStatsSpy: jest.SpyInstance;
+    let updateScrimSpy: jest.SpyInstance;
+    let getTournamentIdSpy: jest.SpyInstance;
+    let createNewScrimSpy: jest.SpyInstance;
 
-    it("Should compute a scrim", async () => {
+    beforeEach(() => {
+      overallStatsSpy = jest.spyOn(overstatService, "getOverallStats");
+      updateScrimSpy = jest.spyOn(dbMock, "updateScrim");
+      getTournamentIdSpy = jest.spyOn(overstatService, "getTournamentId");
+      createNewScrimSpy = jest.spyOn(dbMock, "createNewScrim");
+
+      overallStatsSpy.mockClear();
+      updateScrimSpy.mockClear();
+      getTournamentIdSpy.mockClear();
+
+      getTournamentIdSpy.mockReturnValue(overstatId);
+      overallStatsSpy.mockReturnValue(
+        Promise.resolve({ id: overstatId, stats: tournamentStats }),
+      );
+
       cache.clear();
       cache.setSignups(scrimId, []);
+    });
+
+    const setupScrim = (overstatId?: string) => {
       cache.createScrim(channelId, {
         active: true,
         id: scrimId,
         discordChannel: channelId,
         dateTime: new Date(),
+        overstatId,
+      });
+    };
+
+    it("Should compute a scrim", async () => {
+      setupScrim();
+      await signups.computeScrim(channelId, [overstatLink]);
+      expect(overallStatsSpy).toHaveBeenCalledWith(overstatLink);
+      expect(overallStatsSpy).toHaveBeenCalledTimes(1);
+
+      expect(updateScrimSpy).toHaveBeenCalledWith(scrimId, {
+        overstatId,
+        overstatJson: tournamentStats,
+      });
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
+
+      expect(createNewScrimSpy).not.toHaveBeenCalled();
+
+      const cacheScrim = cache.getScrim(channelId);
+      expect(cacheScrim?.overstatId).toEqual(overstatId);
+    });
+
+    it("Should compute multiple lobbies for a single scrim", async () => {
+      setupScrim();
+
+      const lobby2OverstatLink = "link-different";
+      const lobby2OverstatId = "id-different";
+
+      const lobby3OverstatLink = "link-2-different";
+      const lobby3OverstatId = "id-2-different";
+
+      overallStatsSpy.mockImplementation((link) => {
+        switch (link) {
+          case overstatLink:
+            return overstatId;
+          case lobby2OverstatLink:
+            return lobby2OverstatId;
+          case lobby3OverstatLink:
+            return lobby3OverstatId;
+        }
       });
 
-      jest
-        .spyOn(overstatService, "getOverallStats")
-        .mockImplementation((serviceOverstatLink: string) => {
-          expect(serviceOverstatLink).toEqual(overstatLink);
-          return Promise.resolve(tournamentStats);
-        });
+      await signups.computeScrim(channelId, [
+        overstatLink,
+        lobby2OverstatLink,
+        lobby3OverstatLink,
+      ]);
+      // meed to spy on db.get
+      expect(getTournamentIdSpy).toHaveBeenCalledWith(
+        lobby2OverstatLink,
+        lobby3OverstatLink,
+      );
+      expect(getTournamentIdSpy).toHaveBeenCalledTimes(3);
 
-      jest
-        .spyOn(overstatService, "matchPlayers")
-        .mockImplementation(
-          (
-            serviceScrimId: string,
-            serviceSignups: ScrimSignup[],
-            serviceTournamentStats: OverstatTournamentResponse,
-          ) => {
-            expect(serviceScrimId).toEqual(scrimId);
-            expect(serviceSignups).toEqual([]);
-            expect(serviceTournamentStats).toEqual(tournamentStats);
-            return playerStats;
-          },
-        );
+      expect(overallStatsSpy).toHaveBeenCalledWith(
+        overstatLink,
+        lobby2OverstatLink,
+        lobby3OverstatLink,
+      );
+      expect(overallStatsSpy).toHaveBeenCalledTimes(3);
 
-      jest
-        .spyOn(dbMock, "computeScrim")
-        .mockImplementation(
-          (
-            dbScrimId: string,
-            dbOverstatLink: string,
-            dbSkill: number,
-            dbPlayerStats: PlayerStatInsert[],
-          ) => {
-            expect(dbScrimId).toEqual(scrimId);
-            expect(dbOverstatLink).toEqual(overstatLink);
-            expect(dbSkill).toEqual(skill);
-            expect(dbPlayerStats).toEqual(playerStats);
-            return Promise.resolve(["a ScrimPlayerStat ID"]);
-          },
-        );
+      expect(updateScrimSpy).toHaveBeenCalledWith(scrimId, { overstatId });
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
-      await signups.computeScrim(channelId, overstatLink, 1);
+      expect(createNewScrimSpy).toHaveBeenCalledWith(
+        {
+          time,
+          channelId,
+          lobby2OverstatId,
+          tournamentStats,
+        },
+        {
+          time,
+          channelId,
+          lobby3OverstatId,
+          tournamentStats,
+        },
+      );
+      expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
+
       const cacheScrim = cache.getScrim(channelId);
-      expect(cacheScrim?.skill).toEqual(skill);
-      expect(cacheScrim?.overstatLink).toEqual(overstatLink);
-      expect.assertions(10);
+      expect(cacheScrim?.overstatId).toEqual(overstatId);
     });
 
     it("Should create a new scrim to compute a scrim that has already been computed with a different overstat", async () => {
-      cache.clear();
-      cache.setSignups(scrimId, []);
-      cache.createScrim(channelId, {
-        active: true,
-        id: scrimId,
-        discordChannel: channelId,
-        dateTime: time,
-        overstatLink: "overstat.gg/different",
-        skill: 1,
+      setupScrim(overstatId);
+
+      const newLobbyOverstatLink = overstatLink + "-different";
+      const newLobbyOverstatId = overstatId + "-different";
+
+      // probably need to set up new mock return values somewhere here
+
+      await signups.computeScrim(channelId, [newLobbyOverstatLink]);
+
+      // meed to spy on db.get
+      expect(getTournamentIdSpy).toHaveBeenCalledWith(newLobbyOverstatLink);
+      expect(getTournamentIdSpy).toHaveBeenCalledTimes(1);
+
+      expect(overallStatsSpy).toHaveBeenCalledWith(newLobbyOverstatLink);
+      expect(overallStatsSpy).toHaveBeenCalledTimes(1);
+
+      expect(updateScrimSpy).toHaveBeenCalledWith(scrimId, {
+        overstatId,
+        overstatJson: tournamentStats,
       });
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
-      jest
-        .spyOn(overstatService, "getOverallStats")
-        .mockImplementation((serviceOverstatLink: string) => {
-          expect(serviceOverstatLink).toEqual(overstatLink);
-          return Promise.resolve(tournamentStats);
-        });
+      expect(createNewScrimSpy).toHaveBeenCalledWith(
+        time,
+        channelId,
+        newLobbyOverstatId,
+        tournamentStats,
+      );
 
-      jest
-        .spyOn(dbMock, "createNewScrim")
-        .mockImplementation((dbDateTime: Date, dbDiscordChannelID: string) => {
-          expect(dbDateTime).toEqual(time);
-          expect(dbDiscordChannelID).toEqual(channelId);
-          return Promise.resolve("a different scrim id");
-        });
-
-      jest
-        .spyOn(overstatService, "matchPlayers")
-        .mockImplementation(
-          (
-            serviceScrimId: string,
-            serviceSignups: ScrimSignup[],
-            serviceTournamentStats: OverstatTournamentResponse,
-          ) => {
-            expect(serviceScrimId).toEqual("a different scrim id");
-            expect(serviceSignups).toEqual([]);
-            expect(serviceTournamentStats).toEqual(tournamentStats);
-            return playerStats;
-          },
-        );
-
-      jest
-        .spyOn(dbMock, "computeScrim")
-        .mockImplementation(
-          (
-            dbScrimId: string,
-            dbOverstatLink: string,
-            dbSkill: number,
-            dbPlayerStats: PlayerStatInsert[],
-          ) => {
-            expect(dbScrimId).toEqual("a different scrim id");
-            expect(dbOverstatLink).toEqual(overstatLink);
-            expect(dbSkill).toEqual(skill);
-            expect(dbPlayerStats).toEqual(playerStats);
-            return Promise.resolve(["a ScrimPlayerStat ID"]);
-          },
-        );
-
-      await signups.computeScrim(channelId, overstatLink, 1);
       const cacheScrim = cache.getScrim(channelId);
-      expect(cacheScrim?.skill).toEqual(skill);
-      expect(cacheScrim?.overstatLink).toEqual(overstatLink);
-      expect.assertions(12);
+      // should not be set to a different id, right?
+      expect(cacheScrim?.overstatId).toEqual(overstatId);
     });
 
-    it("Should not create a new scrim to compute a scrim that has already been computed with the same overstat", async () => {
-      cache.clear();
-      cache.setSignups(scrimId, []);
-      cache.createScrim(channelId, {
-        active: true,
-        id: scrimId,
-        discordChannel: channelId,
-        dateTime: time,
-        overstatLink: "overstat.gg",
-        skill: 5,
+    it("Should update a scrim that has already been computed with the same overstat link", async () => {
+      setupScrim(overstatId);
+
+      await signups.computeScrim(channelId, [overstatLink]);
+      expect(overallStatsSpy).toHaveBeenCalledWith(overstatLink);
+
+      // meed to spy on db.get
+      expect(getTournamentIdSpy).toHaveBeenCalledWith(overstatLink);
+
+      // I think we probably should be updating stats if the same overstat id is called,
+      // just in case scoring went wrong and they updated it
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
+      expect(updateScrimSpy).toHaveBeenCalledWith(scrimId, {
+        overstatId,
+        overstatJson: tournamentStats,
       });
 
-      jest
-        .spyOn(overstatService, "getOverallStats")
-        .mockImplementation((serviceOverstatLink: string) => {
-          expect(serviceOverstatLink).toEqual(overstatLink);
-          return Promise.resolve(tournamentStats);
-        });
-
-      const createSpy = jest.spyOn(dbMock, "createNewScrim");
-
-      jest
-        .spyOn(overstatService, "matchPlayers")
-        .mockImplementation(
-          (
-            serviceScrimId: string,
-            serviceSignups: ScrimSignup[],
-            serviceTournamentStats: OverstatTournamentResponse,
-          ) => {
-            expect(serviceScrimId).toEqual(scrimId);
-            expect(serviceSignups).toEqual([]);
-            expect(serviceTournamentStats).toEqual(tournamentStats);
-            return playerStats;
-          },
-        );
-
-      jest
-        .spyOn(dbMock, "computeScrim")
-        .mockImplementation(
-          (
-            dbScrimId: string,
-            dbOverstatLink: string,
-            dbSkill: number,
-            dbPlayerStats: PlayerStatInsert[],
-          ) => {
-            expect(dbScrimId).toEqual(scrimId);
-            expect(dbOverstatLink).toEqual(overstatLink);
-            expect(dbSkill).toEqual(skill);
-            expect(dbPlayerStats).toEqual(playerStats);
-            return Promise.resolve(["a ScrimPlayerStat ID"]);
-          },
-        );
-
-      createSpy.mockClear();
-      await signups.computeScrim(channelId, overstatLink, 1);
+      expect(createNewScrimSpy).not.toHaveBeenCalled();
       const cacheScrim = cache.getScrim(channelId);
-      expect(cacheScrim?.skill).toEqual(1);
-      expect(cacheScrim?.overstatLink).toEqual(overstatLink);
-      expect(createSpy).toHaveBeenCalledTimes(0);
-      expect.assertions(11);
+      expect(cacheScrim?.overstatId).toEqual(overstatId);
     });
   });
 });

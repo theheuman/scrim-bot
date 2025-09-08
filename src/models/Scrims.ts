@@ -3,7 +3,6 @@ import { Player } from "./Player";
 export interface Scrim {
   id: string;
   dateTime: Date;
-  skill?: number;
   overstatId?: string;
   discordChannel: string;
   active: boolean;
