@@ -797,5 +797,18 @@ describe("Signups", () => {
 
       expect(createNewScrimSpy).not.toHaveBeenCalled();
     });
+
+    it("should throw an error if no scrims are found", async () => {
+      getScrimsByDiscordChannel.mockReturnValue(Promise.resolve([]));
+
+      const causeException = async () => {
+        await signups.computeScrim(channelId, [overstatLink]);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "No scrim found for that channel",
+      );
+      expect(getTournamentIdSpy).not.toHaveBeenCalled();
+    });
   });
 });
