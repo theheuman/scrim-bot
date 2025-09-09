@@ -32,15 +32,6 @@ export class OverstatServiceMock {
     return "12345";
   }
 
-  matchPlayers(
-    scrimId: string,
-    signups: ScrimSignup[],
-    stats: OverstatTournamentResponse,
-  ): PlayerStatInsert[] {
-    console.debug("Matching players in overstat mock", scrimId, signups, stats);
-    return [];
-  }
-
   async addPlayerOverstatLink(
     user: User,
     overstatLink: string,
