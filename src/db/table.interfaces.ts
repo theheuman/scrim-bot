@@ -27,8 +27,7 @@ export interface ScrimSignupsWithPlayers {
 export interface Scrims {
   id: uuid;
   date_time_field: string;
-  skill: number;
-  overstat_link?: string;
   discord_channel: string;
   active: boolean;
+  overstat_id?: string;
 }
