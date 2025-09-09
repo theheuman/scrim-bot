@@ -25,7 +25,8 @@ describe("Overstat", () => {
         ok: true,
         text: async () => mockOverstatResponse,
       });
-      const { id, stats } = await overstatService.getOverallStats(overstatLink);
+      const { stats } =
+        await overstatService.getOverallStatsForLink(overstatLink);
       expect(stats.analytics).toBeDefined();
       expect(global.fetch).toHaveBeenCalledWith(
         "https://overstat.gg/api/stats/9994/overall",
@@ -35,7 +36,9 @@ describe("Overstat", () => {
     describe("errors", () => {
       it("Should throw can't split error", async () => {
         const causeException = async () => {
-          await overstatService.getOverallStats("https://overstat.gg/_7zpee");
+          await overstatService.getOverallStatsForLink(
+            "https://overstat.gg/_7zpee",
+          );
         };
         await expect(causeException).rejects.toThrow(
           "URL Malformated, make sure you are using the fully built url and not the shortcode",
@@ -44,7 +47,7 @@ describe("Overstat", () => {
 
       it("Should throw no tournament code error", async () => {
         const causeException = async () => {
-          await overstatService.getOverallStats(
+          await overstatService.getOverallStatsForLink(
             "https://overstat.gg/tournament/vesa/.The_Void_Scrim_Lobby_1_8pm_11_/standings/overall/scoreboard",
           );
         };

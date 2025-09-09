@@ -12,6 +12,7 @@ import {
 } from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
+import { Scrim } from "../models/Scrims";
 
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
@@ -328,6 +329,25 @@ export abstract class DB {
       id: dbData[0].id as string,
       overstatId: dbData[0].overstat_id as string,
     };
+  }
+
+  async getScrimsByDiscordChannel(discordChannelID: string): Promise<Scrim[]> {
+    const dbResult = await this.get(
+      DbTable.scrims,
+      {
+        fieldName: "discord_channel",
+        comparator: "eq",
+        value: discordChannelID,
+      },
+      ["id", "overstat_id", "date_time_field", "active"],
+    );
+    return dbResult.map((entry) => ({
+      id: entry.id as string,
+      dateTime: new Date(entry.date_time_field as string),
+      overstatId: entry.overstat_id as string,
+      discordChannel: discordChannelID,
+      active: entry.active as boolean,
+    }));
   }
 
   getActiveScrims(): Promise<

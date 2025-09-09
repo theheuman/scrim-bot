@@ -10,7 +10,6 @@ import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
-import { DbTable } from "../db/types";
 
 export class ScrimSignups {
   constructor(
@@ -60,69 +59,75 @@ export class ScrimSignups {
     return this.cache.getScrim(discordChannelID);
   }
 
-  // First overstat link stats get set to scrim representing this discord channel in the db
-  // other overstat links get new scrim entries created for them
   async computeScrim(discordChannelID: string, overstatLinks: string[]) {
-    const scrim = this.cache.getScrim(discordChannelID);
-    if (!scrim) {
+    const scrims = await this.db.getScrimsByDiscordChannel(discordChannelID);
+    if (!scrims.length) {
       throw Error("No scrim found for that channel");
     }
-    const overstatLinksToCompute = await this.getUncomputedLinks(
-      scrim,
-      overstatLinks,
+    const overstatIds = overstatLinks.map((link) =>
+      this.overstatService.getTournamentId(link),
+    );
+    const scrimsWithoutOverstatId = scrims.filter((scrim) => !scrim.overstatId);
+    const scrimsToRecompute = scrims.filter((scrim) =>
+      overstatIds.includes(scrim.overstatId ?? ""),
     );
 
-    if (overstatLinksToCompute.length < 1) {
-      throw Error("Scrims already computed with those links");
-    }
-    const lobbyOneOverstatInfo = await this.overstatService.getOverallStats(
-      overstatLinksToCompute[0],
+    const unlinkedOverstatIds = overstatIds.filter(
+      (id) => !scrims.some((scrim) => scrim.overstatId === id),
     );
-    const lobbyOneInsert = {
-      overstatId: lobbyOneOverstatInfo.id,
-      overstatJson: lobbyOneOverstatInfo.stats,
-    };
-    await this.db.updateScrim(scrim.id, lobbyOneInsert);
 
-    const otherLobbyLinks = overstatLinksToCompute.slice(1);
-    for (const overstatLink of otherLobbyLinks) {
-      const info = await this.overstatService.getOverallStats(overstatLink);
-      await this.db.createNewScrim(
-        scrim.dateTime,
-        scrim.discordChannel,
-        info.id,
-        info.stats,
-      );
-    }
+    await this.computeAlreadyCreatedScrims(
+      [...scrimsWithoutOverstatId, ...scrimsToRecompute],
+      unlinkedOverstatIds,
+    );
 
-    scrim.overstatId = lobbyOneInsert.overstatId;
-    return overstatLinksToCompute;
+    const newOverstatIds = unlinkedOverstatIds.slice(
+      scrimsWithoutOverstatId.length,
+    );
+    await this.computeNewScrims(newOverstatIds, {
+      scrimDateTime: scrims[0].dateTime,
+      discordChannelID,
+    });
+
+    return overstatLinks;
   }
 
-  private async getUncomputedLinks(
-    scrim: Scrim,
-    overstatLinks: string[],
-  ): Promise<string[]> {
-    if (scrim.overstatId) {
-      // get all the scrims from the db with this channel id, filter all out all overstatLinks that already have a scrim
-      // stick the links that haven't been computed in the overstatLinksToCompute list
-      const idsAlreadyComputed: string[] = (
-        await this.db.get(
-          DbTable.scrims,
-          {
-            fieldName: "discord_channel",
-            comparator: "eq",
-            value: scrim.discordChannel,
-          },
-          ["overstat_id"],
-        )
-      ).map((dbResult) => dbResult.overstat_id as string);
-      return overstatLinks.filter((link) => {
-        const id = this.overstatService.getTournamentId(link);
-        return !idsAlreadyComputed.includes(id);
+  private async computeAlreadyCreatedScrims(
+    scrims: Scrim[],
+    unlinkedOverstatIds: string[],
+  ) {
+    let nextIdIndex = 0;
+    for (const scrim of scrims) {
+      let overstatId = scrim.overstatId;
+      if (!overstatId) {
+        overstatId = unlinkedOverstatIds[nextIdIndex];
+        nextIdIndex++;
+      }
+      if (!overstatId) {
+        throw new Error(
+          "Mismatch in scrims to overstat ids, code error, this shouldn't be possible",
+        );
+      }
+      const stats = await this.overstatService.getOverallStatsForId(overstatId);
+      await this.db.updateScrim(scrim.id, {
+        overstatId: overstatId,
+        overstatJson: stats,
       });
-    } else {
-      return overstatLinks;
+    }
+  }
+
+  private async computeNewScrims(
+    newOverstatIds: string[],
+    scrimInfo: { discordChannelID: string; scrimDateTime: Date },
+  ) {
+    for (const overstatId of newOverstatIds) {
+      const stats = await this.overstatService.getOverallStatsForId(overstatId);
+      await this.db.createNewScrim(
+        scrimInfo.scrimDateTime,
+        scrimInfo.discordChannelID,
+        overstatId,
+        stats,
+      );
     }
   }
 

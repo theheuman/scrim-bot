@@ -7,10 +7,20 @@ import { PlayerStatInsert } from "../../src/models/Player";
 export class OverstatServiceMock {
   constructor() {}
 
-  async getOverallStats(
+  async getOverallStatsForId(
+    overstatId: string,
+  ): Promise<OverstatTournamentResponse> {
+    console.debug("Getting overall stats for id in overstat mock", overstatId);
+    return Promise.resolve({} as OverstatTournamentResponse);
+  }
+
+  async getOverallStatsForLink(
     overstatLink: string,
   ): Promise<{ id: string; stats: OverstatTournamentResponse }> {
-    console.debug("Getting overal stats in overstat mock", overstatLink);
+    console.debug(
+      "Getting overall stats for link in overstat mock",
+      overstatLink,
+    );
     return Promise.resolve({
       id: "12345",
       stats: {} as OverstatTournamentResponse,

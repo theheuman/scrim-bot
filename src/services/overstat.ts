@@ -50,14 +50,21 @@ export class OverstatService {
     return id[0];
   }
 
-  async getOverallStats(
-    overstatLink: string,
-  ): Promise<{ id: string; stats: OverstatTournamentResponse }> {
-    const tournamentId = this.getTournamentId(overstatLink);
+  async getOverallStatsForId(
+    tournamentId: string,
+  ): Promise<OverstatTournamentResponse> {
     const url = this.getUrl(tournamentId);
     const response = await fetch(url);
     const data = await response.text();
-    return { id: tournamentId, stats: JSON.parse(data) };
+    return JSON.parse(data);
+  }
+
+  async getOverallStatsForLink(
+    overstatLink: string,
+  ): Promise<{ id: string; stats: OverstatTournamentResponse }> {
+    const tournamentId = this.getTournamentId(overstatLink);
+    const stats = await this.getOverallStatsForId(tournamentId);
+    return { id: tournamentId, stats };
   }
 
   matchPlayers(
