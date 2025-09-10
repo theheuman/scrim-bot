@@ -88,7 +88,7 @@ export abstract class DB {
     },
   ): Promise<void> {
     const updatedDataInsert = this.removeUndefined({
-      date_time: updatedData.dateTime,
+      date_time_field: updatedData.dateTime,
       discord_channel: updatedData.discordChannelID,
       overstat_id: updatedData.overstatId,
       overstat_json: updatedData.overstatJson,
