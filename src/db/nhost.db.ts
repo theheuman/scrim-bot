@@ -590,7 +590,7 @@ class NhostDb extends DB {
   private static formatJsonForString(data: JSON | string): string {
     if (typeof data !== "object" || data === null) {
       if (typeof data === "string") {
-        return `"${data}"`; // Wrap strings in quotes
+        return `"${data.replace(/\\/g, "")}"`; // Wrap strings in quotes
       }
       return data; // Return numbers, booleans, etc. as-is
     }
