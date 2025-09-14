@@ -14,16 +14,14 @@ export class ScrimSignupMock {
   // this solves the problem of having multiple lobbies in one scrim.
   async computeScrim(
     discordChannelID: string,
-    overstatLink: string,
-    skill: number,
-  ) {
+    overstatLinks: string[],
+  ): Promise<string[]> {
     console.log(
       "Computing scrim in signup mock",
       discordChannelID,
-      overstatLink,
-      skill,
+      overstatLinks,
     );
-    return Promise.resolve();
+    return Promise.resolve(overstatLinks);
   }
 
   async closeScrim(discordChannelID: string) {

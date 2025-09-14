@@ -1,5 +1,5 @@
 import { GuildMember, User } from "discord.js";
-import { Player, PlayerInsert, PlayerStatInsert } from "../models/Player";
+import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
 import { CacheService } from "./cache";
@@ -59,43 +59,76 @@ export class ScrimSignups {
     return this.cache.getScrim(discordChannelID);
   }
 
-  // this is a dynamic method that checks if scores have already been computed for a given discordChannel
-  // if they have been computed it creates a new scrim entry in the db and computes stats for that one
-  // this solves the problem of having multiple lobbies in one scrim.
-  async computeScrim(
-    discordChannelID: string,
-    overstatLink: string,
-    skill: number,
-  ) {
-    const scrim = this.cache.getScrim(discordChannelID);
-    if (!scrim) {
+  async computeScrim(discordChannelID: string, overstatLinks: string[]) {
+    const scrims = await this.db.getScrimsByDiscordChannel(discordChannelID);
+    if (!scrims.length) {
       throw Error("No scrim found for that channel");
     }
-    let scrimId = scrim.id;
-    const signups = this.cache.getSignups(scrimId);
-    if (!signups) {
-      throw Error("No signups for that scrim");
-    }
-    if (
-      scrim.skill &&
-      scrim.overstatLink &&
-      scrim.overstatLink !== overstatLink
-    ) {
-      scrimId = await this.db.createNewScrim(
-        scrim.dateTime,
-        scrim.discordChannel,
-      );
-    }
-    const stats = await this.overstatService.getOverallStats(overstatLink);
-    const playerStats: PlayerStatInsert[] = this.overstatService.matchPlayers(
-      scrimId,
-      signups,
-      stats,
+    const overstatIds = overstatLinks.map((link) =>
+      this.overstatService.getTournamentId(link),
+    );
+    const scrimsWithoutOverstatId = scrims.filter((scrim) => !scrim.overstatId);
+    const scrimsToRecompute = scrims.filter((scrim) =>
+      overstatIds.includes(scrim.overstatId ?? ""),
     );
 
-    await this.db.computeScrim(scrimId, overstatLink, skill, playerStats);
-    scrim.overstatLink = overstatLink;
-    scrim.skill = skill;
+    const unlinkedOverstatIds = overstatIds.filter(
+      (id) => !scrims.some((scrim) => scrim.overstatId === id),
+    );
+
+    await this.computeAlreadyCreatedScrims(
+      [...scrimsWithoutOverstatId, ...scrimsToRecompute],
+      unlinkedOverstatIds,
+    );
+
+    const newOverstatIds = unlinkedOverstatIds.slice(
+      scrimsWithoutOverstatId.length,
+    );
+    await this.computeNewScrims(newOverstatIds, {
+      scrimDateTime: scrims[0].dateTime,
+      discordChannelID,
+    });
+
+    return overstatLinks;
+  }
+
+  private async computeAlreadyCreatedScrims(
+    scrims: Scrim[],
+    unlinkedOverstatIds: string[],
+  ) {
+    let nextIdIndex = 0;
+    for (const scrim of scrims) {
+      let overstatId = scrim.overstatId;
+      if (!overstatId) {
+        overstatId = unlinkedOverstatIds[nextIdIndex];
+        nextIdIndex++;
+      }
+      if (!overstatId) {
+        throw new Error(
+          "Mismatch in scrims to overstat ids, code error, this shouldn't be possible",
+        );
+      }
+      const stats = await this.overstatService.getOverallStatsForId(overstatId);
+      await this.db.updateScrim(scrim.id, {
+        overstatId: overstatId,
+        overstatJson: stats,
+      });
+    }
+  }
+
+  private async computeNewScrims(
+    newOverstatIds: string[],
+    scrimInfo: { discordChannelID: string; scrimDateTime: Date },
+  ) {
+    for (const overstatId of newOverstatIds) {
+      const stats = await this.overstatService.getOverallStatsForId(overstatId);
+      await this.db.createNewScrim(
+        scrimInfo.scrimDateTime,
+        scrimInfo.discordChannelID,
+        overstatId,
+        stats,
+      );
+    }
   }
 
   async closeScrim(discordChannelID: string) {

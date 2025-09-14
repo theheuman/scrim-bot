@@ -5,7 +5,7 @@ export type JSONValue =
   | { [x: string]: JSONValue }
   | Array<JSONValue>;
 
-export type DbValue = string | number | boolean | Date | null;
+export type DbValue = string | number | boolean | Date | JSON | null;
 export type Comparator = "eq" | "gte" | "lte" | "gt" | "lt";
 export type Operator = "and" | "or";
 export type Expression = {

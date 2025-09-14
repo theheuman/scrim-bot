@@ -1,6 +1,6 @@
 type DataSource = "statscode" | "livedata"; // TODO not sure if its "live" or maybe something like "livedata"
 
-export interface OverstatTournamentResponse {
+export interface OverstatTournamentResponse extends JSON {
   total: number;
   source: DataSource;
   games: GameResponse[];

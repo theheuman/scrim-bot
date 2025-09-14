@@ -141,6 +141,19 @@ export class DbMock extends DB {
     return Promise.resolve({});
   }
 
+  async updateScrim(
+    scrimId: string,
+    updatedData: {
+      dateTime?: Date;
+      discordChannelID?: string;
+      overstatId?: string;
+      overstatJson?: JSON;
+    },
+  ): Promise<void> {
+    console.log("DB Mock updateScrim", scrimId, updatedData);
+    return Promise.resolve();
+  }
+
   async setPrio(
     playerIds: string[],
     startDate: Date,

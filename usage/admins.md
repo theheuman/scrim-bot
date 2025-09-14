@@ -36,28 +36,21 @@ In addition to replying with all the teams it also returns a csv, you can downlo
 Can only be used in a signup post created by the bot
 
 ## /compute-scrim
-Computes stats for the scrim, any overstat accounts linked to discord accounts will have stats generated for them weighted to the lobby strength.
+Computes stats for the scrim, once elo is set up it will calculate elo changes for all players in the lobby that have their discord and overstat linked.
 
-This command can be used multiple times in the same signup post if there are multiple lobbies
+Run this once the overstat has been archived
+
+You can compute up to 3 lobbies at a time for the scrim, you can also recompute a lobby if something with the overstat needed to change (forgot a game, used a wrong game, etc...)
+
+If you computed a lobby that is not part of the scrim please contact a developer to remove it
 
 ![Compute scrim](/usage/assets/admins/compute-scrim.png)
 ![Compute scrim success](/usage/assets/admins/compute-scrim-success.png)
 
 Can only be used in a signup post created by the bot
 
-
-Fill out the required fields: full overstat link (not shortened), skill (see below table for skill for each type of lobby)
-
-Skill map
-```
-League | skill | scrim
-Div 1  |   1   |
-       |   2   |	Lobby 1
-Div 2  |   3   |
-Div 3  |   5   |	Scrim 2
-Div 4  |   6   |	Scrim 3
-Div 5  |   7   |
-```
+Fill out the required fields: full overstat link (not shortened)
+Optionally add overstat-link-2 and/or overstat-link-3 if there are more than one lobby to compute for the channel
 
 ## /close-scrim
 Close the scrim, deletes the post and sets the scrim to not active.

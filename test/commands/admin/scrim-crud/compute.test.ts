@@ -28,10 +28,11 @@ describe("Close scrim", () => {
     string
   >;
   let signupComputeScrimSpy: SpyInstance<
-    Promise<void>,
-    [channelId: string, overstatLink: string, skill: number],
+    Promise<string[]>,
+    [channelId: string, overstatLinks: string[]],
     string
   >;
+  let getStringCallCount = 0;
 
   let command: ComputeScrimCommand;
 
@@ -47,8 +48,14 @@ describe("Close scrim", () => {
     basicInteraction = {
       channelId: "forum thread id",
       options: {
-        getString: () => "overstat.link",
-        getNumber: () => 1,
+        getString: () => {
+          let stringToReturn: string | null = null;
+          if (getStringCallCount < 3) {
+            stringToReturn = "overstat.link";
+          }
+          getStringCallCount++;
+          return stringToReturn;
+        },
       },
       reply: jest.fn(),
       editReply: jest.fn(),
@@ -59,9 +66,7 @@ describe("Close scrim", () => {
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     signupComputeScrimSpy = jest.spyOn(mockScrimSignups, "computeScrim");
-    signupComputeScrimSpy.mockImplementation(() => {
-      return Promise.resolve();
-    });
+    signupComputeScrimSpy.mockReturnValue(Promise.resolve(["overstat.link"]));
   });
 
   beforeEach(() => {
@@ -72,23 +77,39 @@ describe("Close scrim", () => {
       new AuthMock() as AuthService,
       mockScrimSignups as unknown as ScrimSignups,
     );
+    getStringCallCount = 0;
   });
 
-  it("Should compute scrim", async () => {
+  it("Should compute single scrim", async () => {
+    getStringCallCount = 2;
     await command.run(basicInteraction);
-    expect(signupComputeScrimSpy).toHaveBeenCalledWith(
-      "forum thread id",
+    expect(signupComputeScrimSpy).toHaveBeenCalledWith("forum thread id", [
       "overstat.link",
-      1,
-    );
+    ]);
     expect(followUpSpy).toHaveBeenCalledWith(
-      "Scrim lobby successfully computed, you can now compute another lobby or close the scrim",
+      "1 scrim lobby successfully computed, you can now close the scrim",
+    );
+    jest.useRealTimers();
+  });
+
+  it("Should compute multiple scrims", async () => {
+    signupComputeScrimSpy.mockReturnValue(
+      Promise.resolve(["overstat.link", "overstat.link", "overstat.link"]),
+    );
+    await command.run(basicInteraction);
+    expect(signupComputeScrimSpy).toHaveBeenCalledWith("forum thread id", [
+      "overstat.link",
+      "overstat.link",
+      "overstat.link",
+    ]);
+    expect(followUpSpy).toHaveBeenCalledWith(
+      "3 scrim lobbies successfully computed, you can now close the scrim",
     );
     jest.useRealTimers();
   });
 
   describe("errors", () => {
-    it("should not compute scrim because the overstat link is invalid", async () => {
+    it("should not compute scrim because the signup service errored", async () => {
       signupComputeScrimSpy.mockImplementation(() => {
         throw Error(
           "URL Malformated, make sure you are using the fully built url and not the shortcode",

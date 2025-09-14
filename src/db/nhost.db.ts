@@ -12,6 +12,7 @@ import { ErrorPayload, NhostClient } from "@nhost/nhost-js";
 import { GraphQLError } from "graphql/error";
 import { ExpungedPlayerPrio } from "../models/Prio";
 import { appConfig } from "../config";
+import { isJson } from "../utility/utility";
 
 class NhostDb extends DB {
   private nhostClient: NhostClient;
@@ -572,7 +573,7 @@ class NhostDb extends DB {
   }
 
   private static createValueString(
-    value: string | number | boolean | Date | null,
+    value: string | number | boolean | Date | JSON | null,
   ): string {
     if (typeof value === "string") {
       return `"${value}"`;
@@ -580,8 +581,35 @@ class NhostDb extends DB {
       return `"${value.toISOString()}"`;
     } else if (value === null) {
       return `null`;
+    } else if (isJson(value)) {
+      return this.formatJsonForString(value);
     }
     return `${value}`;
+  }
+
+  private static formatJsonForString(data: JSON | string): string {
+    if (typeof data !== "object" || data === null) {
+      if (typeof data === "string") {
+        return `"${data.replace(/\\/g, "")}"`; // Wrap strings in quotes
+      }
+      return data; // Return numbers, booleans, etc. as-is
+    }
+
+    if (Array.isArray(data)) {
+      const formattedElements = data
+        .map((element) => this.formatJsonForString(element))
+        .join(",");
+      return `[${formattedElements}]`;
+    }
+
+    const parts = Object.keys(data).map((key) => {
+      // @ts-expect-error we know key can be used ot index data here
+      const value = data[key];
+      const formattedValue = this.formatJsonForString(value);
+      return `${key}:${formattedValue}`;
+    });
+
+    return `{${parts.join(",")}}`;
   }
 
   private getDbErrorMessage(result: {

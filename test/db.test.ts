@@ -1,5 +1,5 @@
 import { nhostDb } from "../src/db/nhost.db";
-import { PlayerInsert, PlayerStatInsert } from "../src/models/Player";
+import { PlayerInsert } from "../src/models/Player";
 import { Scrims } from "../src/db/table.interfaces";
 
 let mockRequest: (query: string) => Promise<object> = jest.fn();
@@ -864,33 +864,6 @@ describe("DB connection", () => {
         }
       }
     `;
-    const expectedPostQuery = `
-      mutation {
-        insert_scrim_player_stats(objects: [{
-  player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
-  scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-  assists: 1,
-  characters: "fuse,newcastle",
-  damage_dealt: 4144,
-  damage_taken: 0,
-  grenades_thrown: 0,
-  kills: 9,
-  knockdowns: 9,
-  name: "TheHeuman",
-  respawns_given: 0,
-  revives_given: 2,
-  score: 28,
-  survival_time: 4222,
-  tacticals_used: 0,
-  ultimates_used: 0,
-  games_played: 6
-  }]) {
-        returning {
-          id
-        }
-      }
-    }
-    `;
     it("closeScrim()", async () => {
       mockRequest = (query) => {
         let expected = `
@@ -953,79 +926,48 @@ describe("DB connection", () => {
       expect.assertions(3);
     });
 
-    it("computeStats()", async () => {
+    it("updateScrim()", async () => {
       mockRequest = (query) => {
-        let expected = `
+        const expected = `
         mutation {
-          update_scrims(
-            where: { id: { _eq: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9" } },
-            _set: {
-              skill: 1,
-              overstat_link: "https://overstat.gg/tournament/vesa/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard"
-            }
-          ) {
-           returning { id }
+         update_scrims(
+           where: { id: { _eq: "scrim_id" } },
+          _set:
+          {
+            overstat_id: "12345",
+            overstat_json: {id:"valid id",other_fields:"other values",property:{several:"value",fields:"other value"}}
           }
-        }
+         )
+         {
+           returning {
+             id
+           }
+         }
+       }
     `;
-        let returnData: { data: object } = {
+        const returnData: { data: object } = {
           data: {
             update_scrims: {
               returning: [
                 {
-                  id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
+                  id: "scrim_id_1",
                 },
               ],
             },
           },
         };
-        if (query.includes("insert_")) {
-          expected = expectedPostQuery;
-          returnData = {
-            data: {
-              insert_scrim_player_stats: {
-                returning: [
-                  {
-                    id: "87e7f005-4416-4033-958a-6ddd2f82b16f",
-                  },
-                ],
-              },
-            },
-          };
-        }
-
         expect(query.replace(/\s+/g, ` `)).toEqual(
           expected.replace(/\s+/g, ` `),
         );
         return Promise.resolve(returnData);
       };
-      const theHeumanPlayerStats: PlayerStatInsert = {
-        player_id: "f272a11e-5b30-4aea-b596-af2464de59ba",
-        scrim_id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-        assists: 1,
-        characters: "fuse,newcastle",
-        damage_dealt: 4144,
-        damage_taken: 0,
-        grenades_thrown: 0,
-        kills: 9,
-        knockdowns: 9,
-        name: "TheHeuman",
-        respawns_given: 0,
-        revives_given: 2,
-        score: 28,
-        survival_time: 4222,
-        tacticals_used: 0,
-        ultimates_used: 0,
-        games_played: 6,
-      };
-      const returnedData = await nhostDb.computeScrim(
-        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-        "https://overstat.gg/tournament/vesa/10144.The_Void_S1_II_Celestial_Leagu/standings/overall/scoreboard",
-        1,
-        [theHeumanPlayerStats],
-      );
-      expect(returnedData).toEqual(["87e7f005-4416-4033-958a-6ddd2f82b16f"]);
-      expect.assertions(3);
+      await nhostDb.updateScrim("scrim_id", {
+        overstatId: "12345",
+        overstatJson: JSON.parse(
+          `{"id": "valid id", "other_fields": "other values", "property": { "several": "value", "fields": "other value"} }`,
+        ),
+      });
+      expect.assertions(1);
     });
   });
 
