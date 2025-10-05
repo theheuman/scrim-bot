@@ -23,10 +23,12 @@
     "bump-version": "./scripts/bump-version.sh"
   },
   "dependencies": {
+    "@googleapis/sheets": "^12.0.0",
     "@nhost/nhost-js": "^3.1.10",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "discord.js": "^14.16.2",
+    "googleapis": "^161.0.0",
     "graphql": "^16.9.0"
   },
   "devDependencies": {
