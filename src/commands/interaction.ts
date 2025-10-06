@@ -10,6 +10,7 @@ import {
   Message,
   MessagePayload,
   SlashCommandChannelOption,
+  SlashCommandIntegerOption,
   SlashCommandNumberOption,
   SlashCommandRoleOption,
   SlashCommandStringOption,
@@ -25,12 +26,19 @@ export type SlashCommandOption =
   | SlashCommandNumberOption
   | SlashCommandRoleOption
   | SlashCommandUserOption
-  | SlashCommandChannelOption;
+  | SlashCommandChannelOption
+  | SlashCommandIntegerOption;
 
-export interface OptionConfig {
+export interface StringOptionConfig {
   isRequired?: boolean;
   minLength?: number;
   maxLength?: number;
+}
+
+export interface NumberOptionConfig {
+  isRequired?: boolean;
+  minValue?: number;
+  maxValue?: number;
 }
 
 type ExtendedCommandInteractionOptionResolver = Omit<

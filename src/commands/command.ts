@@ -1,8 +1,9 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import {
   CustomInteraction,
-  OptionConfig,
+  StringOptionConfig,
   SlashCommandOption,
+  NumberOptionConfig,
 } from "./interaction";
 import { AuthService } from "../services/auth";
 import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
@@ -34,7 +35,11 @@ export abstract class Command extends SlashCommandBuilder {
     });
   }
 
-  addStringInput(name: string, description: string, config?: OptionConfig) {
+  addStringInput(
+    name: string,
+    description: string,
+    config?: StringOptionConfig,
+  ) {
     this.addStringOption((baseOption) => {
       const option = this.addOption(
         baseOption,
@@ -69,6 +74,33 @@ export abstract class Command extends SlashCommandBuilder {
       required: isRequired,
       name,
       methodName: "getNumber",
+    });
+  }
+
+  addIntegerInput(
+    name: string,
+    description: string,
+    config?: NumberOptionConfig,
+  ) {
+    this.addIntegerOption((baseOption) => {
+      const option = this.addOption(
+        baseOption,
+        name,
+        description,
+        config?.isRequired ?? false,
+      );
+      if (config?.minValue) {
+        option.setMinValue(config.minValue);
+      }
+      if (config?.maxValue) {
+        option.setMinValue(config.maxValue);
+      }
+      return option;
+    });
+    this.loggableArguments.push({
+      required: config?.isRequired ?? false,
+      name,
+      methodName: "getInteger",
     });
   }
 
