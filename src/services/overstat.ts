@@ -30,7 +30,7 @@ export class OverstatService {
 
   // We may want to make sure that the ID returns a valid player
   // https://overstat.gg/api/player/{id} could be used for this
-  private getPlayerId(overstatLink: string): string {
+  getPlayerId(overstatLink: string): string {
     const url = new URL(overstatLink);
     if (url.hostname !== "overstat.gg") {
       throw Error("Not an overstat link");
