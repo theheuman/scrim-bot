@@ -25,11 +25,27 @@ async function accessSpreadsheet() {
   console.log(response.data.values);
 }
 
-async function postSpreadSheetValue() {
+async function postSpreadSheetValue(
+  teamName,
+  teamNoDays,
+  teampCompKnowledge,
+  player1,
+  player2,
+  player3,
+) {
   const client = await getAuthClient();
 
   const range = "Sheet1!A1";
-  const values = [["Value for Col A", "Value for Col B", "Value for Col C"]];
+  const values = [
+    [
+      teamName,
+      teamNoDays,
+      teampCompKnowledge,
+      ...Object.values(player1),
+      ...Object.values(player2),
+      ...Object.values(player3),
+    ],
+  ];
 
   const request = {
     spreadsheetId,
@@ -46,5 +62,32 @@ async function postSpreadSheetValue() {
   console.log(response.data);
 }
 
+const player1 = {
+  name: "TheHeuman",
+  discordId: "valid discord id heuman",
+  elo: 1500,
+  rank: "plat 1",
+  previous_season_vesa_division: "div 3",
+  platform: "Xbox",
+};
+
+const player2 = {
+  name: "Toasty",
+  discordId: "valid discord id toasty",
+  elo: 1200,
+  rank: "gold 1",
+  previous_season_vesa_division: "div 4",
+  platform: "PS5",
+};
+
+const player3 = {
+  name: "pgk",
+  discordId: "valid discord id pgk",
+  elo: 2000,
+  rank: "diamond 1",
+  previous_season_vesa_division: "div 1",
+  platform: "PC",
+};
+
 // accessSpreadsheet();
-postSpreadSheetValue();
+postSpreadSheetValue("HTP", "Monday, Wednesday", 4, player1, player2, player3);
