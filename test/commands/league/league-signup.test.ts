@@ -18,16 +18,6 @@ import { OverstatService } from "../../../src/services/overstat";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
-  let replySpy: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
-    string
-  >;
-  let editReplySpy: SpyInstance<
-    Promise<Message<boolean>>,
-    [options: string | InteractionEditReplyOptions | MessagePayload],
-    string
-  >;
   let followUpSpy: SpyInstance<
     Promise<Message<boolean>>,
     [reply: string | InteractionReplyOptions | MessagePayload],
@@ -66,11 +56,12 @@ describe("Sign up", () => {
   let mockOverstatService: OverstatService;
 
   beforeAll(() => {
+    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      mockOverstatService,
+    );
     basicInteraction = {
       channelId: "forum thread id",
-      reply: jest.fn(),
-      invisibleReply: jest.fn(),
-      editReply: jest.fn(),
+      deferReply: jest.fn(),
       followUp: jest.fn(),
       options: {
         getUser: (key: string) => {
@@ -82,16 +73,30 @@ describe("Sign up", () => {
             return player3;
           }
         },
-        getString: () => "team name",
+        getString: (key: string) => {
+          if (key === staticCommandUsedJustForInputNames.inputNames.teamName) {
+            return "team name";
+          } else if (
+            key ===
+            staticCommandUsedJustForInputNames.inputNames.daysUnableToPlay
+          ) {
+            return "Mondays";
+          } else {
+            getPlayerOverstat(key);
+          }
+        },
         getInteger: (key: string) => {
-          console.log(key);
-          return 2;
+          if (
+            key === staticCommandUsedJustForInputNames.inputNames.compExperience
+          ) {
+            return 4;
+          } else {
+            getPlayerIntegerInputs(key);
+          }
         },
       },
       member: signupMember,
     } as unknown as CustomInteraction;
-    replySpy = jest.spyOn(basicInteraction, "reply");
-    editReplySpy = jest.spyOn(basicInteraction, "editReply");
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     googleSheetsRequestSpy = jest.spyOn(
       sheets("v4").spreadsheets.values,
@@ -105,8 +110,6 @@ describe("Sign up", () => {
 
   beforeEach(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
-    replySpy.mockClear();
-    editReplySpy.mockClear();
     followUpSpy.mockClear();
     googleSheetsRequestSpy.mockClear();
     command = new LeagueSignupCommand(mockOverstatService);
@@ -125,9 +128,8 @@ describe("Sign up", () => {
       googleSheetsRequestSpy.mockImplementationOnce(async () => {
         throw Error("Sheets Failure");
       });
-      editReplySpy = jest.spyOn(basicInteraction, "editReply");
       await command.run(basicInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
+      expect(followUpSpy).toHaveBeenCalledWith(
         "Team not signed up. Error: Sheets failure",
       );
     });
@@ -144,11 +146,120 @@ describe("Sign up", () => {
             return "12345";
           }
         });
-      editReplySpy = jest.spyOn(basicInteraction, "editReply");
       await command.run(basicInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
+      expect(followUpSpy).toHaveBeenCalledWith(
         `Team not signed up. Error: Player "pgk" has an invalid overstat link: Not a link to a player overview. A valid link looks like this: https://overstat.gg/player/357606/overview`,
       );
     });
   });
+
+  const ranks = {
+    player1: 1,
+    player2: 2,
+    player3: 3,
+  };
+
+  const divisions = {
+    player1: 1,
+    player2: 2,
+    player3: 3,
+  };
+
+  const overstats = {
+    player1: "overstat.gg/player1",
+    player2: "overstat.gg/player2",
+    player3: "overstat.gg/player3",
+  };
+
+  const getPlayerIntegerInputs = (key: string) => {
+    if (key.includes("rank")) {
+      return getPlayerRank(key);
+    } else {
+      return getPlayerDivision(key);
+    }
+  };
+
+  const getPlayerRank = (key: string) => {
+    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      mockOverstatService,
+    );
+    if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player1inputNames.rank
+    ) {
+      return ranks.player1;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player2inputNames.rank
+    ) {
+      return ranks.player2;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player3inputNames.rank
+    ) {
+      return ranks.player3;
+    } else {
+      throw Error(
+        "Test error getting player rank that doesn't match input names",
+      );
+    }
+  };
+
+  const getPlayerDivision = (key: string) => {
+    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      mockOverstatService,
+    );
+    if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player1inputNames
+        .lastSeasonDivision
+    ) {
+      return divisions.player1;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player2inputNames
+        .lastSeasonDivision
+    ) {
+      return divisions.player2;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player3inputNames
+        .lastSeasonDivision
+    ) {
+      return divisions.player3;
+    } else {
+      throw Error(
+        "Test error getting player division that doesn't match input names",
+      );
+    }
+  };
+
+  const getPlayerOverstat = (key: string) => {
+    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      mockOverstatService,
+    );
+    if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player1inputNames
+        .overstatLink
+    ) {
+      return divisions.player1;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player2inputNames
+        .overstatLink
+    ) {
+      return divisions.player2;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player3inputNames
+        .overstatLink
+    ) {
+      return divisions.player3;
+    } else {
+      throw Error(
+        "Test error getting player overstatLink that doesn't match input names",
+      );
+    }
+  };
 });

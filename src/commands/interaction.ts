@@ -20,6 +20,7 @@ import {
 } from "discord.js";
 import { parseDate } from "../utility/time";
 import { isGuildMember } from "../utility/utility";
+import { InteractionDeferReplyOptions } from "discord.js/typings";
 
 export type SlashCommandOption =
   | SlashCommandStringOption
@@ -104,6 +105,16 @@ export class CustomInteraction {
       argument,
     );
     return this.ogInteraction.reply(argument);
+  }
+
+  deferReply(
+    argument?: InteractionDeferReplyOptions & { withResponse: true },
+  ): Promise<InteractionResponse<boolean>> {
+    console.log(
+      `\tReplying to interaction ${this.ogInteraction.id}: `,
+      argument,
+    );
+    return this.ogInteraction.deferReply(argument);
   }
 
   editReply(

@@ -93,7 +93,7 @@ export abstract class Command extends SlashCommandBuilder {
         option.setMinValue(config.minValue);
       }
       if (config?.maxValue) {
-        option.setMinValue(config.maxValue);
+        option.setMaxValue(config.maxValue);
       }
       return option;
     });

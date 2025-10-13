@@ -1,7 +1,6 @@
 import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
-import { Player } from "../../models/Player";
 import { OverstatService } from "../../services/overstat";
 import { User } from "discord.js";
 
@@ -12,24 +11,24 @@ export class LeagueSignupCommand extends MemberCommand {
     compExperience: "comp-experience",
     daysUnableToPlay: "days-unable-to-play",
 
-    player1: {
+    player1inputNames: {
       user: "player1",
       rank: "player1-rank",
-      lastSeasonDivision: "player1-last-season-vesa-division",
+      lastSeasonDivision: "player1-vesa-division",
       overstatLink: "player1-overstat-link",
     },
 
-    player2: {
+    player2inputNames: {
       user: "player2",
       rank: "player2-rank",
-      lastSeasonDivision: "player2-last-season-vesa-division",
+      lastSeasonDivision: "player2-vesa-division",
       overstatLink: "player2-overstat-link",
     },
 
-    player3: {
+    player3inputNames: {
       user: "player3",
       rank: "player3-rank",
-      lastSeasonDivision: "player3-last-season-vesa-division",
+      lastSeasonDivision: "player3-vesa-division",
       overstatLink: "player3-overstat-link",
     },
   };
@@ -52,57 +51,63 @@ export class LeagueSignupCommand extends MemberCommand {
       },
     );
 
-    this.addStringInput(
-      this.inputNames.daysUnableToPlay,
-      "Days your team is unable to play, ex: Monday, Tuesday, Wednesday, Thursday, Friday. Input as a comma delimited list of days your team can not play because one or more of you have other engagements",
+    this.addUserInput(this.inputNames.player1inputNames.user, "@player1", true);
+    this.addUserInput(this.inputNames.player2inputNames.user, "@player2", true);
+    this.addUserInput(this.inputNames.player3inputNames.user, "@player3", true);
+
+    // TODO choice
+    this.addIntegerInput(
+      this.inputNames.player1inputNames.rank,
+      "Player 1 last seasons peak rank",
+      {
+        isRequired: true,
+      },
+    );
+    this.addIntegerInput(
+      this.inputNames.player2inputNames.rank,
+      "Player 2 last seasons peak rank",
+      {
+        isRequired: true,
+      },
+    );
+    this.addIntegerInput(
+      this.inputNames.player3inputNames.rank,
+      "Player 3 last seasons peak rank",
+      {
+        isRequired: true,
+      },
     );
 
-    this.addUserInput(this.inputNames.player1.user, "@player1", true);
-    this.addUserInput(this.inputNames.player2.user, "@player2", true);
-    this.addUserInput(this.inputNames.player3.user, "@player3", true);
+    this.addStringInput(
+      this.inputNames.daysUnableToPlay,
+      "Days your team is unable to play due to scheduling conflicts for one or more of your players",
+    );
+
+    // TODO choice
+    this.addIntegerInput(
+      this.inputNames.player1inputNames.lastSeasonDivision,
+      "Player 1 last vesa seasons division",
+    );
+    this.addIntegerInput(
+      this.inputNames.player2inputNames.lastSeasonDivision,
+      "Player 2 last vesa seasons division",
+    );
+    this.addIntegerInput(
+      this.inputNames.player3inputNames.lastSeasonDivision,
+      "Player 3 last vesa seasons division",
+    );
 
     this.addStringInput(
-      this.inputNames.player1.overstatLink,
+      this.inputNames.player1inputNames.overstatLink,
       "Player 1 overstat link",
     );
     this.addStringInput(
-      this.inputNames.player2.overstatLink,
+      this.inputNames.player2inputNames.overstatLink,
       "Player 2 overstat link",
     );
     this.addStringInput(
-      this.inputNames.player3.overstatLink,
+      this.inputNames.player3inputNames.overstatLink,
       "Player 3 overstat link",
-    );
-
-    // TODO choice
-    this.addStringInput(
-      this.inputNames.player1.rank,
-      "Player 1 last seasons peak rank",
-    );
-    this.addStringInput(
-      this.inputNames.player2.rank,
-      "Player 2 last seasons peak rank",
-    );
-    this.addStringInput(
-      this.inputNames.player3.rank,
-      "Player 3 last seasons peak rank",
-    );
-
-    // TODO choice
-    this.addUserInput(
-      this.inputNames.player1.lastSeasonDivision,
-      "Player 1 last vesa seasons division",
-      true,
-    );
-    this.addUserInput(
-      this.inputNames.player2.lastSeasonDivision,
-      "Player 2 last vesa seasons division",
-      true,
-    );
-    this.addUserInput(
-      this.inputNames.player3.lastSeasonDivision,
-      "Player 3 last vesa seasons division",
-      true,
     );
   }
 
@@ -117,9 +122,18 @@ export class LeagueSignupCommand extends MemberCommand {
       true,
     );
     const signupPlayer = interaction.member;
-    const player1 = this.getPlayerInputs(this.inputNames.player1, interaction);
-    const player2 = this.getPlayerInputs(this.inputNames.player2, interaction);
-    const player3 = this.getPlayerInputs(this.inputNames.player3, interaction);
+    const player1 = this.getPlayerInputs(
+      this.inputNames.player1inputNames,
+      interaction,
+    );
+    const player2 = this.getPlayerInputs(
+      this.inputNames.player2inputNames,
+      interaction,
+    );
+    const player3 = this.getPlayerInputs(
+      this.inputNames.player3inputNames,
+      interaction,
+    );
 
     if (!isGuildMember(signupPlayer)) {
       await interaction.reply(
@@ -127,8 +141,12 @@ export class LeagueSignupCommand extends MemberCommand {
       );
       return;
     }
-    await interaction.ogInteraction.deferReply();
-    // do the logic!
+    // TODO maybe check for overstat links here and error out. Ask the user to provide an override input? eg: override-missing-info
+
+    await interaction.deferReply();
+    // TODO actuall implementation
+    console.log(channelId, teamName, compExperience, player1, player2, player3);
+    await interaction.followUp("Waited some time, replying now");
   }
 
   // TODO convert integer inputs to enums
@@ -144,7 +162,7 @@ export class LeagueSignupCommand extends MemberCommand {
   ): {
     user: User;
     rank: number;
-    overstatLink: string;
+    overstatLink: string | null;
     lastSeasonDivision: number;
   } {
     return {
@@ -152,7 +170,6 @@ export class LeagueSignupCommand extends MemberCommand {
       rank: interaction.options.getInteger(playerNumberInputs.rank, true),
       overstatLink: interaction.options.getString(
         playerNumberInputs.overstatLink,
-        true,
       ),
       lastSeasonDivision: interaction.options.getInteger(
         playerNumberInputs.lastSeasonDivision,
