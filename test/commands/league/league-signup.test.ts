@@ -1,8 +1,6 @@
 import {
   GuildMember,
-  InteractionEditReplyOptions,
   InteractionReplyOptions,
-  InteractionResponse,
   Message,
   MessagePayload,
   User,
@@ -106,6 +104,7 @@ describe("Sign up", () => {
       [request: unknown],
       string
     >;
+    // TODO mock google auth
   });
 
   beforeEach(() => {
@@ -154,15 +153,21 @@ describe("Sign up", () => {
   });
 
   const ranks = {
-    player1: 1,
-    player2: 2,
-    player3: 3,
+    player1: 0,
+    player2: 1,
+    player3: 2,
   };
 
   const divisions = {
-    player1: 1,
-    player2: 2,
-    player3: 3,
+    player1: 0,
+    player2: 1,
+    player3: 2,
+  };
+
+  const platforms = {
+    player1: 0,
+    player2: 1,
+    player3: 2,
   };
 
   const overstats = {
@@ -174,8 +179,10 @@ describe("Sign up", () => {
   const getPlayerIntegerInputs = (key: string) => {
     if (key.includes("rank")) {
       return getPlayerRank(key);
-    } else {
+    } else if (key.includes("div")) {
       return getPlayerDivision(key);
+    } else {
+      return getPlayerPlatform(key);
     }
   };
 
@@ -200,7 +207,7 @@ describe("Sign up", () => {
       return ranks.player3;
     } else {
       throw Error(
-        "Test error getting player rank that doesn't match input names",
+        "Test Error: Trying to get player rank that doesn't match input names",
       );
     }
   };
@@ -229,7 +236,7 @@ describe("Sign up", () => {
       return divisions.player3;
     } else {
       throw Error(
-        "Test error getting player division that doesn't match input names",
+        "Test error: Trying to get player division that doesn't match input names",
       );
     }
   };
@@ -243,22 +250,48 @@ describe("Sign up", () => {
       staticCommandUsedJustForInputNames.inputNames.player1inputNames
         .overstatLink
     ) {
-      return divisions.player1;
+      return overstats.player1;
     } else if (
       key ===
       staticCommandUsedJustForInputNames.inputNames.player2inputNames
         .overstatLink
     ) {
-      return divisions.player2;
+      return overstats.player2;
     } else if (
       key ===
       staticCommandUsedJustForInputNames.inputNames.player3inputNames
         .overstatLink
     ) {
-      return divisions.player3;
+      return overstats.player3;
     } else {
       throw Error(
-        "Test error getting player overstatLink that doesn't match input names",
+        "Test error: Trying to get player overstatLink that doesn't match input names",
+      );
+    }
+  };
+
+  const getPlayerPlatform = (key: string) => {
+    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      mockOverstatService,
+    );
+    if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player1inputNames.platform
+    ) {
+      return platforms.player1;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player2inputNames.platform
+    ) {
+      return platforms.player2;
+    } else if (
+      key ===
+      staticCommandUsedJustForInputNames.inputNames.player3inputNames.platform
+    ) {
+      return platforms.player3;
+    } else {
+      throw Error(
+        "Test error: Trying to get player platform that doesn't match input names",
       );
     }
   };

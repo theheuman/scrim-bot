@@ -2,7 +2,12 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { User } from "discord.js";
+import { Snowflake } from "discord.js";
+import { google } from "googleapis";
+import { GoogleAuth, OAuth2Client } from "googleapis-common";
+import { AnyAuthClient } from "google-auth-library";
+import { sheets_v4 } from "@googleapis/sheets";
+import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
 
 // TODO which fields are optional
 export class LeagueSignupCommand extends MemberCommand {
@@ -16,6 +21,7 @@ export class LeagueSignupCommand extends MemberCommand {
       rank: "player1-rank",
       lastSeasonDivision: "player1-vesa-division",
       overstatLink: "player1-overstat-link",
+      platform: "player1-platform",
     },
 
     player2inputNames: {
@@ -23,6 +29,7 @@ export class LeagueSignupCommand extends MemberCommand {
       rank: "player2-rank",
       lastSeasonDivision: "player2-vesa-division",
       overstatLink: "player2-overstat-link",
+      platform: "player2-platform",
     },
 
     player3inputNames: {
@@ -30,6 +37,7 @@ export class LeagueSignupCommand extends MemberCommand {
       rank: "player3-rank",
       lastSeasonDivision: "player3-vesa-division",
       overstatLink: "player3-overstat-link",
+      platform: "player3-platform",
     },
   };
 
@@ -78,6 +86,29 @@ export class LeagueSignupCommand extends MemberCommand {
       },
     );
 
+    // TODO choice
+    this.addIntegerInput(
+      this.inputNames.player1inputNames.platform,
+      "Player 1 platform",
+      {
+        isRequired: true,
+      },
+    );
+    this.addIntegerInput(
+      this.inputNames.player2inputNames.platform,
+      "Player 2 platform",
+      {
+        isRequired: true,
+      },
+    );
+    this.addIntegerInput(
+      this.inputNames.player3inputNames.platform,
+      "Player 3 platform",
+      {
+        isRequired: true,
+      },
+    );
+
     this.addStringInput(
       this.inputNames.daysUnableToPlay,
       "Days your team is unable to play due to scheduling conflicts for one or more of your players",
@@ -112,9 +143,13 @@ export class LeagueSignupCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    const channelId = interaction.channelId;
+    // const channelId = interaction.channelId;
     const teamName = interaction.options.getString(
       this.inputNames.teamName,
+      true,
+    );
+    const teamNoDays = interaction.options.getString(
+      this.inputNames.daysUnableToPlay,
       true,
     );
     const compExperience = interaction.options.getInteger(
@@ -145,8 +180,20 @@ export class LeagueSignupCommand extends MemberCommand {
 
     await interaction.deferReply();
     // TODO actuall implementation
-    console.log(channelId, teamName, compExperience, player1, player2, player3);
-    await interaction.followUp("Waited some time, replying now");
+
+    try {
+      await this.postSpreadSheetValue(
+        teamName,
+        teamNoDays,
+        compExperience as CompKnowledge,
+        player1,
+        player2,
+        player3,
+      );
+      await interaction.followUp("Signed team up");
+    } catch (e) {
+      await interaction.followUp(`Didn't sign team up. ${e}`);
+    }
   }
 
   // TODO convert integer inputs to enums
@@ -157,24 +204,123 @@ export class LeagueSignupCommand extends MemberCommand {
       rank: string;
       overstatLink: string;
       lastSeasonDivision: string;
+      platform: string;
     },
     interaction: CustomInteraction,
-  ): {
-    user: User;
-    rank: number;
-    overstatLink: string | null;
-    lastSeasonDivision: number;
-  } {
+  ): SheetsPlayer {
+    const user = interaction.options.getUser(playerNumberInputs.user, true);
     return {
-      user: interaction.options.getUser(playerNumberInputs.user, true),
-      rank: interaction.options.getInteger(playerNumberInputs.rank, true),
-      overstatLink: interaction.options.getString(
-        playerNumberInputs.overstatLink,
+      elo: undefined,
+      platform: interaction.options.getInteger(
+        playerNumberInputs.platform,
+        true,
       ),
-      lastSeasonDivision: interaction.options.getInteger(
+      name: user.displayName,
+      discordId: user.id,
+      rank: interaction.options.getInteger(playerNumberInputs.rank, true),
+      overstatLink:
+        interaction.options.getString(playerNumberInputs.overstatLink) ??
+        undefined,
+      previous_season_vesa_division: interaction.options.getInteger(
         playerNumberInputs.lastSeasonDivision,
         true,
       ),
     };
   }
+
+  async postSpreadSheetValue(
+    teamName: string,
+    teamNoDays: string,
+    teamCompKnowledge: CompKnowledge,
+    player1: SheetsPlayer,
+    player2: SheetsPlayer,
+    player3: SheetsPlayer,
+  ) {
+    const client = await this.getAuthClient();
+    const spreadsheetId = "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo";
+
+    const range = "Sheet1!A1";
+    const values = [
+      [
+        teamName,
+        teamNoDays,
+        teamCompKnowledge,
+        ...Object.values(player1),
+        ...Object.values(player2),
+        ...Object.values(player3),
+      ],
+    ];
+
+    const request: Params$Resource$Spreadsheets$Values$Append = {
+      spreadsheetId,
+      range,
+      // Add valueInputOption to tell the API how to interpret the data (e.g., as raw text, or with formula parsing)
+      valueInputOption: "USER_ENTERED", // 'USER_ENTERED' is generally a safe choice
+      requestBody: {
+        values: values,
+      },
+      auth: client as OAuth2Client,
+    };
+
+    const sheets = google.sheets("v4");
+    const response = await sheets.spreadsheets.values.append(request);
+    console.log(response.data);
+  }
+
+  getAuthClient(): Promise<AnyAuthClient> {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: "service-account-key.json",
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    }) as GoogleAuth;
+
+    return auth.getClient();
+  }
+}
+
+enum PlayerRank {
+  Bronze,
+  Silver,
+  Gold,
+  Plat,
+  LowDiamond,
+  HighDiamond,
+  Masters,
+  Pred,
+}
+
+enum VesaDivision {
+  Division10,
+  Division9,
+  Division8,
+  Division7,
+  Division6,
+  Division5,
+  Division4,
+  Division3,
+  Division2,
+  Division1,
+}
+
+enum Platform {
+  xbox,
+  playstation,
+  pc,
+}
+
+enum CompKnowledge {
+  None,
+  Some,
+  Fair,
+  Alot,
+  Pro,
+}
+
+interface SheetsPlayer {
+  name: string;
+  discordId: Snowflake;
+  elo: number | undefined;
+  rank: PlayerRank;
+  previous_season_vesa_division: VesaDivision;
+  platform: Platform;
+  overstatLink: string | undefined;
 }
