@@ -3,10 +3,9 @@ import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
 import { Snowflake } from "discord.js";
-import { google } from "googleapis";
 import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
-import { sheets_v4 } from "@googleapis/sheets";
+import { auth, sheets, sheets_v4 } from "@googleapis/sheets";
 import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
 
 // TODO which fields are optional
@@ -251,6 +250,8 @@ export class LeagueSignupCommand extends MemberCommand {
       ],
     ];
 
+    console.log(values);
+
     const request: Params$Resource$Spreadsheets$Values$Append = {
       spreadsheetId,
       range,
@@ -262,18 +263,18 @@ export class LeagueSignupCommand extends MemberCommand {
       auth: client as OAuth2Client,
     };
 
-    const sheets = google.sheets("v4");
-    const response = await sheets.spreadsheets.values.append(request);
+    const sheetsClient = sheets({ version: "v4" });
+    const response = await sheetsClient.spreadsheets.values.append(request);
     console.log(response.data);
   }
 
   getAuthClient(): Promise<AnyAuthClient> {
-    const auth = new google.auth.GoogleAuth({
+    const googleAuth = new auth.GoogleAuth({
       keyFile: "service-account-key.json",
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     }) as GoogleAuth;
 
-    return auth.getClient();
+    return googleAuth.getClient();
   }
 }
 

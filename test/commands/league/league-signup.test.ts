@@ -8,16 +8,15 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
-import { sheets_v4 } from "@googleapis/sheets";
-import { google } from "googleapis";
+import * as GoogleSheets from "@googleapis/sheets";
 
 import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
 import { Readable } from "stream";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { OverstatService } from "../../../src/services/overstat";
-import Resource$Spreadsheets = sheets_v4.Resource$Spreadsheets;
-import Sheets = sheets_v4.Sheets;
-import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+import Resource$Spreadsheets = GoogleSheets.sheets_v4.Resource$Spreadsheets;
+import Sheets = GoogleSheets.sheets_v4.Sheets;
+import Params$Resource$Spreadsheets$Values$Append = GoogleSheets.sheets_v4.Params$Resource$Spreadsheets$Values$Append;
 
 class MockGoogleAuth {
   getClient() {
@@ -119,13 +118,13 @@ describe("Sign up", () => {
         } as GaxiosResponseWithHTTP2),
     };
     googleSheetsRequestSpy = jest.spyOn(googleValuesMethods, "append");
-    googleSheetsSpy = jest.spyOn(google, "sheets").mockReturnValue({
+    googleSheetsSpy = jest.spyOn(GoogleSheets, "sheets").mockReturnValue({
       spreadsheets: {
         values: googleValuesMethods,
       } as unknown as Resource$Spreadsheets,
     } as Sheets);
     googleAuthSpy = jest
-      .spyOn(google.auth, "GoogleAuth")
+      .spyOn(GoogleSheets.auth, "GoogleAuth")
       .mockReturnValue(new MockGoogleAuth() as unknown as GoogleAuth);
   });
 
