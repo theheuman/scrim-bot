@@ -8,11 +8,22 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
-import { sheets } from "@googleapis/sheets";
-import { GaxiosResponseWithHTTP2 } from "googleapis-common";
+import { sheets_v4 } from "@googleapis/sheets";
+import { google } from "googleapis";
+
+import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
 import { Readable } from "stream";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { OverstatService } from "../../../src/services/overstat";
+import Resource$Spreadsheets = sheets_v4.Resource$Spreadsheets;
+import Sheets = sheets_v4.Sheets;
+import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+
+class MockGoogleAuth {
+  getClient() {
+    return undefined;
+  }
+}
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -23,9 +34,11 @@ describe("Sign up", () => {
   >;
   let googleSheetsRequestSpy: SpyInstance<
     Promise<GaxiosResponseWithHTTP2<Readable>>,
-    [request: unknown],
+    [request: Params$Resource$Spreadsheets$Values$Append],
     string
   >;
+  let googleAuthSpy: SpyInstance;
+  let googleSheetsSpy: SpyInstance;
 
   let command: LeagueSignupCommand;
 
@@ -96,15 +109,24 @@ describe("Sign up", () => {
       member: signupMember,
     } as unknown as CustomInteraction;
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
-    googleSheetsRequestSpy = jest.spyOn(
-      sheets("v4").spreadsheets.values,
-      "append",
-    ) as unknown as SpyInstance<
-      Promise<GaxiosResponseWithHTTP2<Readable>>,
-      [request: unknown],
-      string
-    >;
-    // TODO mock google auth
+
+    const googleValuesMethods = {
+      append: (
+        request: Params$Resource$Spreadsheets$Values$Append,
+      ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
+        Promise.resolve({
+          data: "Request data " + request.key,
+        } as GaxiosResponseWithHTTP2),
+    };
+    googleSheetsRequestSpy = jest.spyOn(googleValuesMethods, "append");
+    googleSheetsSpy = jest.spyOn(google, "sheets").mockReturnValue({
+      spreadsheets: {
+        values: googleValuesMethods,
+      } as unknown as Resource$Spreadsheets,
+    } as Sheets);
+    googleAuthSpy = jest
+      .spyOn(google.auth, "GoogleAuth")
+      .mockReturnValue(new MockGoogleAuth() as unknown as GoogleAuth);
   });
 
   beforeEach(() => {
