@@ -5,9 +5,8 @@ import { OverstatService } from "../../services/overstat";
 import { Snowflake } from "discord.js";
 import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
-import { auth, sheets, sheets_v4 } from "@googleapis/sheets";
-import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
-import { SheetHelper } from "../../utility/sheet-helper";
+import { auth, sheets } from "@googleapis/sheets";
+import { SheetHelper, SpreadSheetType } from "../../utility/sheet-helper";
 
 // TODO which fields are optional
 export class LeagueSignupCommand extends MemberCommand {
@@ -249,33 +248,26 @@ export class LeagueSignupCommand extends MemberCommand {
     player2: SheetsPlayer,
     player3: SheetsPlayer,
   ): Promise<number | null> {
-    const client = await this.getAuthClient();
-    const spreadsheetId = "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo";
+    const authClient = await this.getAuthClient();
 
-    const range = "Sheet1!A1";
     const values = [
       [
         teamName,
         teamNoDays,
         teamCompKnowledge,
-        ...Object.values(player1),
-        ...Object.values(player2),
-        ...Object.values(player3),
+        ...this.convertSheetsPlayer(player1),
+        ...this.convertSheetsPlayer(player2),
+        ...this.convertSheetsPlayer(player3),
       ],
     ];
 
     console.log(values);
 
-    const request: Params$Resource$Spreadsheets$Values$Append = {
-      spreadsheetId,
-      range,
-      // Add valueInputOption to tell the API how to interpret the data (e.g., as raw text, or with formula parsing)
-      valueInputOption: "USER_ENTERED", // 'USER_ENTERED' is generally a safe choice
-      requestBody: {
-        values: values,
-      },
-      auth: client as OAuth2Client,
-    };
+    const request = SheetHelper.BUILD_REQUEST(
+      values,
+      authClient as OAuth2Client,
+      SpreadSheetType.TEST_SHEET,
+    );
 
     const sheetsClient = sheets({ version: "v4" });
     const response = await sheetsClient.spreadsheets.values.append(request);
@@ -284,6 +276,18 @@ export class LeagueSignupCommand extends MemberCommand {
       response.data.updates,
     );
     return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
+  }
+
+  private convertSheetsPlayer(player: SheetsPlayer): (string | number)[] {
+    return [
+      player.name,
+      player.discordId,
+      player.overstatLink ?? "No overstat",
+      player.previous_season_vesa_division,
+      player.rank,
+      player.platform,
+      player.elo ?? "No elo on record",
+    ];
   }
 
   getAuthClient(): Promise<AnyAuthClient> {

@@ -92,7 +92,7 @@ describe("Sign up", () => {
           ) {
             return "Mondays";
           } else {
-            getPlayerOverstat(key);
+            return getPlayerOverstat(key);
           }
         },
         getInteger: (key: string) => {
@@ -101,7 +101,7 @@ describe("Sign up", () => {
           ) {
             return 4;
           } else {
-            getPlayerIntegerInputs(key);
+            return getPlayerIntegerInputs(key);
           }
         },
       },
@@ -151,27 +151,27 @@ describe("Sign up", () => {
             "team name",
             "Mondays",
             4,
-            undefined,
-            undefined,
-            "Player 1",
-            "player1id",
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            "Player 2",
-            "player2id",
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            "Player 3",
-            "player3id",
-            undefined,
-            undefined,
-            undefined,
+            player1.displayName,
+            player1.id,
+            overstats.player1,
+            divisions.player1,
+            ranks.player1,
+            platforms.player1,
+            "No elo on record",
+            player2.displayName,
+            player2.id,
+            overstats.player2,
+            divisions.player2,
+            ranks.player2,
+            platforms.player2,
+            "No elo on record",
+            player3.displayName,
+            player3.id,
+            overstats.player3,
+            divisions.player3,
+            ranks.player3,
+            platforms.player3,
+            "No elo on record",
           ],
         ],
       },
