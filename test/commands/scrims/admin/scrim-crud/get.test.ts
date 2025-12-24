@@ -160,8 +160,8 @@ describe("Get signups", () => {
       force: true,
     });
     expect(getSignupsSpy).toHaveBeenCalledWith("forum thread id", ["an id"]);
-    const expectedMainListString = `Main list.\n__Main list team__. Signed up by: <@teamCapDiscordId1>. Players: <@teamCapDiscordId1> <@teamCapDiscordId1>. Prio: 1. League prio.\n__Main list team 2__. Signed up by: <@teamCapDiscordId2>. Players: .\n`;
-    const expectedWaitListString = `Wait list.\n__Wait list team__. Signed up by: <@teamCapDiscordId3>. Players: . Prio: -1. Team captain is a known inter.\n`;
+    const expectedMainListString = `Main list.\n__Main list team__\nSigned up by: <@teamCapDiscordId1>.\nPlayers: <@teamCapDiscordId1>, <@teamCapDiscordId1>. Prio: 1. League prio.\n__Main list team 2__\nSigned up by: <@teamCapDiscordId2>.\nPlayers: .\n`;
+    const expectedWaitListString = `Wait list.\n__Wait list team__\nSigned up by: <@teamCapDiscordId3>.\nPlayers: . Prio: -1. Team captain is a known inter.\n`;
     expect(followupSpy).toHaveBeenCalledWith({
       content: expectedMainListString,
       ephemeral: true,

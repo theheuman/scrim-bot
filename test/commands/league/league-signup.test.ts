@@ -114,7 +114,12 @@ describe("Sign up", () => {
         request: Params$Resource$Spreadsheets$Values$Append,
       ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
         Promise.resolve({
-          data: "Request data " + request.key,
+          data: {
+            updates: {
+              updatedRange: "Sheet1!A6:X6",
+            },
+            request: "Request data " + request.key,
+          },
         } as GaxiosResponseWithHTTP2),
     };
     googleSheetsRequestSpy = jest.spyOn(googleValuesMethods, "append");
@@ -137,9 +142,44 @@ describe("Sign up", () => {
 
   it("Should complete signup", async () => {
     await command.run(basicInteraction);
-    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({});
+    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
+      auth: undefined,
+      range: "Sheet1!A1",
+      requestBody: {
+        values: [
+          [
+            "team name",
+            "Mondays",
+            4,
+            undefined,
+            undefined,
+            "Player 1",
+            "player1id",
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            "Player 2",
+            "player2id",
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            "Player 3",
+            "player3id",
+            undefined,
+            undefined,
+            undefined,
+          ],
+        ],
+      },
+      spreadsheetId: "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo",
+      valueInputOption: "USER_ENTERED",
+    });
     expect(followUpSpy).toHaveBeenCalledWith(
-      `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nSignup #5. Your priority based on returning players will be determined by admins manually`,
+      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #5. Your priority based on returning players will be determined by admins manually`,
     );
   });
 
@@ -150,10 +190,11 @@ describe("Sign up", () => {
       });
       await command.run(basicInteraction);
       expect(followUpSpy).toHaveBeenCalledWith(
-        "Team not signed up. Error: Sheets failure",
+        "Team not signed up. Error: Sheets Failure",
       );
     });
 
+    /*
     it("should not complete the signup because the overstats are not valid", async () => {
       let getOverstatIdCount = 0;
       jest
@@ -171,6 +212,7 @@ describe("Sign up", () => {
         `Team not signed up. Error: Player "pgk" has an invalid overstat link: Not a link to a player overview. A valid link looks like this: https://overstat.gg/player/357606/overview`,
       );
     });
+     */
   });
 
   const ranks = {

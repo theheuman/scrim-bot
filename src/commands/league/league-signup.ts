@@ -7,6 +7,7 @@ import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
 import { auth, sheets, sheets_v4 } from "@googleapis/sheets";
 import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+import { SheetHelper } from "../../utility/sheet-helper";
 
 // TODO which fields are optional
 export class LeagueSignupCommand extends MemberCommand {
@@ -181,7 +182,7 @@ export class LeagueSignupCommand extends MemberCommand {
     // TODO actuall implementation
 
     try {
-      await this.postSpreadSheetValue(
+      const signupNumber = await this.postSpreadSheetValue(
         teamName,
         teamNoDays,
         compExperience as CompKnowledge,
@@ -189,9 +190,22 @@ export class LeagueSignupCommand extends MemberCommand {
         player2,
         player3,
       );
-      await interaction.followUp("Signed team up");
+      if (!signupNumber) {
+        await interaction.followUp(
+          "Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting",
+        );
+        return;
+      }
+      const signupString = this.formatTeam({
+        teamName,
+        players: [player1, player2, player3],
+        signupPlayer: player1,
+      });
+      await interaction.followUp(
+        `${signupString}\nSignup #${signupNumber}. Your priority based on returning players will be determined by admins manually`,
+      );
     } catch (e) {
-      await interaction.followUp(`Didn't sign team up. ${e}`);
+      await interaction.followUp(`Team not signed up. ${e}`);
     }
   }
 
@@ -234,7 +248,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player1: SheetsPlayer,
     player2: SheetsPlayer,
     player3: SheetsPlayer,
-  ) {
+  ): Promise<number | null> {
     const client = await this.getAuthClient();
     const spreadsheetId = "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo";
 
@@ -266,6 +280,10 @@ export class LeagueSignupCommand extends MemberCommand {
     const sheetsClient = sheets({ version: "v4" });
     const response = await sheetsClient.spreadsheets.values.append(request);
     console.log(response.data);
+    const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
+      response.data.updates,
+    );
+    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
   }
 
   getAuthClient(): Promise<AnyAuthClient> {
