@@ -46,7 +46,7 @@ export class LeagueSignupCommand extends MemberCommand {
       minLength: 1,
       maxLength: 25,
     });
-    // TODO add choices https://docs.discordnet.dev/guides/int_basics/application-commands/slash-commands/choice-slash-command.html
+
     this.addChoiceInput(
       this.inputNames.compExperience,
       "Your teams comp experience: 1 for none, 5 for extremely experienced",
@@ -167,7 +167,6 @@ export class LeagueSignupCommand extends MemberCommand {
     // TODO maybe check for overstat links here and error out. Ask the user to provide an override input? eg: override-missing-info
 
     await interaction.deferReply();
-    // TODO actuall implementation
 
     try {
       const signupNumber = await this.postSpreadSheetValue(
@@ -197,7 +196,6 @@ export class LeagueSignupCommand extends MemberCommand {
     }
   }
 
-  // TODO which ones should be optional?
   getPlayerInputs(
     playerNumberInputs: {
       user: string;
