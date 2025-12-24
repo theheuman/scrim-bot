@@ -95,16 +95,14 @@ describe("Sign up", () => {
             return getPlayerOverstat(key);
           }
         },
-        getInteger: (key: string) => {
-          return getPlayerIntegerInputs(key);
-        },
         getChoice: (key: string) => {
           if (
             key === staticCommandUsedJustForInputNames.inputNames.compExperience
           ) {
             return 4;
+          } else {
+            return getPlayerChoiceInputs(key);
           }
-          return null;
         },
       },
       member: signupMember,
@@ -156,23 +154,23 @@ describe("Sign up", () => {
             player1.displayName,
             player1.id,
             overstats.player1,
-            divisions.player1,
-            ranks.player1,
-            platforms.player1,
+            "Division1",
+            "Bronze",
+            "pc",
             "No elo on record",
             player2.displayName,
             player2.id,
             overstats.player2,
-            divisions.player2,
-            ranks.player2,
-            platforms.player2,
+            "Division2",
+            "Silver",
+            "playstation",
             "No elo on record",
             player3.displayName,
             player3.id,
             overstats.player3,
-            divisions.player3,
-            ranks.player3,
-            platforms.player3,
+            "No division provided",
+            "Gold",
+            "xbox",
             "No elo on record",
           ],
         ],
@@ -226,7 +224,7 @@ describe("Sign up", () => {
   const divisions = {
     player1: 0,
     player2: 1,
-    player3: 2,
+    player3: null,
   };
 
   const platforms = {
@@ -241,7 +239,7 @@ describe("Sign up", () => {
     player3: "overstat.gg/player3",
   };
 
-  const getPlayerIntegerInputs = (key: string) => {
+  const getPlayerChoiceInputs = (key: string) => {
     if (key.includes("rank")) {
       return getPlayerRank(key);
     } else if (key.includes("div")) {

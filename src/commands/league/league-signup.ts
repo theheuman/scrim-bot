@@ -8,7 +8,6 @@ import { AnyAuthClient } from "google-auth-library";
 import { auth, sheets } from "@googleapis/sheets";
 import { SheetHelper, SpreadSheetType } from "../../utility/sheet-helper";
 
-// TODO which fields are optional
 export class LeagueSignupCommand extends MemberCommand {
   inputNames = {
     teamName: "team-name",
@@ -59,50 +58,42 @@ export class LeagueSignupCommand extends MemberCommand {
     this.addUserInput(this.inputNames.player2inputNames.user, "@player2", true);
     this.addUserInput(this.inputNames.player3inputNames.user, "@player3", true);
 
-    // TODO choice
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player1inputNames.rank,
       "Player 1 last seasons peak rank",
-      {
-        isRequired: true,
-      },
+      PlayerRank,
+      true,
     );
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player2inputNames.rank,
       "Player 2 last seasons peak rank",
-      {
-        isRequired: true,
-      },
+      PlayerRank,
+      true,
     );
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player3inputNames.rank,
       "Player 3 last seasons peak rank",
-      {
-        isRequired: true,
-      },
+      PlayerRank,
+      true,
     );
 
-    // TODO choice
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player1inputNames.platform,
       "Player 1 platform",
-      {
-        isRequired: true,
-      },
+      Platform,
+      true,
     );
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player2inputNames.platform,
       "Player 2 platform",
-      {
-        isRequired: true,
-      },
+      Platform,
+      true,
     );
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player3inputNames.platform,
       "Player 3 platform",
-      {
-        isRequired: true,
-      },
+      Platform,
+      true,
     );
 
     this.addStringInput(
@@ -110,18 +101,20 @@ export class LeagueSignupCommand extends MemberCommand {
       "Days your team is unable to play due to scheduling conflicts for one or more of your players",
     );
 
-    // TODO choice
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player1inputNames.lastSeasonDivision,
       "Player 1 last vesa seasons division",
+      VesaDivision,
     );
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player2inputNames.lastSeasonDivision,
       "Player 2 last vesa seasons division",
+      VesaDivision,
     );
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.player3inputNames.lastSeasonDivision,
       "Player 3 last vesa seasons division",
+      VesaDivision,
     );
 
     this.addStringInput(
@@ -204,7 +197,6 @@ export class LeagueSignupCommand extends MemberCommand {
     }
   }
 
-  // TODO convert integer inputs to enums
   // TODO which ones should be optional?
   getPlayerInputs(
     playerNumberInputs: {
@@ -219,19 +211,26 @@ export class LeagueSignupCommand extends MemberCommand {
     const user = interaction.options.getUser(playerNumberInputs.user, true);
     return {
       elo: undefined,
-      platform: interaction.options.getInteger(
+      platform: interaction.options.getChoice(
         playerNumberInputs.platform,
+        Platform,
         true,
       ),
       name: user.displayName,
       discordId: user.id,
-      rank: interaction.options.getInteger(playerNumberInputs.rank, true),
+      rank: interaction.options.getChoice(
+        playerNumberInputs.rank,
+        PlayerRank,
+        true,
+      ),
       overstatLink:
         interaction.options.getString(playerNumberInputs.overstatLink) ??
         undefined,
       previous_season_vesa_division:
-        interaction.options.getInteger(playerNumberInputs.lastSeasonDivision) ??
-        -1,
+        interaction.options.getChoice(
+          playerNumberInputs.lastSeasonDivision,
+          VesaDivision,
+        ) ?? undefined,
     };
   }
 
@@ -280,9 +279,11 @@ export class LeagueSignupCommand extends MemberCommand {
       player.name,
       player.discordId,
       player.overstatLink ?? "No overstat",
-      player.previous_season_vesa_division,
-      player.rank,
-      player.platform,
+      player.previous_season_vesa_division !== undefined
+        ? VesaDivision[player.previous_season_vesa_division]
+        : "No division provided",
+      PlayerRank[player.rank],
+      Platform[player.platform],
       player.elo ?? "No elo on record",
     ];
   }
@@ -309,22 +310,23 @@ enum PlayerRank {
 }
 
 enum VesaDivision {
-  Division10,
-  Division9,
-  Division8,
-  Division7,
-  Division6,
-  Division5,
-  Division4,
-  Division3,
-  Division2,
   Division1,
+  Division2,
+  Division3,
+  Division4,
+  Division5,
+  Division6,
+  Division7,
+  // Division8,
+  // Division9,
+  // Division10,
 }
 
 enum Platform {
-  xbox,
-  playstation,
   pc,
+  playstation,
+  xbox,
+  switch,
 }
 
 enum CompKnowledge {
@@ -340,7 +342,7 @@ interface SheetsPlayer {
   discordId: Snowflake;
   elo: number | undefined;
   rank: PlayerRank;
-  previous_season_vesa_division: VesaDivision;
+  previous_season_vesa_division?: VesaDivision;
   platform: Platform;
   overstatLink: string | undefined;
 }
