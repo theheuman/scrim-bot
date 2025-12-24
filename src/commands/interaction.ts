@@ -48,6 +48,16 @@ type ExtendedCommandInteractionOptionResolver = Omit<
 > & {
   getDateTime(key: string, required?: boolean): Date | null;
   getDateTime(key: string, required: true): Date;
+  getChoice<K extends Record<string, string | number>>(
+    key: string,
+    choices: K,
+    required?: boolean,
+  ): K[keyof K] | null;
+  getChoice<K extends Record<string, string | number>>(
+    key: string,
+    choices: K,
+    required: true,
+  ): K[keyof K];
 };
 
 export class CustomInteraction {
@@ -93,6 +103,31 @@ export class CustomInteraction {
       }
       // get around typescript expecting a date here, technically we are supplying the getDate(): Date | null function here
       return null as unknown as Date;
+    };
+
+    extendedOptions["getChoice"] = <K extends Record<string, string | number>>(
+      key: string,
+      choices: K,
+    ): K[keyof K] => {
+      const choiceString = options.getString(key);
+
+      if (choiceString === null) {
+        return null as unknown as K[keyof K];
+      }
+
+      const numericValue = Number(choiceString);
+      const actualValue = isNaN(numericValue) ? choiceString : numericValue;
+
+      // Validate that the value exists within the Enum's values
+      const validValues = Object.values(choices);
+
+      if (!validValues.includes(actualValue)) {
+        throw new Error(
+          `Can't parse "${key}". Inputted choice "${choiceString}" does not match available choices in the provided Enum: ${choices}`,
+        );
+      }
+
+      return actualValue as K[keyof K];
     };
     return extendedOptions;
   }

@@ -48,14 +48,11 @@ export class LeagueSignupCommand extends MemberCommand {
       maxLength: 25,
     });
     // TODO add choices https://docs.discordnet.dev/guides/int_basics/application-commands/slash-commands/choice-slash-command.html
-    this.addIntegerInput(
+    this.addChoiceInput(
       this.inputNames.compExperience,
       "Your teams comp experience: 1 for none, 5 for extremely experienced",
-      {
-        isRequired: true,
-        minValue: 1,
-        maxValue: 5,
-      },
+      CompKnowledge,
+      true,
     );
 
     this.addUserInput(this.inputNames.player1inputNames.user, "@player1", true);
@@ -142,17 +139,16 @@ export class LeagueSignupCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    // const channelId = interaction.channelId;
     const teamName = interaction.options.getString(
       this.inputNames.teamName,
       true,
     );
     const teamNoDays = interaction.options.getString(
       this.inputNames.daysUnableToPlay,
-      true,
     );
-    const compExperience = interaction.options.getInteger(
+    const compExperience = interaction.options.getChoice(
       this.inputNames.compExperience,
+      CompKnowledge,
       true,
     );
     const signupPlayer = interaction.member;
@@ -183,8 +179,8 @@ export class LeagueSignupCommand extends MemberCommand {
     try {
       const signupNumber = await this.postSpreadSheetValue(
         teamName,
-        teamNoDays,
-        compExperience as CompKnowledge,
+        teamNoDays ?? "Open schedule",
+        compExperience,
         player1,
         player2,
         player3,
@@ -233,10 +229,9 @@ export class LeagueSignupCommand extends MemberCommand {
       overstatLink:
         interaction.options.getString(playerNumberInputs.overstatLink) ??
         undefined,
-      previous_season_vesa_division: interaction.options.getInteger(
-        playerNumberInputs.lastSeasonDivision,
-        true,
-      ),
+      previous_season_vesa_division:
+        interaction.options.getInteger(playerNumberInputs.lastSeasonDivision) ??
+        -1,
     };
   }
 
@@ -250,11 +245,13 @@ export class LeagueSignupCommand extends MemberCommand {
   ): Promise<number | null> {
     const authClient = await this.getAuthClient();
 
+    const compExperienceLabel = `${teamCompKnowledge}: ${CompKnowledge[teamCompKnowledge]}`;
+
     const values = [
       [
         teamName,
         teamNoDays,
-        teamCompKnowledge,
+        compExperienceLabel,
         ...this.convertSheetsPlayer(player1),
         ...this.convertSheetsPlayer(player2),
         ...this.convertSheetsPlayer(player3),

@@ -96,13 +96,15 @@ describe("Sign up", () => {
           }
         },
         getInteger: (key: string) => {
+          return getPlayerIntegerInputs(key);
+        },
+        getChoice: (key: string) => {
           if (
             key === staticCommandUsedJustForInputNames.inputNames.compExperience
           ) {
             return 4;
-          } else {
-            return getPlayerIntegerInputs(key);
           }
+          return null;
         },
       },
       member: signupMember,
@@ -150,7 +152,7 @@ describe("Sign up", () => {
           [
             "team name",
             "Mondays",
-            4,
+            "4: Pro",
             player1.displayName,
             player1.id,
             overstats.player1,

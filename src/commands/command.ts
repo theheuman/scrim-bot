@@ -9,9 +9,21 @@ import { AuthService } from "../services/auth";
 import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
 import { formatDateForDiscord, formatTimeForDiscord } from "../utility/time";
 
+type DiscordGetterMethods =
+  | "getString"
+  | "getInteger"
+  | "getNumber"
+  | "getBoolean"
+  | "getUser"
+  | "getMember"
+  | "getRole"
+  | "getChannel"
+  | "getMentionable"
+  | "getAttachment";
+
 export abstract class Command extends SlashCommandBuilder {
   private loggableArguments: {
-    methodName: keyof ChatInputCommandInteraction["options"];
+    methodName: DiscordGetterMethods;
     name: string;
     required: boolean;
   }[] = [];
@@ -99,6 +111,30 @@ export abstract class Command extends SlashCommandBuilder {
       required: config?.isRequired ?? false,
       name,
       methodName: "getInteger",
+    });
+  }
+
+  addChoiceInput(
+    name: string,
+    description: string,
+    choices: Record<string, string | number>,
+    isRequired: boolean = false,
+  ) {
+    const mappedChoices = Object.keys(choices)
+      .filter((key) => isNaN(Number(key)))
+      .map((key) => ({
+        name: key,
+        value: choices[key].toString(),
+      }));
+    this.addStringOption((baseOption) => {
+      const option = this.addOption(baseOption, name, description, isRequired);
+      option.addChoices(...mappedChoices);
+      return option;
+    });
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getString",
     });
   }
 
@@ -217,8 +253,9 @@ export abstract class Command extends SlashCommandBuilder {
     informationArray.push(`Command issued: ${interaction.id}`);
     informationArray.push(`Name: ${this.name}`);
     const userArguments = this.loggableArguments.map((argument) => {
-      // @ts-expect-error right now this type isn't indexed correctly, fix when we have internet
-      const value = interaction.options[argument.methodName](argument.name);
+      const options = interaction.options;
+      // @ts-expect-error typescript is complaining that our getter methods aren't callable even though we know they are. Need an expert, gemini mostly unhelpful here
+      const value = options[argument.methodName](argument.name);
       return `{ name: ${argument.name}, required: ${argument.required}, value: ${value}}`;
     });
     const userArgumentString =
