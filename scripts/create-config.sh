@@ -14,6 +14,7 @@ warn_if_missing "LOBBY_SIZE" "20"
 warn_if_missing "DISCORD_BOT_TOKEN" "default_bot_token"
 warn_if_missing "DISCORD_CLIENT_ID" "default_client_id"
 warn_if_missing "DISCORD_GUILD_ID" "default_guild_id"
+warn_if_missing "DISCORD_GUILD_ID_LEAGUE" "default_guild_id"
 warn_if_missing "NHOST_SECRET" "default_admin_secret"
 warn_if_missing "NHOST_SUBDOMAIN" "default_subdomain"
 warn_if_missing "NHOST_REGION" "default_region"
@@ -25,7 +26,10 @@ cat > $file_location <<EOF
     "discord": {
       "token": "DEV_DISCORD_BOT_TOKEN",
       "clientId": "DEV_DISCORD_CLIENT_ID",
-      "guildId": "DEV_DISCORD_GUILD_ID"
+      "guildId": {
+        "scrim": "DEV_DISCORD_GUILD_ID_SCRIMS",
+        "league": "DEV_DISCORD_GUILD_ID_LEAGUE"
+      }
     },
     "nhost": {
       "adminSecret": "nhost-admin-secret",
@@ -38,7 +42,10 @@ cat > $file_location <<EOF
     "discord": {
       "token": "${DISCORD_BOT_TOKEN}",
       "clientId": "${DISCORD_CLIENT_ID}",
-      "guildId": "${DISCORD_GUILD_ID}"
+      "guildId": {
+        "scrim": "${DISCORD_GUILD_ID}",
+        "league": "${DISCORD_GUILD_ID_LEAGUE}"
+      }
     },
     "nhost": {
       "adminSecret": "${NHOST_SECRET}",

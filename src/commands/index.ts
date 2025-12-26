@@ -29,20 +29,24 @@ import { ScrimBanCommand } from "./scrims/admin/bans/scrim-ban";
 import { ExpungeBanCommand } from "./scrims/admin/bans/expunge-ban";
 import { LeagueSignupCommand } from "./league/league-signup";
 
-export const commands: Command[] = [
+export const commonCommands: Command[] = [
   // test commands
   new PingCommand(),
   new UserCommand(),
 
-  // custom commands
+  new AddAdminRoleCommand(authService),
+  new RemoveAdminRoleCommand(authService),
+
+  new LinkOverstatCommand(authService, overstatService),
+  new GetOverstatCommand(authService, overstatService),
+];
+
+export const scrimCommands: Command[] = [
   new AddPrioCommand(authService, prioService),
   new ExpungePrioCommand(authService, prioService),
 
   new ScrimBanCommand(authService, banService),
   new ExpungeBanCommand(authService, banService),
-
-  new AddAdminRoleCommand(authService),
-  new RemoveAdminRoleCommand(authService),
 
   new CreateScrimCommand(authService, signupsService, staticValueService),
   new GetSignupsCommand(authService, signupsService, staticValueService),
@@ -54,10 +58,14 @@ export const commands: Command[] = [
   new SignupCommand(signupsService, prioService),
   new SubPlayerCommand(rosterService),
   new CurrentPositionCommand(signupsService, staticValueService),
+];
 
-  new LinkOverstatCommand(authService, overstatService),
-  new GetOverstatCommand(authService, overstatService),
-
-  // League commands
+export const leagueCommands: Command[] = [
   new LeagueSignupCommand(overstatService),
+];
+
+export const commands: Command[] = [
+  ...commonCommands,
+  ...scrimCommands,
+  ...leagueCommands,
 ];

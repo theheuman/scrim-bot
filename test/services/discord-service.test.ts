@@ -17,7 +17,9 @@ jest.mock("../../src/config", () => {
   return {
     appConfig: {
       discord: {
-        guildId: "a valid guild id",
+        guildId: {
+          scrim: "a valid guild id",
+        },
       },
     },
   };
