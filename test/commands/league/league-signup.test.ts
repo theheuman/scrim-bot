@@ -141,6 +141,9 @@ describe("Sign up", () => {
   });
 
   it("Should complete signup", async () => {
+    const date = new Date("2025-12-26T18:55:23.264Z");
+    jest.useFakeTimers();
+    jest.setSystemTime(date);
     await command.run(basicInteraction);
     expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
       auth: undefined,
@@ -148,6 +151,7 @@ describe("Sign up", () => {
       requestBody: {
         values: [
           [
+            date.toISOString(),
             "team name",
             "Mondays",
             "4: Pro",
@@ -181,6 +185,7 @@ describe("Sign up", () => {
     expect(followUpSpy).toHaveBeenCalledWith(
       `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #5. Your priority based on returning players will be determined by admins manually`,
     );
+    jest.useRealTimers();
   });
 
   describe("errors", () => {

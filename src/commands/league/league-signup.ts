@@ -246,6 +246,7 @@ export class LeagueSignupCommand extends MemberCommand {
 
     const values = [
       [
+        new Date().toISOString(),
         teamName,
         teamNoDays,
         compExperienceLabel,
