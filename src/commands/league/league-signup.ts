@@ -177,7 +177,7 @@ export class LeagueSignupCommand extends MemberCommand {
         player2,
         player3,
       );
-      if (!signupNumber) {
+      if (signupNumber === null) {
         await interaction.followUp(
           "Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting",
         );
@@ -261,7 +261,7 @@ export class LeagueSignupCommand extends MemberCommand {
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      SpreadSheetType.TEST_SHEET,
+      SpreadSheetType.PROD_SHEET,
     );
 
     const sheetsClient = sheets({ version: "v4" });

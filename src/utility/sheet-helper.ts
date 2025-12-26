@@ -5,6 +5,7 @@ import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Sp
 
 enum SpreadSheetTypes {
   TEST_SHEET = "TEST_SHEET",
+  PROD_SHEET = "PROD_SHEET",
 }
 
 export const SpreadSheetType: Record<
@@ -14,6 +15,10 @@ export const SpreadSheetType: Record<
   TEST_SHEET: {
     id: "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo",
     range: "Sheet1!A1",
+  },
+  PROD_SHEET: {
+    id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
+    range: "Discord Submittals!A1",
   },
 };
 

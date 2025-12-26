@@ -116,7 +116,7 @@ describe("Sign up", () => {
         Promise.resolve({
           data: {
             updates: {
-              updatedRange: "Sheet1!A6:X6",
+              updatedRange: "'Discord Submittals'!A1:Y1",
             },
             request: "Request data " + request.key,
           },
@@ -147,7 +147,7 @@ describe("Sign up", () => {
     await command.run(basicInteraction);
     expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
       auth: undefined,
-      range: "Sheet1!A1",
+      range: "Discord Submittals!A1",
       requestBody: {
         values: [
           [
@@ -179,11 +179,11 @@ describe("Sign up", () => {
           ],
         ],
       },
-      spreadsheetId: "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo",
+      spreadsheetId: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
       valueInputOption: "USER_ENTERED",
     });
     expect(followUpSpy).toHaveBeenCalledWith(
-      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #5. Your priority based on returning players will be determined by admins manually`,
+      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually`,
     );
     jest.useRealTimers();
   });
