@@ -270,7 +270,7 @@ describe("Sign up", () => {
         });
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Team not signed up. One or more of the overstat links provided are not valid.\nError: Not a link to a player overview.`,
+        `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\nError: Not a link to a player overview.`,
       );
     });
   });
@@ -296,7 +296,7 @@ describe("Sign up", () => {
   const overstats = {
     player1: "overstat.gg/player1",
     player2: "overstat.gg/player2",
-    player3: null,
+    player3: "None",
   };
 
   const getPlayerChoiceInputs = (key: string) => {

@@ -96,6 +96,29 @@ export class LeagueSignupCommand extends MemberCommand {
       true,
     );
 
+    // TODO, make these required but allow user to type in the string "none"
+    this.addStringInput(
+      this.inputNames.player1inputNames.overstatLink,
+      `Player 1 overstat link. Write "None" if they do not have one`,
+      {
+        isRequired: true,
+      },
+    );
+    this.addStringInput(
+      this.inputNames.player2inputNames.overstatLink,
+      `Player 2 overstat link. Write "None" if they do not have one`,
+      {
+        isRequired: true,
+      },
+    );
+    this.addStringInput(
+      this.inputNames.player3inputNames.overstatLink,
+      `Player 3 overstat link. Write "None" if they do not have one`,
+      {
+        isRequired: true,
+      },
+    );
+
     this.addStringInput(
       this.inputNames.daysUnableToPlay,
       "Days your team is unable to play due to scheduling conflicts for one or more of your players",
@@ -115,20 +138,6 @@ export class LeagueSignupCommand extends MemberCommand {
       this.inputNames.player3inputNames.lastSeasonDivision,
       "Player 3 last vesa seasons division",
       VesaDivision,
-    );
-
-    // TODO, make these required but allow user to type in the string "none"
-    this.addStringInput(
-      this.inputNames.player1inputNames.overstatLink,
-      "Player 1 overstat link",
-    );
-    this.addStringInput(
-      this.inputNames.player2inputNames.overstatLink,
-      "Player 2 overstat link",
-    );
-    this.addStringInput(
-      this.inputNames.player3inputNames.overstatLink,
-      "Player 3 overstat link",
     );
   }
 
@@ -165,7 +174,7 @@ export class LeagueSignupCommand extends MemberCommand {
       );
     } catch (e) {
       await interaction.invisibleReply(
-        "Team not signed up. One or more of the overstat links provided are not valid.\n" +
+        `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\n` +
           e,
       );
       return;
@@ -223,7 +232,7 @@ export class LeagueSignupCommand extends MemberCommand {
     const user = interaction.options.getUser(playerNumberInputs.user, true);
     const overstatLink = await this.validateOverstatLink(
       user,
-      interaction.options.getString(playerNumberInputs.overstatLink),
+      interaction.options.getString(playerNumberInputs.overstatLink, true),
     );
     return {
       elo: undefined,
@@ -251,10 +260,10 @@ export class LeagueSignupCommand extends MemberCommand {
   // throws if provided link is illegal, otherwise returns valid link, if no link provided attempts to fetch from db. Sends undefined if it can't fetch it
   async validateOverstatLink(
     user: User,
-    overstatLink: string | null,
+    overstatLink: string,
   ): Promise<string | undefined> {
     let linkToReturn: string | undefined;
-    if (!overstatLink) {
+    if (overstatLink.toLowerCase() === "none") {
       try {
         linkToReturn = await this.overstatService.getPlayerOverstat(user);
       } catch {
