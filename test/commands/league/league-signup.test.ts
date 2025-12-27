@@ -1,6 +1,7 @@
 import {
   GuildMember,
   InteractionReplyOptions,
+  InteractionResponse,
   Message,
   MessagePayload,
   User,
@@ -31,12 +32,17 @@ describe("Sign up", () => {
     [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
+  let invisibleReplySpy: SpyInstance<
+    Promise<InteractionResponse<boolean>>,
+    [message: string],
+    string
+  >;
   let googleSheetsRequestSpy: SpyInstance<
     Promise<GaxiosResponseWithHTTP2<Readable>>,
     [request: Params$Resource$Spreadsheets$Values$Append],
     string
   >;
-  let googleAuthSpy: SpyInstance;
+  let getPlayerOverstatSpy: SpyInstance;
   let googleSheetsSpy: SpyInstance;
 
   let command: LeagueSignupCommand;
@@ -62,15 +68,16 @@ describe("Sign up", () => {
     id: "player3id",
   } as User;
 
-  const signupPlayers = [player1, player2, player3];
   let mockOverstatService: OverstatService;
 
   beforeAll(() => {
+    mockOverstatService = new OverstatServiceMock() as OverstatService;
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
     );
     basicInteraction = {
       channelId: "forum thread id",
+      invisibleReply: jest.fn(),
       deferReply: jest.fn(),
       followUp: jest.fn(),
       options: {
@@ -108,6 +115,7 @@ describe("Sign up", () => {
       member: signupMember,
     } as unknown as CustomInteraction;
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
+    invisibleReplySpy = jest.spyOn(basicInteraction, "invisibleReply");
 
     const googleValuesMethods = {
       append: (
@@ -128,13 +136,17 @@ describe("Sign up", () => {
         values: googleValuesMethods,
       } as unknown as Resource$Spreadsheets,
     } as Sheets);
-    googleAuthSpy = jest
+    jest
       .spyOn(GoogleSheets.auth, "GoogleAuth")
       .mockReturnValue(new MockGoogleAuth() as unknown as GoogleAuth);
+    getPlayerOverstatSpy = jest
+      .spyOn(mockOverstatService, "getPlayerOverstat")
+      .mockImplementation(() => {
+        throw Error("Rejected get player overstat promise");
+      });
   });
 
   beforeEach(() => {
-    mockOverstatService = new OverstatServiceMock() as OverstatService;
     followUpSpy.mockClear();
     googleSheetsRequestSpy.mockClear();
     command = new LeagueSignupCommand(mockOverstatService);
@@ -171,7 +183,58 @@ describe("Sign up", () => {
             "No elo on record",
             player3.displayName,
             player3.id,
-            overstats.player3,
+            "No overstat",
+            "No division provided",
+            "Gold",
+            "xbox",
+            "No elo on record",
+          ],
+        ],
+      },
+      spreadsheetId: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
+      valueInputOption: "USER_ENTERED",
+    });
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually`,
+    );
+    jest.useRealTimers();
+  });
+
+  it("Should complete signup with db filled overstat", async () => {
+    getPlayerOverstatSpy.mockReturnValueOnce(
+      Promise.resolve("overstat from db"),
+    );
+    const date = new Date("2025-12-26T18:55:23.264Z");
+    jest.useFakeTimers();
+    jest.setSystemTime(date);
+    await command.run(basicInteraction);
+    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
+      auth: undefined,
+      range: "Discord Submittals!A1",
+      requestBody: {
+        values: [
+          [
+            date.toISOString(),
+            "team name",
+            "Mondays",
+            "4: Pro",
+            player1.displayName,
+            player1.id,
+            overstats.player1,
+            "Division1",
+            "Bronze",
+            "pc",
+            "No elo on record",
+            player2.displayName,
+            player2.id,
+            overstats.player2,
+            "Division2",
+            "Silver",
+            "playstation",
+            "No elo on record",
+            player3.displayName,
+            player3.id,
+            "overstat from db",
             "No division provided",
             "Gold",
             "xbox",
@@ -199,25 +262,17 @@ describe("Sign up", () => {
       );
     });
 
-    /*
     it("should not complete the signup because the overstats are not valid", async () => {
-      let getOverstatIdCount = 0;
       jest
-        .spyOn(mockOverstatService, "getPlayerId")
+        .spyOn(mockOverstatService, "validateLinkUrl")
         .mockImplementationOnce(() => {
-          getOverstatIdCount++;
-          if (getOverstatIdCount === 0) {
-            throw Error("Not a link to a player overview.");
-          } else {
-            return "12345";
-          }
+          throw Error("Not a link to a player overview.");
         });
       await command.run(basicInteraction);
-      expect(followUpSpy).toHaveBeenCalledWith(
-        `Team not signed up. Error: Player "pgk" has an invalid overstat link: Not a link to a player overview. A valid link looks like this: https://overstat.gg/player/357606/overview`,
+      expect(invisibleReplySpy).toHaveBeenCalledWith(
+        `Team not signed up. One or more of the overstat links provided are not valid.\nError: Not a link to a player overview.`,
       );
     });
-     */
   });
 
   const ranks = {
@@ -241,7 +296,7 @@ describe("Sign up", () => {
   const overstats = {
     player1: "overstat.gg/player1",
     player2: "overstat.gg/player2",
-    player3: "overstat.gg/player3",
+    player3: null,
   };
 
   const getPlayerChoiceInputs = (key: string) => {

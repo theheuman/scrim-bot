@@ -37,6 +37,11 @@ export class OverstatServiceMock {
     return "12345";
   }
 
+  validateLinkUrl(overstatLink: string): string {
+    console.log("Mock overstat service validateOverstatLink", overstatLink);
+    return "12345";
+  }
+
   async addPlayerOverstatLink(
     user: User,
     overstatLink: string,

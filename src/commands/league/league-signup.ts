@@ -2,7 +2,7 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { Snowflake } from "discord.js";
+import { Snowflake, User } from "discord.js";
 import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
 import { auth, sheets } from "@googleapis/sheets";
@@ -117,6 +117,7 @@ export class LeagueSignupCommand extends MemberCommand {
       VesaDivision,
     );
 
+    // TODO, make these required but allow user to type in the string "none"
     this.addStringInput(
       this.inputNames.player1inputNames.overstatLink,
       "Player 1 overstat link",
@@ -145,26 +146,39 @@ export class LeagueSignupCommand extends MemberCommand {
       true,
     );
     const signupPlayer = interaction.member;
-    const player1 = this.getPlayerInputs(
-      this.inputNames.player1inputNames,
-      interaction,
-    );
-    const player2 = this.getPlayerInputs(
-      this.inputNames.player2inputNames,
-      interaction,
-    );
-    const player3 = this.getPlayerInputs(
-      this.inputNames.player3inputNames,
-      interaction,
-    );
+    let player1;
+    let player2;
+    let player3;
+
+    try {
+      player1 = await this.getPlayerInputs(
+        this.inputNames.player1inputNames,
+        interaction,
+      );
+      player2 = await this.getPlayerInputs(
+        this.inputNames.player2inputNames,
+        interaction,
+      );
+      player3 = await this.getPlayerInputs(
+        this.inputNames.player3inputNames,
+        interaction,
+      );
+    } catch (e) {
+      await interaction.invisibleReply(
+        "Team not signed up. One or more of the overstat links provided are not valid.\n" +
+          e,
+      );
+      return;
+    }
 
     if (!isGuildMember(signupPlayer)) {
-      await interaction.reply(
+      await interaction.invisibleReply(
         "Team not signed up. Signup initiated by member that cannot be found. Contact admin",
       );
       return;
     }
-    // TODO maybe check for overstat links here and error out. Ask the user to provide an override input? eg: override-missing-info
+
+    // TODO add in logic to followup with user asking for overstat id if none provided
 
     await interaction.deferReply();
 
@@ -196,7 +210,7 @@ export class LeagueSignupCommand extends MemberCommand {
     }
   }
 
-  getPlayerInputs(
+  async getPlayerInputs(
     playerNumberInputs: {
       user: string;
       rank: string;
@@ -205,8 +219,12 @@ export class LeagueSignupCommand extends MemberCommand {
       platform: string;
     },
     interaction: CustomInteraction,
-  ): SheetsPlayer {
+  ): Promise<SheetsPlayer> {
     const user = interaction.options.getUser(playerNumberInputs.user, true);
+    const overstatLink = await this.validateOverstatLink(
+      user,
+      interaction.options.getString(playerNumberInputs.overstatLink),
+    );
     return {
       elo: undefined,
       platform: interaction.options.getChoice(
@@ -221,15 +239,36 @@ export class LeagueSignupCommand extends MemberCommand {
         PlayerRank,
         true,
       ),
-      overstatLink:
-        interaction.options.getString(playerNumberInputs.overstatLink) ??
-        undefined,
+      overstatLink,
       previous_season_vesa_division:
         interaction.options.getChoice(
           playerNumberInputs.lastSeasonDivision,
           VesaDivision,
         ) ?? undefined,
     };
+  }
+
+  // throws if provided link is illegal, otherwise returns valid link, if no link provided attempts to fetch from db. Sends undefined if it can't fetch it
+  async validateOverstatLink(
+    user: User,
+    overstatLink: string | null,
+  ): Promise<string | undefined> {
+    let linkToReturn: string | undefined;
+    if (!overstatLink) {
+      try {
+        linkToReturn = await this.overstatService.getPlayerOverstat(user);
+      } catch {
+        linkToReturn = undefined;
+        console.log(
+          "No overstat provided and none found in db for " + user.displayName,
+        );
+      }
+    } else {
+      // will throw an error if link is invalid
+      await this.overstatService.validateLinkUrl(overstatLink);
+      linkToReturn = overstatLink;
+    }
+    return linkToReturn;
   }
 
   async postSpreadSheetValue(
