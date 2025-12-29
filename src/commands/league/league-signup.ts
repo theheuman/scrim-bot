@@ -257,7 +257,7 @@ export class LeagueSignupCommand extends MemberCommand {
     };
   }
 
-  // throws if provided link is illegal, otherwise returns valid link, if no link provided attempts to fetch from db. Sends undefined if it can't fetch it
+  // throws if provided link is illegal or if provided link does not match link for that user in db, otherwise returns valid link, if "none" provided attempts to fetch from db. Sends undefined if it can't fetch it
   async validateOverstatLink(
     user: User,
     overstatLink: string,
@@ -275,6 +275,21 @@ export class LeagueSignupCommand extends MemberCommand {
     } else {
       // will throw an error if link is invalid
       await this.overstatService.validateLinkUrl(overstatLink);
+      let dbOverstatLink;
+      try {
+        dbOverstatLink = await this.overstatService.getPlayerOverstat(user);
+      } catch {
+        await this.overstatService.addPlayerOverstatLink(user, overstatLink);
+      }
+      if (
+        dbOverstatLink &&
+        this.overstatService.getPlayerId(overstatLink) !==
+          this.overstatService.getPlayerId(dbOverstatLink)
+      ) {
+        throw new Error(
+          `Overstat provided for ${user.displayName} does not match link previously provided with /link-overstat command`,
+        );
+      }
       linkToReturn = overstatLink;
     }
     return linkToReturn;

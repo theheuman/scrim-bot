@@ -14,10 +14,14 @@ import * as GoogleSheets from "@googleapis/sheets";
 import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
 import { Readable } from "stream";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
-import { OverstatService } from "../../../src/services/overstat";
+import {
+  getPlayerOverstatUrl,
+  OverstatService,
+} from "../../../src/services/overstat";
 import Resource$Spreadsheets = GoogleSheets.sheets_v4.Resource$Spreadsheets;
 import Sheets = GoogleSheets.sheets_v4.Sheets;
 import Params$Resource$Spreadsheets$Values$Append = GoogleSheets.sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+import { DB } from "../../../src/db/db";
 
 class MockGoogleAuth {
   getClient() {
@@ -139,10 +143,12 @@ describe("Sign up", () => {
     jest
       .spyOn(GoogleSheets.auth, "GoogleAuth")
       .mockReturnValue(new MockGoogleAuth() as unknown as GoogleAuth);
-    getPlayerOverstatSpy = jest
-      .spyOn(mockOverstatService, "getPlayerOverstat")
-      .mockImplementation(() => {
-        throw Error("Rejected get player overstat promise");
+    jest
+      .spyOn(mockOverstatService, "getPlayerId")
+      .mockImplementation((overstatLink) => {
+        return new OverstatService(undefined as unknown as DB).getPlayerId(
+          overstatLink,
+        );
       });
   });
 
@@ -150,6 +156,11 @@ describe("Sign up", () => {
     followUpSpy.mockClear();
     googleSheetsRequestSpy.mockClear();
     command = new LeagueSignupCommand(mockOverstatService);
+    getPlayerOverstatSpy = jest
+      .spyOn(mockOverstatService, "getPlayerOverstat")
+      .mockImplementation(() => {
+        throw Error("Rejected get player overstat promise");
+      });
   });
 
   it("Should complete signup", async () => {
@@ -201,9 +212,18 @@ describe("Sign up", () => {
   });
 
   it("Should complete signup with db filled overstat", async () => {
-    getPlayerOverstatSpy.mockReturnValueOnce(
-      Promise.resolve("overstat from db"),
-    );
+    let getCount = 0;
+    getPlayerOverstatSpy.mockImplementation(() => {
+      // mock implementation so that the link from the db matches the link provided by the userspy
+      getCount++;
+      if (getCount === 1) {
+        return Promise.resolve(overstats.player1);
+      } else if (getCount === 2) {
+        return Promise.resolve(overstats.player2);
+      } else {
+        return Promise.resolve("overstat from db");
+      }
+    });
     const date = new Date("2025-12-26T18:55:23.264Z");
     jest.useFakeTimers();
     jest.setSystemTime(date);
@@ -273,6 +293,17 @@ describe("Sign up", () => {
         `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\nError: Not a link to a player overview.`,
       );
     });
+
+    it("Should complete signup with db filled overstat", async () => {
+      getPlayerOverstatSpy.mockReturnValue(
+        Promise.resolve(getPlayerOverstatUrl("123")),
+      );
+      await command.run(basicInteraction);
+      expect(invisibleReplySpy).toHaveBeenCalledWith(
+        `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\nError: Overstat provided for ${player1.displayName} does not match link previously provided with /link-overstat command`,
+      );
+      jest.useRealTimers();
+    });
   });
 
   const ranks = {
@@ -294,8 +325,8 @@ describe("Sign up", () => {
   };
 
   const overstats = {
-    player1: "overstat.gg/player1",
-    player2: "overstat.gg/player2",
+    player1: getPlayerOverstatUrl("1"),
+    player2: getPlayerOverstatUrl("2"),
     player3: "None",
   };
 
