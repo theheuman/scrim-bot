@@ -17,7 +17,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player1inputNames: {
       user: "player1",
       rank: "player1-rank",
-      lastSeasonDivision: "player1-vesa-division",
+      lastSeasonDivision: "player1-s12-vesa-division",
       overstatLink: "player1-overstat-link",
       platform: "player1-platform",
     },
@@ -25,7 +25,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player2inputNames: {
       user: "player2",
       rank: "player2-rank",
-      lastSeasonDivision: "player2-vesa-division",
+      lastSeasonDivision: "player2-s12-vesa-division",
       overstatLink: "player2-overstat-link",
       platform: "player2-platform",
     },
@@ -33,7 +33,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player3inputNames: {
       user: "player3",
       rank: "player3-rank",
-      lastSeasonDivision: "player3-vesa-division",
+      lastSeasonDivision: "player3-s12-vesa-division",
       overstatLink: "player3-overstat-link",
       platform: "player3-platform",
     },
@@ -49,7 +49,7 @@ export class LeagueSignupCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.compExperience,
-      "Your teams comp experience: 1 for none, 5 for extremely experienced",
+      "Your teams comp experience",
       CompKnowledge,
       true,
     );
@@ -96,7 +96,6 @@ export class LeagueSignupCommand extends MemberCommand {
       true,
     );
 
-    // TODO, make these required but allow user to type in the string "none"
     this.addStringInput(
       this.inputNames.player1inputNames.overstatLink,
       `Player 1 overstat link. Write "None" if they do not have one`,
@@ -126,17 +125,17 @@ export class LeagueSignupCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.player1inputNames.lastSeasonDivision,
-      "Player 1 last vesa seasons division",
+      "Player 1 VESA season 12 division",
       VesaDivision,
     );
     this.addChoiceInput(
       this.inputNames.player2inputNames.lastSeasonDivision,
-      "Player 2 last vesa seasons division",
+      "Player 2 VESA season 12 division",
       VesaDivision,
     );
     this.addChoiceInput(
       this.inputNames.player3inputNames.lastSeasonDivision,
-      "Player 3 last vesa seasons division",
+      "Player 3 VESA season 12 division",
       VesaDivision,
     );
   }
