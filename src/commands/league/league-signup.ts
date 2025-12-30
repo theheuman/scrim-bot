@@ -306,13 +306,23 @@ export class LeagueSignupCommand extends MemberCommand {
     const authClient = await this.getAuthClient();
 
     const compExperienceLabel = `${teamCompKnowledge}: ${CompKnowledge[teamCompKnowledge]}`;
-
+    const returningPlayersCount = [player1, player2, player3].reduce(
+      (count, player) => {
+        if (player.previous_season_vesa_division !== undefined) {
+          return count + 1;
+        } else {
+          return count;
+        }
+      },
+      0,
+    );
     const values = [
       [
         new Date().toISOString(),
         teamName,
         teamNoDays,
         compExperienceLabel,
+        `${returningPlayersCount} returning players`,
         ...this.convertSheetsPlayer(player1),
         ...this.convertSheetsPlayer(player2),
         ...this.convertSheetsPlayer(player3),
