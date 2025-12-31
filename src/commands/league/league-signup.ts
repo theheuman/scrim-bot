@@ -154,9 +154,9 @@ export class LeagueSignupCommand extends MemberCommand {
       true,
     );
     const signupPlayer = interaction.member;
-    let player1;
-    let player2;
-    let player3;
+    let player1: SheetsPlayer;
+    let player2: SheetsPlayer;
+    let player3: SheetsPlayer;
 
     try {
       player1 = await this.getPlayerInputs(
@@ -171,6 +171,16 @@ export class LeagueSignupCommand extends MemberCommand {
         this.inputNames.player3inputNames,
         interaction,
       );
+      if (
+        ![player1.discordId, player2.discordId, player3.discordId].includes(
+          interaction.member.id,
+        )
+      ) {
+        await interaction.invisibleReply(
+          `Team not signed up. User signing team up must be a player on the team`,
+        );
+        return;
+      }
     } catch (e) {
       await interaction.invisibleReply(
         `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\n` +
