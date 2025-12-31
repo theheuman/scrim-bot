@@ -53,7 +53,7 @@ describe("Sign up", () => {
 
   const signupMember = {
     displayName: "Signup User",
-    id: "signupPlayerId",
+    id: "player1id",
     roles: {},
   } as GuildMember;
 
@@ -102,18 +102,20 @@ describe("Sign up", () => {
             staticCommandUsedJustForInputNames.inputNames.daysUnableToPlay
           ) {
             return "Mondays";
+          } else if (
+            key === staticCommandUsedJustForInputNames.inputNames.comments
+          ) {
+            return "Additional comments provided by the user";
+          } else if (
+            key === staticCommandUsedJustForInputNames.inputNames.compExperience
+          ) {
+            return "2 days a week, 2 years, EEC";
           } else {
             return getPlayerOverstat(key);
           }
         },
         getChoice: (key: string) => {
-          if (
-            key === staticCommandUsedJustForInputNames.inputNames.compExperience
-          ) {
-            return 4;
-          } else {
-            return getPlayerChoiceInputs(key);
-          }
+          return getPlayerChoiceInputs(key);
         },
       },
       member: signupMember,
@@ -177,7 +179,7 @@ describe("Sign up", () => {
             date.toISOString(),
             "team name",
             "Mondays",
-            "4: Pro",
+            "2 days a week, 2 years, EEC",
             "2 returning players",
             player1.displayName,
             player1.id,
@@ -200,6 +202,7 @@ describe("Sign up", () => {
             "Gold",
             "xbox",
             "No elo on record",
+            "Additional comments provided by the user",
           ],
         ],
       },
@@ -238,7 +241,7 @@ describe("Sign up", () => {
             date.toISOString(),
             "team name",
             "Mondays",
-            "4: Pro",
+            "2 days a week, 2 years, EEC",
             "2 returning players",
             player1.displayName,
             player1.id,
@@ -261,6 +264,7 @@ describe("Sign up", () => {
             "Gold",
             "xbox",
             "No elo on record",
+            "Additional comments provided by the user",
           ],
         ],
       },
@@ -273,7 +277,51 @@ describe("Sign up", () => {
     jest.useRealTimers();
   });
 
+  it("Should complete signup but warn that response can't be parsed", async () => {
+    const localGoogleValueMethods = {
+      append: (
+        request: Params$Resource$Spreadsheets$Values$Append,
+      ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
+        Promise.resolve({
+          data: {
+            updates: {
+              updatedRange: "weird unparseable string",
+            },
+            request: "Request data " + request.key,
+          },
+        } as GaxiosResponseWithHTTP2),
+    };
+    googleSheetsSpy.mockReturnValueOnce({
+      spreadsheets: {
+        values: localGoogleValueMethods,
+      } as unknown as Resource$Spreadsheets,
+    } as Sheets);
+    const localGoogleRequestSpy = jest.spyOn(localGoogleValueMethods, "append");
+
+    await command.run(basicInteraction);
+    // re initialize request spy to spy on the local append method
+    expect(localGoogleRequestSpy).toHaveBeenCalled();
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting`,
+    );
+  });
+
   describe("errors", () => {
+    it("should not complete the signup because command initiator is not on the team", async () => {
+      basicInteraction.member = {
+        displayName: "Signup User",
+        id: "a different id",
+        roles: {},
+      } as GuildMember;
+      await command.run(basicInteraction);
+      expect(invisibleReplySpy).toHaveBeenCalledWith(
+        "Team not signed up. User signing team up must be a player on the team",
+      );
+
+      // reset interaction member cause I don't feel like moving its definition to the before each
+      basicInteraction.member = signupMember;
+    });
+
     it("should not complete the signup because google did a bad", async () => {
       googleSheetsRequestSpy.mockImplementationOnce(async () => {
         throw Error("Sheets Failure");
