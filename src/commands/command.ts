@@ -1,18 +1,29 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import {
   CustomInteraction,
-  OptionConfig,
+  StringOptionConfig,
   SlashCommandOption,
+  NumberOptionConfig,
 } from "./interaction";
 import { AuthService } from "../services/auth";
 import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
-import { ScrimSignup } from "../models/Scrims";
-import { Player } from "../models/Player";
 import { formatDateForDiscord, formatTimeForDiscord } from "../utility/time";
+
+type DiscordGetterMethods =
+  | "getString"
+  | "getInteger"
+  | "getNumber"
+  | "getBoolean"
+  | "getUser"
+  | "getMember"
+  | "getRole"
+  | "getChannel"
+  | "getMentionable"
+  | "getAttachment";
 
 export abstract class Command extends SlashCommandBuilder {
   private loggableArguments: {
-    methodName: keyof ChatInputCommandInteraction["options"];
+    methodName: DiscordGetterMethods;
     name: string;
     required: boolean;
   }[] = [];
@@ -34,7 +45,11 @@ export abstract class Command extends SlashCommandBuilder {
     });
   }
 
-  addStringInput(name: string, description: string, config?: OptionConfig) {
+  addStringInput(
+    name: string,
+    description: string,
+    config?: StringOptionConfig,
+  ) {
     this.addStringOption((baseOption) => {
       const option = this.addOption(
         baseOption,
@@ -69,6 +84,57 @@ export abstract class Command extends SlashCommandBuilder {
       required: isRequired,
       name,
       methodName: "getNumber",
+    });
+  }
+
+  addIntegerInput(
+    name: string,
+    description: string,
+    config?: NumberOptionConfig,
+  ) {
+    this.addIntegerOption((baseOption) => {
+      const option = this.addOption(
+        baseOption,
+        name,
+        description,
+        config?.isRequired ?? false,
+      );
+      if (config?.minValue) {
+        option.setMinValue(config.minValue);
+      }
+      if (config?.maxValue) {
+        option.setMaxValue(config.maxValue);
+      }
+      return option;
+    });
+    this.loggableArguments.push({
+      required: config?.isRequired ?? false,
+      name,
+      methodName: "getInteger",
+    });
+  }
+
+  addChoiceInput(
+    name: string,
+    description: string,
+    choices: Record<string, string | number>,
+    isRequired: boolean = false,
+  ) {
+    const mappedChoices = Object.keys(choices)
+      .filter((key) => isNaN(Number(key)))
+      .map((key) => ({
+        name: key,
+        value: choices[key].toString(),
+      }));
+    this.addStringOption((baseOption) => {
+      const option = this.addOption(baseOption, name, description, isRequired);
+      option.addChoices(...mappedChoices);
+      return option;
+    });
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getString",
     });
   }
 
@@ -140,11 +206,21 @@ export abstract class Command extends SlashCommandBuilder {
     return formatTimeForDiscord(date);
   }
 
-  formatTeam(team: ScrimSignup): string {
+  formatTeam(team: {
+    players: {
+      discordId: string;
+    }[];
+    teamName: string;
+    signupPlayer: { discordId: string };
+    prio?: {
+      amount: number;
+      reasons: string;
+    };
+  }): string {
     const playerString = team.players
       .map((player) => this.formatPlayer(player))
-      .join(" ");
-    const teamString = `__${team.teamName}__. Signed up by: ${this.formatPlayer(team.signupPlayer)}. Players: ${playerString}.`;
+      .join(", ");
+    const teamString = `__${team.teamName}__\nSigned up by: ${this.formatPlayer(team.signupPlayer)}.\nPlayers: ${playerString}.`;
     const prioString =
       team.prio && team.prio.reasons
         ? ` Prio: ${team.prio.amount}. ${team.prio.reasons}.`
@@ -152,7 +228,7 @@ export abstract class Command extends SlashCommandBuilder {
     return teamString + prioString;
   }
 
-  formatPlayer(player: Player): string {
+  formatPlayer(player: { discordId: string }): string {
     return `<@${player.discordId}>`;
   }
 
@@ -177,8 +253,9 @@ export abstract class Command extends SlashCommandBuilder {
     informationArray.push(`Command issued: ${interaction.id}`);
     informationArray.push(`Name: ${this.name}`);
     const userArguments = this.loggableArguments.map((argument) => {
-      // @ts-expect-error right now this type isn't indexed correctly, fix when we have internet
-      const value = interaction.options[argument.methodName](argument.name);
+      const options = interaction.options;
+      // @ts-expect-error typescript is complaining that our getter methods aren't callable even though we know they are. Need an expert, gemini mostly unhelpful here
+      const value = options[argument.methodName](argument.name);
       return `{ name: ${argument.name}, required: ${argument.required}, value: ${value}}`;
     });
     const userArgumentString =

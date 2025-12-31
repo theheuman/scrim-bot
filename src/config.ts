@@ -5,7 +5,10 @@ export interface AppConfig {
   discord: {
     token: string;
     clientId: string;
-    guildId: string;
+    guildId: {
+      scrim: string;
+      league: string;
+    };
   };
   nhost: { adminSecret: string; subdomain: string; region: string };
 }

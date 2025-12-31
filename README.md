@@ -15,9 +15,9 @@ Install dependencies
 npm install
 ```
 
-To run the tests, you'll need to add a config.json file to the root directory.
+To run the tests, you'll need to add a config.json and a service-account-key.json file to the root directory. 
 
-The file should contain:
+The config file should contain:
 ```json
 {
   "dev": {
@@ -25,7 +25,10 @@ The file should contain:
     "discord": {
       "token": "DEV_DISCORD_BOT_TOKEN",
       "clientId": "DEV_DISCORD_CLIENT_ID",
-      "guildId": "DEV_DISCORD_GUILD_ID"  
+      "guildId": {
+        "scrim": "DEV_DISCORD_GUILD_ID_SCRIMS",
+        "league": "DEV_DISCORD_GUILD_ID_LEAGUE"
+      }
     },
     "nhost": {
       "adminSecret": "nhost-admin-secret",
@@ -37,8 +40,10 @@ The file should contain:
     "lobbySize": 20,
     "discord": {
       "token": "DISCORD_BOT_TOKEN",
-      "clientId": "DISCORD_CLIENT_ID",
-      "guildId": "DISCORD_GUILD_ID"
+      "guildId": {
+        "scrim": "DISCORD_GUILD_ID_SCRIMS",
+        "league": "DISCORD_GUILD_ID_LEAGUE"
+      }
     },
     "nhost": {
       "adminSecret": "NHOST_SECRET",
@@ -52,10 +57,12 @@ Where DISCORD_BOT_TOKEN is the bot token taken from the discord application port
 DISCORD_CLIENT_ID is the application ID from the discord application portal general information page
 DISCORD_GUILD_ID is the server ID of the server the bot is running in
 
-You can create a template config file by running
+The key file 
+You can create the template config files by running: (need to have jq installed)
 `
 npm run create-config
 `
+
 This script will default to generic placeholders but can use environment variables of the same names to populate the values. 
 The script will warn you which variables are missing and you can re run it to get the correct values.
 

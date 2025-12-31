@@ -22,7 +22,7 @@ export class DiscordService {
       scrim,
       signupCount,
     );
-    const guild = this.client.guilds.cache.get(appConfig.discord.guildId);
+    const guild = this.client.guilds.cache.get(appConfig.discord.guildId.scrim);
     if (!guild) {
       throw Error("Guild not found");
     }

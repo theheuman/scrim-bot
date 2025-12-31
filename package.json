@@ -1,7 +1,7 @@
 {
   "name": "scrim-bot",
   "description": "A multipurpose bot to track scrim signups, low prio and player performance among other things",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "author": "Jacob Heuman",
   "license": "LGPL-3.0-only",
   "scripts": {
@@ -23,6 +23,7 @@
     "bump-version": "./scripts/bump-version.sh"
   },
   "dependencies": {
+    "@googleapis/sheets": "^12.0.0",
     "@nhost/nhost-js": "^3.1.10",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
