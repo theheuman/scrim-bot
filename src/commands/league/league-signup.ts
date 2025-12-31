@@ -54,7 +54,11 @@ export class LeagueSignupCommand extends MemberCommand {
       true,
     );
 
-    this.addUserInput(this.inputNames.player1inputNames.user, "@player1", true);
+    this.addUserInput(
+      this.inputNames.player1inputNames.user,
+      "@player1 (Captain)",
+      true,
+    );
     this.addUserInput(this.inputNames.player2inputNames.user, "@player2", true);
     this.addUserInput(this.inputNames.player3inputNames.user, "@player3", true);
 
@@ -218,7 +222,9 @@ export class LeagueSignupCommand extends MemberCommand {
       const signupString = this.formatTeam({
         teamName,
         players: [player1, player2, player3],
-        signupPlayer: player1,
+        signupPlayer: {
+          discordId: signupPlayer.id,
+        },
       });
       await interaction.followUp(
         `${signupString}\nSignup #${signupNumber}. Your priority based on returning players will be determined by admins manually`,
