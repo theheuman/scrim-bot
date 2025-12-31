@@ -102,6 +102,10 @@ describe("Sign up", () => {
             staticCommandUsedJustForInputNames.inputNames.daysUnableToPlay
           ) {
             return "Mondays";
+          } else if (
+            key === staticCommandUsedJustForInputNames.inputNames.comments
+          ) {
+            return "Additional comments provided by the user";
           } else {
             return getPlayerOverstat(key);
           }
@@ -200,6 +204,7 @@ describe("Sign up", () => {
             "Gold",
             "xbox",
             "No elo on record",
+            "Additional comments provided by the user",
           ],
         ],
       },
@@ -261,6 +266,7 @@ describe("Sign up", () => {
             "Gold",
             "xbox",
             "No elo on record",
+            "Additional comments provided by the user",
           ],
         ],
       },

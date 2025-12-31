@@ -37,6 +37,7 @@ export class LeagueSignupCommand extends MemberCommand {
       overstatLink: "player3-overstat-link",
       platform: "player3-platform",
     },
+    comments: "additional-comments",
   };
 
   constructor(private overstatService: OverstatService) {
@@ -142,6 +143,11 @@ export class LeagueSignupCommand extends MemberCommand {
       "Player 3 VESA season 12 division",
       VesaDivision,
     );
+
+    this.addStringInput(
+      this.inputNames.comments,
+      "Anything else you'd like to add that could help us sort or prioritize your team",
+    );
   }
 
   async run(interaction: CustomInteraction) {
@@ -155,6 +161,10 @@ export class LeagueSignupCommand extends MemberCommand {
     const compExperience = interaction.options.getChoice(
       this.inputNames.compExperience,
       CompKnowledge,
+      true,
+    );
+    const additionalComments = interaction.options.getString(
+      this.inputNames.comments,
       true,
     );
     const signupPlayer = interaction.member;
@@ -212,6 +222,7 @@ export class LeagueSignupCommand extends MemberCommand {
         player1,
         player2,
         player3,
+        additionalComments,
       );
       if (signupNumber === null) {
         await interaction.followUp(
@@ -317,6 +328,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player1: SheetsPlayer,
     player2: SheetsPlayer,
     player3: SheetsPlayer,
+    additionalComments: string,
   ): Promise<number | null> {
     const authClient = await this.getAuthClient();
 
@@ -341,6 +353,7 @@ export class LeagueSignupCommand extends MemberCommand {
         ...this.convertSheetsPlayer(player1),
         ...this.convertSheetsPlayer(player2),
         ...this.convertSheetsPlayer(player3),
+        additionalComments,
       ],
     ];
 
