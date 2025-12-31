@@ -106,18 +106,16 @@ describe("Sign up", () => {
             key === staticCommandUsedJustForInputNames.inputNames.comments
           ) {
             return "Additional comments provided by the user";
+          } else if (
+            key === staticCommandUsedJustForInputNames.inputNames.compExperience
+          ) {
+            return "2 days a week, 2 years, EEC";
           } else {
             return getPlayerOverstat(key);
           }
         },
         getChoice: (key: string) => {
-          if (
-            key === staticCommandUsedJustForInputNames.inputNames.compExperience
-          ) {
-            return 4;
-          } else {
-            return getPlayerChoiceInputs(key);
-          }
+          return getPlayerChoiceInputs(key);
         },
       },
       member: signupMember,
@@ -181,7 +179,7 @@ describe("Sign up", () => {
             date.toISOString(),
             "team name",
             "Mondays",
-            "4: Pro",
+            "2 days a week, 2 years, EEC",
             "2 returning players",
             player1.displayName,
             player1.id,
@@ -243,7 +241,7 @@ describe("Sign up", () => {
             date.toISOString(),
             "team name",
             "Mondays",
-            "4: Pro",
+            "2 days a week, 2 years, EEC",
             "2 returning players",
             player1.displayName,
             player1.id,

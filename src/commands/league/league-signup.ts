@@ -48,11 +48,10 @@ export class LeagueSignupCommand extends MemberCommand {
       maxLength: 25,
     });
 
-    this.addChoiceInput(
+    this.addStringInput(
       this.inputNames.compExperience,
-      "Your teams comp experience",
-      CompKnowledge,
-      true,
+      `State scrim frequency/experience & main servers for your team? Ex: "~2 days per wk, for 2 yrs, EEC"`,
+      { isRequired: true },
     );
 
     this.addUserInput(
@@ -158,14 +157,12 @@ export class LeagueSignupCommand extends MemberCommand {
     const teamNoDays = interaction.options.getString(
       this.inputNames.daysUnableToPlay,
     );
-    const compExperience = interaction.options.getChoice(
+    const compExperience = interaction.options.getString(
       this.inputNames.compExperience,
-      CompKnowledge,
       true,
     );
     const additionalComments = interaction.options.getString(
       this.inputNames.comments,
-      true,
     );
     const signupPlayer = interaction.member;
     let player1: SheetsPlayer;
@@ -222,7 +219,7 @@ export class LeagueSignupCommand extends MemberCommand {
         player1,
         player2,
         player3,
-        additionalComments,
+        additionalComments ?? "",
       );
       if (signupNumber === null) {
         await interaction.followUp(
@@ -300,7 +297,7 @@ export class LeagueSignupCommand extends MemberCommand {
       }
     } else {
       // will throw an error if link is invalid
-      await this.overstatService.validateLinkUrl(overstatLink);
+      this.overstatService.validateLinkUrl(overstatLink);
       let dbOverstatLink;
       try {
         dbOverstatLink = await this.overstatService.getPlayerOverstat(user);
@@ -324,7 +321,7 @@ export class LeagueSignupCommand extends MemberCommand {
   async postSpreadSheetValue(
     teamName: string,
     teamNoDays: string,
-    teamCompKnowledge: CompKnowledge,
+    teamCompKnowledge: string,
     player1: SheetsPlayer,
     player2: SheetsPlayer,
     player3: SheetsPlayer,
@@ -332,7 +329,6 @@ export class LeagueSignupCommand extends MemberCommand {
   ): Promise<number | null> {
     const authClient = await this.getAuthClient();
 
-    const compExperienceLabel = `${teamCompKnowledge}: ${CompKnowledge[teamCompKnowledge]}`;
     const returningPlayersCount = [player1, player2, player3].reduce(
       (count, player) => {
         if (player.previous_season_vesa_division !== undefined) {
@@ -348,7 +344,7 @@ export class LeagueSignupCommand extends MemberCommand {
         new Date().toISOString(),
         teamName,
         teamNoDays,
-        compExperienceLabel,
+        teamCompKnowledge,
         `${returningPlayersCount} returning players`,
         ...this.convertSheetsPlayer(player1),
         ...this.convertSheetsPlayer(player2),
@@ -356,8 +352,6 @@ export class LeagueSignupCommand extends MemberCommand {
         additionalComments,
       ],
     ];
-
-    console.log(values);
 
     const request = SheetHelper.BUILD_REQUEST(
       values,
@@ -427,14 +421,6 @@ enum Platform {
   playstation,
   xbox,
   switch,
-}
-
-enum CompKnowledge {
-  None,
-  Some,
-  Fair,
-  Alot,
-  Pro,
 }
 
 interface SheetsPlayer {
