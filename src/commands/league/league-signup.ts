@@ -122,25 +122,28 @@ export class LeagueSignupCommand extends MemberCommand {
       },
     );
 
-    this.addStringInput(
-      this.inputNames.daysUnableToPlay,
-      "Days your team is unable to play due to scheduling conflicts for one or more of your players",
-    );
-
     this.addChoiceInput(
       this.inputNames.player1inputNames.lastSeasonDivision,
       "Player 1 VESA season 12 division",
       VesaDivision,
+      true,
     );
     this.addChoiceInput(
       this.inputNames.player2inputNames.lastSeasonDivision,
       "Player 2 VESA season 12 division",
       VesaDivision,
+      true,
     );
     this.addChoiceInput(
       this.inputNames.player3inputNames.lastSeasonDivision,
       "Player 3 VESA season 12 division",
       VesaDivision,
+      true,
+    );
+
+    this.addStringInput(
+      this.inputNames.daysUnableToPlay,
+      "Days your team is unable to play due to scheduling conflicts for one or more of your players",
     );
 
     this.addStringInput(
@@ -272,11 +275,11 @@ export class LeagueSignupCommand extends MemberCommand {
         true,
       ),
       overstatLink,
-      previous_season_vesa_division:
-        interaction.options.getChoice(
-          playerNumberInputs.lastSeasonDivision,
-          VesaDivision,
-        ) ?? undefined,
+      previous_season_vesa_division: interaction.options.getChoice(
+        playerNumberInputs.lastSeasonDivision,
+        VesaDivision,
+        true,
+      ),
     };
   }
 
@@ -331,7 +334,7 @@ export class LeagueSignupCommand extends MemberCommand {
 
     const returningPlayersCount = [player1, player2, player3].reduce(
       (count, player) => {
-        if (player.previous_season_vesa_division !== undefined) {
+        if (player.previous_season_vesa_division !== VesaDivision.None) {
           return count + 1;
         } else {
           return count;
@@ -373,9 +376,7 @@ export class LeagueSignupCommand extends MemberCommand {
       player.name,
       player.discordId,
       player.overstatLink ?? "No overstat",
-      player.previous_season_vesa_division !== undefined
-        ? VesaDivision[player.previous_season_vesa_division]
-        : "No division provided",
+      VesaDivision[player.previous_season_vesa_division],
       PlayerRank[player.rank],
       Platform[player.platform],
       player.elo ?? "No elo on record",
@@ -404,6 +405,7 @@ enum PlayerRank {
 }
 
 enum VesaDivision {
+  None,
   Division1,
   Division2,
   Division3,
@@ -428,7 +430,7 @@ interface SheetsPlayer {
   discordId: Snowflake;
   elo: number | undefined;
   rank: PlayerRank;
-  previous_season_vesa_division?: VesaDivision;
+  previous_season_vesa_division: VesaDivision;
   platform: Platform;
   overstatLink: string | undefined;
 }
