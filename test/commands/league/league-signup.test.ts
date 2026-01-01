@@ -198,7 +198,7 @@ describe("Sign up", () => {
             player3.displayName,
             player3.id,
             "No overstat",
-            "No division provided",
+            "None",
             "Gold",
             "xbox",
             "No elo on record",
@@ -260,7 +260,7 @@ describe("Sign up", () => {
             player3.displayName,
             player3.id,
             "overstat from db",
-            "No division provided",
+            "None",
             "Gold",
             "xbox",
             "No elo on record",
@@ -363,9 +363,9 @@ describe("Sign up", () => {
   };
 
   const divisions = {
-    player1: 0,
-    player2: 1,
-    player3: null,
+    player1: 1,
+    player2: 2,
+    player3: 0,
   };
 
   const platforms = {
