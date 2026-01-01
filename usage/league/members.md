@@ -5,9 +5,13 @@ Commands any member can use
 ## /league-signup
 Signup for the scrim
 
-![signup example image](/usage/assets/league-signup.png)
+![signup example image](/usage/assets/league/signup-1.png)
+![signup example image](/usage/assets/league/signup-2.png)
+![signup example image](/usage/assets/league/signup-3.png)
+![signup example image](/usage/assets/league/signup-4.png)
+![signup example image](/usage/assets/league/signup-5.png)
 
-![success image](/usage/assets/league-signup-success.png)
+![success image](/usage/assets/league/signup-success.png)
 
 To be used in the #league-signups channel
 
