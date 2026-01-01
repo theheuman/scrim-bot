@@ -14,14 +14,14 @@ If you're here because you didn't read and you're having issues, please read the
 
 * In the #league-signup channel type "/league-signup"
   * While you type you will see a drop down of options of commands to run, select the newt bot league signup command
-  * [Selecting user](/usage/assets/league/selecting-user.png)
+  * ![Selecting user](/usage/assets/league/selecting-user.png)
 * Fill out all the required fields
   * team name
     * Type your team name
   * player 1 (captain)
     * start typing the name of your captain and select the correct user from the dropdown. The captain **MUST** be on the team
-    * [Selecting player](/usage/assets/league/selecting-user.png)
-    * [Succesfully selected player](/usage/assets/league/selected-user.png)
+    * ![Selecting player](/usage/assets/league/selecting-user.png)
+    * ![Succesfully selected player](/usage/assets/league/selected-user.png)
   * player 2
     * start typing the name of player 2 and select the correct user from the dropdown
   * player 3 
@@ -30,8 +30,8 @@ If you're here because you didn't read and you're having issues, please read the
     * Type your scrim frequency/experience & main servers for your team? Ex: "~2 days per wk, for 2 yrs, EEC",
   * player1-rank
     * Select from the dropdown the ranked tier this player achieved in the latest ranked split or most recent season with decent amount of games played
-    * [selecting rank from dropdown](/usage/assets/league/selecting-rank.png)
-    * [successfully selected rank from dropdown](/usage/assets/league/selected-rank.png)
+    * ![selecting rank from dropdown](/usage/assets/league/selecting-rank.png)
+    * ![successfully selected rank from dropdown](/usage/assets/league/selected-rank.png)
   * player1-s12-vesa-division
     * Select from the dropdown the s12 vesa division this player played in, select "None" if you did not play or all you did was sub and you were not on a roster
   * player1-overstat-link
