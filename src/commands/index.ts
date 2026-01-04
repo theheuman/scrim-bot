@@ -28,6 +28,7 @@ import { CurrentPositionCommand } from "./scrims/signup/current-position";
 import { ScrimBanCommand } from "./scrims/admin/bans/scrim-ban";
 import { ExpungeBanCommand } from "./scrims/admin/bans/expunge-ban";
 import { LeagueSignupCommand } from "./league/league-signup";
+import { GetUserCommand } from "./overstat/get-user";
 
 export const commonCommands: Command[] = [
   // test commands
@@ -39,6 +40,7 @@ export const commonCommands: Command[] = [
 
   new LinkOverstatCommand(authService, overstatService),
   new GetOverstatCommand(authService, overstatService),
+  new GetUserCommand(authService, overstatService),
 ];
 
 export const scrimCommands: Command[] = [

@@ -1,6 +1,7 @@
 import { OverstatTournamentResponse } from "../models/overstatModels";
 import { DB } from "../db/db";
 import { User } from "discord.js";
+import { Player } from "../models/Player";
 
 export class OverstatService {
   constructor(private db: DB) {}
@@ -89,6 +90,13 @@ export class OverstatService {
       throw Error("Player has no overstat id");
     }
     return getPlayerOverstatUrl(player.overstatId);
+  }
+
+  async getPlayerFromOverstatLink(
+    overstatLink: string,
+  ): Promise<Player | undefined> {
+    const overstatId = await this.validateLinkUrl(overstatLink);
+    return this.db.getPlayerFromOverstatId(overstatId);
   }
 }
 
