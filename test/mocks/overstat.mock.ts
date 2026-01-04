@@ -2,7 +2,7 @@ import { User } from "discord.js";
 import { DB } from "../../src/db/db";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { ScrimSignup } from "../../src/models/Scrims";
-import { PlayerStatInsert } from "../../src/models/Player";
+import { Player, PlayerStatInsert } from "../../src/models/Player";
 
 export class OverstatServiceMock {
   constructor() {}
@@ -51,7 +51,17 @@ export class OverstatServiceMock {
   }
 
   async getPlayerOverstat(user: User): Promise<string> {
-    console.debug("Matching players in overstat mock", user);
+    console.debug("Get player overstat link in overstat mock", user);
     return "";
+  }
+
+  async getPlayerFromOverstatLink(
+    overstatLink: string,
+  ): Promise<Player | undefined> {
+    console.debug(
+      "Get player from overstat link in overstat mock",
+      overstatLink,
+    );
+    return undefined;
   }
 }

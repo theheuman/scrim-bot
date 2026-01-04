@@ -100,3 +100,14 @@ Remove a discord role from being able to use the bots admin commands
 Please use #bot-handling
 
 Fill out the required field: role
+
+## /get-user
+Tries to find the user linked to the overstat link provided
+
+Use whatever channel you want
+
+Fill out the required field: overstat-link
+
+
+![Get user](/usage/assets/admins/get-user.png)
+![Get user success](/usage/assets/admins/get-user-success.png)

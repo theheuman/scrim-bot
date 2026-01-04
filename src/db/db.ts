@@ -331,6 +331,30 @@ export abstract class DB {
     };
   }
 
+  async getPlayerFromOverstatId(
+    overstatId: string,
+  ): Promise<Player | undefined> {
+    const dbData = await this.get(
+      DbTable.players,
+      {
+        fieldName: "overstat_id",
+        comparator: "eq",
+        value: overstatId,
+      },
+      ["id", "display_name", "discord_id"],
+    );
+    if (dbData.length > 0) {
+      return {
+        discordId: dbData[0].discord_id as string,
+        displayName: dbData[0].display_name as string,
+        id: dbData[0].id as string,
+        overstatId,
+      };
+    } else {
+      return undefined;
+    }
+  }
+
   async getScrimsByDiscordChannel(discordChannelID: string): Promise<Scrim[]> {
     const dbResult = await this.get(
       DbTable.scrims,
