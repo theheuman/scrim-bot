@@ -6,7 +6,8 @@ import { AnyAuthClient } from "google-auth-library";
 
 enum SpreadSheetTypes {
   TEST_SHEET = "TEST_SHEET",
-  PROD_SHEET = "PROD_SHEET",
+  PROD_SIGNUP_SHEET = "PROD_SIGNUP_SHEET",
+  PROD_SUB_REQUEST_SHEET = "PROD_SUB_REQUEST_SHEET",
 }
 
 export const SpreadSheetType: Record<
@@ -17,9 +18,13 @@ export const SpreadSheetType: Record<
     id: "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo",
     range: "Sheet1!A1",
   },
-  PROD_SHEET: {
+  PROD_SIGNUP_SHEET: {
     id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
     range: "Discord Submittals!A1",
+  },
+  PROD_SUB_REQUEST_SHEET: {
+    id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
+    range: "Sub Requests!A1",
   },
 };
 

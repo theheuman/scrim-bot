@@ -160,7 +160,7 @@ describe("Sub request", () => {
     await command.run(basicInteraction);
     expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
       auth: undefined,
-      range: "Discord Submittals!A1",
+      range: "Sub Requests!A1",
       requestBody: {
         values: [
           [

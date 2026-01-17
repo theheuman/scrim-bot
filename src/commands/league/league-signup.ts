@@ -327,7 +327,7 @@ export class LeagueSignupCommand extends MemberCommand {
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      SpreadSheetType.PROD_SHEET,
+      SpreadSheetType.PROD_SIGNUP_SHEET,
     );
 
     const sheetsClient = sheets({ version: "v4" });

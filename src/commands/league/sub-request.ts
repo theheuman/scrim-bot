@@ -183,7 +183,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      SpreadSheetType.PROD_SHEET,
+      SpreadSheetType.PROD_SUB_REQUEST_SHEET,
     );
 
     const sheetsClient = sheets({ version: "v4" });
