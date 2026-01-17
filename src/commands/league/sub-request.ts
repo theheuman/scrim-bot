@@ -39,7 +39,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     this.addChoiceInput(
       this.inputNames.teamDivision,
       `Which division or placement lobby is your team playing in`,
-      VesaDivision,
+      VesaSubRequestDivision,
       true,
     );
 
@@ -210,3 +210,14 @@ export class LeagueSubRequestCommand extends MemberCommand {
     ];
   }
 }
+
+function omitKey<T extends object, K extends keyof T>(
+  obj: T,
+  key: K,
+): Omit<T, K> {
+  const { [key]: _, ...rest } = obj;
+  console.debug(_);
+  return rest;
+}
+
+const VesaSubRequestDivision = omitKey(VesaDivision, "None");
