@@ -1,7 +1,8 @@
-import { OAuth2Client } from "googleapis-common";
-import { sheets_v4 } from "@googleapis/sheets";
+import { GoogleAuth, OAuth2Client } from "googleapis-common";
+import { auth, sheets_v4 } from "@googleapis/sheets";
 import Schema$UpdateValuesResponse = sheets_v4.Schema$UpdateValuesResponse;
 import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+import { AnyAuthClient } from "google-auth-library";
 
 enum SpreadSheetTypes {
   TEST_SHEET = "TEST_SHEET",
@@ -54,5 +55,14 @@ export class SheetHelper {
       },
       auth: authClient as OAuth2Client,
     };
+  }
+
+  static GET_AUTH_CLIENT(): Promise<AnyAuthClient> {
+    const googleAuth = new auth.GoogleAuth({
+      keyFile: "service-account-key.json",
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    }) as GoogleAuth;
+
+    return googleAuth.getClient();
   }
 }

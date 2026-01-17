@@ -2,11 +2,16 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { Snowflake, User } from "discord.js";
-import { GoogleAuth, OAuth2Client } from "googleapis-common";
-import { AnyAuthClient } from "google-auth-library";
-import { auth, sheets } from "@googleapis/sheets";
+import { OAuth2Client } from "googleapis-common";
+import { sheets } from "@googleapis/sheets";
 import { SheetHelper, SpreadSheetType } from "../../utility/sheet-helper";
+import {
+  Platform,
+  PlayerRank,
+  LeagueSignupPlayer,
+  VesaDivision,
+} from "../../models/league-models";
+import { LeagueCommandHelper } from "./league-command-helper";
 
 export class LeagueSignupCommand extends MemberCommand {
   inputNames = {
@@ -168,9 +173,9 @@ export class LeagueSignupCommand extends MemberCommand {
       this.inputNames.comments,
     );
     const signupPlayer = interaction.member;
-    let player1: SheetsPlayer;
-    let player2: SheetsPlayer;
-    let player3: SheetsPlayer;
+    let player1: LeagueSignupPlayer;
+    let player2: LeagueSignupPlayer;
+    let player3: LeagueSignupPlayer;
 
     try {
       player1 = await this.getPlayerInputs(
@@ -254,11 +259,12 @@ export class LeagueSignupCommand extends MemberCommand {
       platform: string;
     },
     interaction: CustomInteraction,
-  ): Promise<SheetsPlayer> {
+  ): Promise<LeagueSignupPlayer> {
     const user = interaction.options.getUser(playerNumberInputs.user, true);
-    const overstatLink = await this.validateOverstatLink(
+    const overstatLink = await LeagueCommandHelper.VALIDATE_OVERSTAT_LINK(
       user,
       interaction.options.getString(playerNumberInputs.overstatLink, true),
+      this.overstatService,
     );
     return {
       elo: undefined,
@@ -283,54 +289,16 @@ export class LeagueSignupCommand extends MemberCommand {
     };
   }
 
-  // throws if provided link is illegal or if provided link does not match link for that user in db, otherwise returns valid link, if "none" provided attempts to fetch from db. Sends undefined if it can't fetch it
-  async validateOverstatLink(
-    user: User,
-    overstatLink: string,
-  ): Promise<string | undefined> {
-    let linkToReturn: string | undefined;
-    if (overstatLink.toLowerCase() === "none") {
-      try {
-        linkToReturn = await this.overstatService.getPlayerOverstat(user);
-      } catch {
-        linkToReturn = undefined;
-        console.log(
-          "No overstat provided and none found in db for " + user.displayName,
-        );
-      }
-    } else {
-      // will throw an error if link is invalid
-      this.overstatService.validateLinkUrl(overstatLink);
-      let dbOverstatLink;
-      try {
-        dbOverstatLink = await this.overstatService.getPlayerOverstat(user);
-      } catch {
-        await this.overstatService.addPlayerOverstatLink(user, overstatLink);
-      }
-      if (
-        dbOverstatLink &&
-        this.overstatService.getPlayerId(overstatLink) !==
-          this.overstatService.getPlayerId(dbOverstatLink)
-      ) {
-        throw new Error(
-          `Overstat provided for ${user.displayName} does not match link previously provided with /link-overstat command`,
-        );
-      }
-      linkToReturn = overstatLink;
-    }
-    return linkToReturn;
-  }
-
   async postSpreadSheetValue(
     teamName: string,
     teamNoDays: string,
     teamCompKnowledge: string,
-    player1: SheetsPlayer,
-    player2: SheetsPlayer,
-    player3: SheetsPlayer,
+    player1: LeagueSignupPlayer,
+    player2: LeagueSignupPlayer,
+    player3: LeagueSignupPlayer,
     additionalComments: string,
   ): Promise<number | null> {
-    const authClient = await this.getAuthClient();
+    const authClient = await SheetHelper.GET_AUTH_CLIENT();
 
     const returningPlayersCount = [player1, player2, player3].reduce(
       (count, player) => {
@@ -349,9 +317,9 @@ export class LeagueSignupCommand extends MemberCommand {
         teamNoDays,
         teamCompKnowledge,
         `${returningPlayersCount} returning players`,
-        ...this.convertSheetsPlayer(player1),
-        ...this.convertSheetsPlayer(player2),
-        ...this.convertSheetsPlayer(player3),
+        ...this.convertPlayerToSheetsFormat(player1),
+        ...this.convertPlayerToSheetsFormat(player2),
+        ...this.convertPlayerToSheetsFormat(player3),
         additionalComments,
       ],
     ];
@@ -371,7 +339,9 @@ export class LeagueSignupCommand extends MemberCommand {
     return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
   }
 
-  private convertSheetsPlayer(player: SheetsPlayer): (string | number)[] {
+  private convertPlayerToSheetsFormat(
+    player: LeagueSignupPlayer,
+  ): (string | number)[] {
     return [
       player.name,
       player.discordId,
@@ -382,55 +352,4 @@ export class LeagueSignupCommand extends MemberCommand {
       player.elo ?? "No elo on record",
     ];
   }
-
-  getAuthClient(): Promise<AnyAuthClient> {
-    const googleAuth = new auth.GoogleAuth({
-      keyFile: "service-account-key.json",
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    }) as GoogleAuth;
-
-    return googleAuth.getClient();
-  }
-}
-
-enum PlayerRank {
-  Bronze,
-  Silver,
-  Gold,
-  Plat,
-  LowDiamond,
-  HighDiamond,
-  Masters,
-  Pred,
-}
-
-enum VesaDivision {
-  None,
-  Division1,
-  Division2,
-  Division3,
-  Division4,
-  Division5,
-  Division6,
-  Division7,
-  // Division8,
-  // Division9,
-  // Division10,
-}
-
-enum Platform {
-  pc,
-  playstation,
-  xbox,
-  switch,
-}
-
-interface SheetsPlayer {
-  name: string;
-  discordId: Snowflake;
-  elo: number | undefined;
-  rank: PlayerRank;
-  previous_season_vesa_division: VesaDivision;
-  platform: Platform;
-  overstatLink: string | undefined;
 }
