@@ -156,6 +156,7 @@ describe("Sign up", () => {
 
   beforeEach(() => {
     followUpSpy.mockClear();
+    invisibleReplySpy.mockClear();
     googleSheetsRequestSpy.mockClear();
     command = new LeagueSignupCommand(mockOverstatService);
     getPlayerOverstatSpy = jest

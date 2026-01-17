@@ -94,13 +94,12 @@ export class LeagueSubRequestCommand extends MemberCommand {
     let playerOutOverstat: string;
     let playerInOverstat: string | undefined;
 
-    // TODO get player out overstat from overstat service and fail if not in there, ask to link
     try {
       playerOutOverstat =
         await this.overstatService.getPlayerOverstat(playerOut);
     } catch (e) {
       await interaction.invisibleReply(
-        `Could not find overstat of the player being subbed out in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket` +
+        `Could not find overstat of the player being subbed out in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket.\n` +
           e,
       );
       return;
@@ -117,7 +116,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
       );
     } catch (e) {
       await interaction.invisibleReply(
-        `Sub request not valid. Overstat link provided for player subbing in is not valid. Write "None" if the player does not have one.\n` +
+        `Sub request not valid. Overstat link provided for player subbing in is not valid.\n` +
           e,
       );
       return;
@@ -133,7 +132,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const signupNumber = await this.postSpreadSheetValue(
+      const subRequestNumber = await this.postSpreadSheetValue(
         teamName,
         VesaDivision[teamDivision],
         subbingDate,
@@ -148,13 +147,13 @@ export class LeagueSubRequestCommand extends MemberCommand {
           overstatLink: playerInOverstat,
         },
       );
-      if (signupNumber === null) {
+      if (subRequestNumber === null) {
         await interaction.followUp(
-          "Problem parsing google sheets response, please check sheet to see if your request went through before resubmitting",
+          "Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting",
         );
         return;
       }
-      const discordReplyMessage = `Sub request`;
+      const discordReplyMessage = `Sub requested for __${teamName}__\nSubbing out <@${playerOut.id}>\nSubbing in <@${playerIn.id}>\nRequested date: ${subbingDate}\nSheet row #${subRequestNumber}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);

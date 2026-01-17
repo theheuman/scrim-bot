@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
-import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
+import { LeagueSubRequestCommand } from "../../../src/commands/league/sub-request";
 import * as GoogleSheets from "@googleapis/sheets";
 
 import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
@@ -29,7 +29,7 @@ class MockGoogleAuth {
   }
 }
 
-describe("Sign up", () => {
+describe("Sub request", () => {
   let basicInteraction: CustomInteraction;
   let followUpSpy: SpyInstance<
     Promise<Message<boolean>>,
@@ -46,10 +46,10 @@ describe("Sign up", () => {
     [request: Params$Resource$Spreadsheets$Values$Append],
     string
   >;
-  let getPlayerOverstatSpy: SpyInstance;
+  let getPlayerOverstatSpy: SpyInstance<Promise<string>, [user: User], string>;
   let googleSheetsSpy: SpyInstance;
 
-  let command: LeagueSignupCommand;
+  let command: LeagueSubRequestCommand;
 
   const signupMember = {
     displayName: "Signup User",
@@ -57,26 +57,21 @@ describe("Sign up", () => {
     roles: {},
   } as GuildMember;
 
-  const player1 = {
+  const playerOut = {
     displayName: "Player 1",
     id: "player1id",
   } as User;
 
-  const player2 = {
+  const playerIn = {
     displayName: "Player 2",
     id: "player2id",
-  } as User;
-
-  const player3 = {
-    displayName: "Player 3",
-    id: "player3id",
   } as User;
 
   let mockOverstatService: OverstatService;
 
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
-    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+    const staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
       mockOverstatService,
     );
     basicInteraction = {
@@ -86,36 +81,27 @@ describe("Sign up", () => {
       followUp: jest.fn(),
       options: {
         getUser: (key: string) => {
-          if (key === "player1") {
-            return player1;
-          } else if (key === "player2") {
-            return player2;
+          if (key === "player-out") {
+            return playerOut;
+          } else if (key === "player-in") {
+            return playerIn;
           } else {
-            return player3;
+            return null;
           }
         },
         getString: (key: string) => {
           if (key === staticCommandUsedJustForInputNames.inputNames.teamName) {
-            return "team name";
+            return "Dude Cube";
           } else if (
-            key ===
-            staticCommandUsedJustForInputNames.inputNames.daysUnableToPlay
+            key === staticCommandUsedJustForInputNames.inputNames.date
           ) {
-            return "Mondays";
-          } else if (
-            key === staticCommandUsedJustForInputNames.inputNames.comments
-          ) {
-            return "Additional comments provided by the user";
-          } else if (
-            key === staticCommandUsedJustForInputNames.inputNames.compExperience
-          ) {
-            return "2 days a week, 2 years, EEC";
+            return "Monday 1/19";
           } else {
-            return getPlayerOverstat(key);
+            return overstats.player2;
           }
         },
-        getChoice: (key: string) => {
-          return getPlayerChoiceInputs(key);
+        getChoice: () => {
+          return 4;
         },
       },
       member: signupMember,
@@ -152,20 +138,22 @@ describe("Sign up", () => {
           overstatLink,
         );
       });
+    getPlayerOverstatSpy = jest.spyOn(mockOverstatService, "getPlayerOverstat");
+    getPlayerOverstatSpy.mockImplementation((user) =>
+      user.id === playerOut.id
+        ? Promise.resolve(overstats.player1)
+        : Promise.resolve(overstats.player2),
+    );
   });
 
   beforeEach(() => {
     followUpSpy.mockClear();
     googleSheetsRequestSpy.mockClear();
-    command = new LeagueSignupCommand(mockOverstatService);
-    getPlayerOverstatSpy = jest
-      .spyOn(mockOverstatService, "getPlayerOverstat")
-      .mockImplementation(() => {
-        throw Error("Rejected get player overstat promise");
-      });
+    invisibleReplySpy.mockClear();
+    command = new LeagueSubRequestCommand(mockOverstatService);
   });
 
-  it("Should complete signup", async () => {
+  it("Should make the sub request", async () => {
     const date = new Date("2025-12-26T18:55:23.264Z");
     jest.useFakeTimers();
     jest.setSystemTime(date);
@@ -177,32 +165,15 @@ describe("Sign up", () => {
         values: [
           [
             date.toISOString(),
-            "team name",
-            "Mondays",
-            "2 days a week, 2 years, EEC",
-            "2 returning players",
-            player1.displayName,
-            player1.id,
+            "Dude Cube",
+            "Division4",
+            "Monday 1/19",
+            playerOut.displayName,
+            playerOut.id,
             overstats.player1,
-            "Division1",
-            "Bronze",
-            "pc",
-            "No elo on record",
-            player2.displayName,
-            player2.id,
+            playerIn.displayName,
+            playerIn.id,
             overstats.player2,
-            "Division2",
-            "Silver",
-            "playstation",
-            "No elo on record",
-            player3.displayName,
-            player3.id,
-            "No overstat",
-            "None",
-            "Gold",
-            "xbox",
-            "No elo on record",
-            "Additional comments provided by the user",
           ],
         ],
       },
@@ -210,69 +181,7 @@ describe("Sign up", () => {
       valueInputOption: "USER_ENTERED",
     });
     expect(followUpSpy).toHaveBeenCalledWith(
-      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually`,
-    );
-    jest.useRealTimers();
-  });
-
-  it("Should complete signup with db filled overstat", async () => {
-    let getCount = 0;
-    getPlayerOverstatSpy.mockImplementation(() => {
-      // mock implementation so that the link from the db matches the link provided by the userspy
-      getCount++;
-      if (getCount === 1) {
-        return Promise.resolve(overstats.player1);
-      } else if (getCount === 2) {
-        return Promise.resolve(overstats.player2);
-      } else {
-        return Promise.resolve("overstat from db");
-      }
-    });
-    const date = new Date("2025-12-26T18:55:23.264Z");
-    jest.useFakeTimers();
-    jest.setSystemTime(date);
-    await command.run(basicInteraction);
-    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
-      auth: undefined,
-      range: "Discord Submittals!A1",
-      requestBody: {
-        values: [
-          [
-            date.toISOString(),
-            "team name",
-            "Mondays",
-            "2 days a week, 2 years, EEC",
-            "2 returning players",
-            player1.displayName,
-            player1.id,
-            overstats.player1,
-            "Division1",
-            "Bronze",
-            "pc",
-            "No elo on record",
-            player2.displayName,
-            player2.id,
-            overstats.player2,
-            "Division2",
-            "Silver",
-            "playstation",
-            "No elo on record",
-            player3.displayName,
-            player3.id,
-            "overstat from db",
-            "None",
-            "Gold",
-            "xbox",
-            "No elo on record",
-            "Additional comments provided by the user",
-          ],
-        ],
-      },
-      spreadsheetId: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
-      valueInputOption: "USER_ENTERED",
-    });
-    expect(followUpSpy).toHaveBeenCalledWith(
-      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually`,
+      `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested date: Monday 1/19\nSheet row #0`,
     );
     jest.useRealTimers();
   });
@@ -302,37 +211,22 @@ describe("Sign up", () => {
     // re initialize request spy to spy on the local append method
     expect(localGoogleRequestSpy).toHaveBeenCalled();
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting`,
+      `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting`,
     );
   });
 
   describe("errors", () => {
-    it("should not complete the signup because command initiator is not on the team", async () => {
-      basicInteraction.member = {
-        displayName: "Signup User",
-        id: "a different id",
-        roles: {},
-      } as GuildMember;
-      await command.run(basicInteraction);
-      expect(invisibleReplySpy).toHaveBeenCalledWith(
-        "Team not signed up. User signing team up must be a player on the team",
-      );
-
-      // reset interaction member cause I don't feel like moving its definition to the before each
-      basicInteraction.member = signupMember;
-    });
-
     it("should not complete the signup because google did a bad", async () => {
       googleSheetsRequestSpy.mockImplementationOnce(async () => {
         throw Error("Sheets Failure");
       });
       await command.run(basicInteraction);
       expect(followUpSpy).toHaveBeenCalledWith(
-        "Team not signed up. Error: Sheets Failure",
+        "Sub request not made. Error: Sheets Failure",
       );
     });
 
-    it("should not complete the signup because the overstats are not valid", async () => {
+    it("should not complete the signup because the overstat is not valid", async () => {
       jest
         .spyOn(mockOverstatService, "validateLinkUrl")
         .mockImplementationOnce(() => {
@@ -340,163 +234,23 @@ describe("Sign up", () => {
         });
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\nError: Not a link to a player overview.`,
+        `Sub request not valid. Overstat link provided for player subbing in is not valid.\nError: Not a link to a player overview.`,
       );
     });
 
-    it("Should complete signup with db filled overstat", async () => {
-      getPlayerOverstatSpy.mockReturnValue(
-        Promise.resolve(getPlayerOverstatUrl("123")),
-      );
+    it("should not complete the signup because the player being subbed out doesn't have an overstat", async () => {
+      getPlayerOverstatSpy.mockImplementationOnce(() => {
+        throw Error("Rejected get player overstat promise");
+      });
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Team not signed up. One or more of the overstat links provided are not valid. Write "None" if the player does not have one.\nError: Overstat provided for ${player1.displayName} does not match link previously provided with /link-overstat command`,
+        `Could not find overstat of the player being subbed out in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket.\nError: Rejected get player overstat promise`,
       );
-      jest.useRealTimers();
     });
   });
-
-  const ranks = {
-    player1: 0,
-    player2: 1,
-    player3: 2,
-  };
-
-  const divisions = {
-    player1: 1,
-    player2: 2,
-    player3: 0,
-  };
-
-  const platforms = {
-    player1: 0,
-    player2: 1,
-    player3: 2,
-  };
 
   const overstats = {
     player1: getPlayerOverstatUrl("1"),
     player2: getPlayerOverstatUrl("2"),
-    player3: "None",
-  };
-
-  const getPlayerChoiceInputs = (key: string) => {
-    if (key.includes("rank")) {
-      return getPlayerRank(key);
-    } else if (key.includes("div")) {
-      return getPlayerDivision(key);
-    } else {
-      return getPlayerPlatform(key);
-    }
-  };
-
-  const getPlayerRank = (key: string) => {
-    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      mockOverstatService,
-    );
-    if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player1inputNames.rank
-    ) {
-      return ranks.player1;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player2inputNames.rank
-    ) {
-      return ranks.player2;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player3inputNames.rank
-    ) {
-      return ranks.player3;
-    } else {
-      throw Error(
-        "Test Error: Trying to get player rank that doesn't match input names",
-      );
-    }
-  };
-
-  const getPlayerDivision = (key: string) => {
-    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      mockOverstatService,
-    );
-    if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player1inputNames
-        .lastSeasonDivision
-    ) {
-      return divisions.player1;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player2inputNames
-        .lastSeasonDivision
-    ) {
-      return divisions.player2;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player3inputNames
-        .lastSeasonDivision
-    ) {
-      return divisions.player3;
-    } else {
-      throw Error(
-        "Test error: Trying to get player division that doesn't match input names",
-      );
-    }
-  };
-
-  const getPlayerOverstat = (key: string) => {
-    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      mockOverstatService,
-    );
-    if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player1inputNames
-        .overstatLink
-    ) {
-      return overstats.player1;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player2inputNames
-        .overstatLink
-    ) {
-      return overstats.player2;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player3inputNames
-        .overstatLink
-    ) {
-      return overstats.player3;
-    } else {
-      throw Error(
-        "Test error: Trying to get player overstatLink that doesn't match input names",
-      );
-    }
-  };
-
-  const getPlayerPlatform = (key: string) => {
-    const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      mockOverstatService,
-    );
-    if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player1inputNames.platform
-    ) {
-      return platforms.player1;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player2inputNames.platform
-    ) {
-      return platforms.player2;
-    } else if (
-      key ===
-      staticCommandUsedJustForInputNames.inputNames.player3inputNames.platform
-    ) {
-      return platforms.player3;
-    } else {
-      throw Error(
-        "Test error: Trying to get player platform that doesn't match input names",
-      );
-    }
   };
 });
