@@ -10,6 +10,7 @@ import {
   LeagueSubRequestPlayer,
 } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
+import { GuildMember } from "discord.js";
 
 export class LeagueSubRequestCommand extends MemberCommand {
   inputNames = {
@@ -146,6 +147,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
           discordId: playerIn.id,
           overstatLink: playerInOverstat,
         },
+        requestedByMember,
       );
       if (subRequestNumber === null) {
         await interaction.followUp(
@@ -166,6 +168,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     subDate: string,
     player1: LeagueSubRequestPlayer,
     player2: LeagueSubRequestPlayer,
+    commandUser: GuildMember,
   ): Promise<number | null> {
     const authClient = await SheetHelper.GET_AUTH_CLIENT();
 
@@ -177,6 +180,8 @@ export class LeagueSubRequestCommand extends MemberCommand {
         subDate,
         ...this.convertPlayerToSheetsFormat(player1),
         ...this.convertPlayerToSheetsFormat(player2),
+        commandUser.displayName,
+        commandUser.id,
       ],
     ];
 

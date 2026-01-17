@@ -174,6 +174,8 @@ describe("Sub request", () => {
             playerIn.displayName,
             playerIn.id,
             overstats.player2,
+            signupMember.displayName,
+            signupMember.id,
           ],
         ],
       },
