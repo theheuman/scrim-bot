@@ -33,12 +33,11 @@ export class RoleAssignmentCommand extends AdminCommand {
     );
 
     if (!("editable" in role)) {
-      await interaction.invisibleReply(
+      await interaction.editReply(
         "Role sent is not of type Role, contact bot admin",
       );
       return;
     }
-    await interaction.deferReply();
 
     const userIds = userIdString
       .split(/[ ,]+/)
@@ -60,13 +59,13 @@ export class RoleAssignmentCommand extends AdminCommand {
       if (failureIds.length > 0) {
         message += `\nFailed to add to ${failureIds.length}: ${failureIds.join(", ")}`;
       }
-      await interaction.reply(message);
+      await interaction.followUp(message);
     } else {
       let message = "Failed to add role to any users";
       if (failureIds.length > 0) {
         message += `\nFailed to add to ${failureIds.length}: ${failureIds.join(", ")}`;
       }
-      await interaction.reply(message);
+      await interaction.followUp(message);
     }
   }
 }

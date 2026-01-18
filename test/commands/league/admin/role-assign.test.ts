@@ -1,12 +1,11 @@
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import SpyInstance = jest.SpyInstance;
 import {
-  Collection,
-  FetchMembersOptions,
   GuildMember,
   GuildMemberRoleManager,
+  InteractionEditReplyOptions,
   InteractionReplyOptions,
-  InteractionResponse,
+  Message,
   MessagePayload,
   ReadonlyCollection,
   Role,
@@ -31,14 +30,14 @@ describe("Assign roles", () => {
     string
   >;
   let memberFetchSpy: SpyInstance<Promise<GuildMember>, [id: string], string>;
-  let replySpy: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string | InteractionReplyOptions | MessagePayload],
+  let editReplySpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [argument: string | MessagePayload | InteractionEditReplyOptions],
     string
   >;
-  let invisibleReply: SpyInstance<
-    Promise<InteractionResponse<boolean>>,
-    [reply: string],
+  let followupSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
     string
   >;
 
@@ -62,7 +61,7 @@ describe("Assign roles", () => {
       reply: jest.fn(),
       invisibleReply: jest.fn(),
       followUp: jest.fn(),
-      deferReply: jest.fn(),
+      editReply: jest.fn(),
       guild: {
         members: {
           fetch: jest.fn(),
@@ -70,8 +69,8 @@ describe("Assign roles", () => {
       },
     } as unknown as CustomInteraction;
 
-    replySpy = jest.spyOn(basicInteraction, "reply");
-    invisibleReply = jest.spyOn(basicInteraction, "invisibleReply");
+    editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    followupSpy = jest.spyOn(basicInteraction, "followUp");
     jest
       .spyOn(basicInteraction.options, "getString")
       .mockReturnValue("123 456,,789");
@@ -96,8 +95,8 @@ describe("Assign roles", () => {
     addRoleSpy = jest.spyOn(fakeMember.roles, "add");
     memberFetchSpy.mockClear();
     addRoleSpy.mockClear();
-    replySpy.mockClear();
-    invisibleReply.mockClear();
+    editReplySpy.mockClear();
+    followupSpy.mockClear();
   });
 
   it("Should add role to user", async () => {
@@ -126,7 +125,7 @@ describe("Assign roles", () => {
         },
       ],
     ]);
-    expect(replySpy).toHaveBeenCalledWith(
+    expect(followupSpy).toHaveBeenCalledWith(
       "Successfully added the role to 3 member(s).",
     );
   });
@@ -144,7 +143,7 @@ describe("Assign roles", () => {
 
     await command.run(basicInteraction);
 
-    expect(replySpy).toHaveBeenCalledWith(
+    expect(followupSpy).toHaveBeenCalledWith(
       "Successfully added the role to 2 member(s).\nFailed to add to 1: 456",
     );
   });
@@ -154,7 +153,7 @@ describe("Assign roles", () => {
 
     await command.run(basicInteraction);
 
-    expect(replySpy).toHaveBeenCalledWith("Failed to add role to any users");
+    expect(followupSpy).toHaveBeenCalledWith("Failed to add role to any users");
   });
 
   it("Should reply with an error if no roles were added and there were failures", async () => {
@@ -164,7 +163,7 @@ describe("Assign roles", () => {
 
     await command.run(basicInteraction);
 
-    expect(replySpy).toHaveBeenCalledWith(
+    expect(followupSpy).toHaveBeenCalledWith(
       "Failed to add role to any users\nFailed to add to 3: 123, 456, 789",
     );
   });
