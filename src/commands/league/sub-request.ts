@@ -16,7 +16,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
   inputNames = {
     teamName: "team-name",
     teamDivision: "team-division",
-    date: "date",
+    weekNumber: "week-number",
 
     playerOutInputNames: {
       user: "player-out",
@@ -26,6 +26,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
       user: "player-in",
       overstatLink: "player-in-overstat-link",
     },
+    additionalComments: "additional-comments",
   };
 
   constructor(private overstatService: OverstatService) {
@@ -43,10 +44,11 @@ export class LeagueSubRequestCommand extends MemberCommand {
       true,
     );
 
-    this.addStringInput(
-      this.inputNames.date,
-      `The date this sub will play. Ex: Monday Jan 19th, or similar`,
-      { isRequired: true },
+    this.addChoiceInput(
+      this.inputNames.weekNumber,
+      `Which week `,
+      WeekNumbers,
+      true,
     );
 
     this.addUserInput(
@@ -67,6 +69,11 @@ export class LeagueSubRequestCommand extends MemberCommand {
         isRequired: true,
       },
     );
+
+    this.addStringInput(
+      this.inputNames.additionalComments,
+      `Anything additional details about this sub, or comments? (how many games, subbed previously? etc.)`,
+    );
   }
 
   async run(interaction: CustomInteraction) {
@@ -79,8 +86,9 @@ export class LeagueSubRequestCommand extends MemberCommand {
       VesaDivision,
       true,
     );
-    const subbingDate = interaction.options.getString(
-      this.inputNames.date,
+    const weekNumber = interaction.options.getChoice(
+      this.inputNames.weekNumber,
+      WeekNumbers,
       true,
     );
     const requestedByMember = interaction.member;
@@ -123,6 +131,9 @@ export class LeagueSubRequestCommand extends MemberCommand {
       return;
     }
 
+    const additionalComments =
+      interaction.options.getString(this.inputNames.additionalComments) ?? "";
+
     if (!isGuildMember(requestedByMember)) {
       await interaction.invisibleReply(
         "Sub request not made. Signup initiated by member that cannot be found. Contact admin",
@@ -134,9 +145,9 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     try {
       const subRequestNumber = await this.postSpreadSheetValue(
-        teamName,
         VesaDivision[teamDivision],
-        subbingDate,
+        teamName,
+        WeekNumbers[weekNumber],
         {
           name: playerOut.displayName,
           discordId: playerOut.id,
@@ -148,6 +159,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
           overstatLink: playerInOverstat,
         },
         requestedByMember,
+        additionalComments,
       );
       if (subRequestNumber === null) {
         await interaction.followUp(
@@ -155,7 +167,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
         );
         return;
       }
-      const discordReplyMessage = `Sub requested for __${teamName}__\nSubbing out <@${playerOut.id}>\nSubbing in <@${playerIn.id}>\nRequested date: ${subbingDate}\nSheet row #${subRequestNumber}`;
+      const discordReplyMessage = `Sub requested for __${teamName}__\nSubbing out <@${playerOut.id}>\nSubbing in <@${playerIn.id}>\nRequested week: ${WeekNumbers[weekNumber]}\nSheet row #${subRequestNumber}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);
@@ -163,25 +175,27 @@ export class LeagueSubRequestCommand extends MemberCommand {
   }
 
   async postSpreadSheetValue(
-    teamName: string,
     teamDivision: string,
-    subDate: string,
+    teamName: string,
+    weekNumber: string,
     player1: LeagueSubRequestPlayer,
     player2: LeagueSubRequestPlayer,
     commandUser: GuildMember,
+    additionalComments: string,
   ): Promise<number | null> {
     const authClient = await SheetHelper.GET_AUTH_CLIENT();
 
     const values = [
       [
         new Date().toISOString(),
-        teamName,
         teamDivision,
-        subDate,
+        teamName,
+        weekNumber,
         ...this.convertPlayerToSheetsFormat(player1),
         ...this.convertPlayerToSheetsFormat(player2),
         commandUser.displayName,
         commandUser.id,
+        additionalComments,
       ],
     ];
 
@@ -193,7 +207,6 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     const sheetsClient = sheets({ version: "v4" });
     const response = await sheetsClient.spreadsheets.values.append(request);
-    console.log(response.data);
     const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
       response.data.updates,
     );
@@ -209,6 +222,20 @@ export class LeagueSubRequestCommand extends MemberCommand {
       player.overstatLink ?? "No overstat",
     ];
   }
+}
+
+enum WeekNumbers {
+  PlacementDay1,
+  PlacementDay2,
+  PlacementDay3,
+  PlacementDay4,
+  Week1,
+  Week2,
+  Week3,
+  Week4,
+  Week5,
+  Week6,
+  MatchPoint,
 }
 
 function omitKey<T extends object, K extends keyof T>(

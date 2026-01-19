@@ -93,15 +93,32 @@ describe("Sub request", () => {
           if (key === staticCommandUsedJustForInputNames.inputNames.teamName) {
             return "Dude Cube";
           } else if (
-            key === staticCommandUsedJustForInputNames.inputNames.date
+            key ===
+            staticCommandUsedJustForInputNames.inputNames.playerInInputNames
+              .overstatLink
           ) {
-            return "Monday 1/19";
-          } else {
             return overstats.player2;
+          } else if (
+            key ===
+            staticCommandUsedJustForInputNames.inputNames.additionalComments
+          ) {
+            return "None";
+          } else {
+            return null;
           }
         },
-        getChoice: () => {
-          return 4;
+        getChoice: (key: string) => {
+          if (
+            key === staticCommandUsedJustForInputNames.inputNames.teamDivision
+          ) {
+            return 4;
+          } else if (
+            key === staticCommandUsedJustForInputNames.inputNames.weekNumber
+          ) {
+            return 0;
+          } else {
+            return null;
+          }
         },
       },
       member: signupMember,
@@ -165,9 +182,9 @@ describe("Sub request", () => {
         values: [
           [
             date.toISOString(),
-            "Dude Cube",
             "Division4",
-            "Monday 1/19",
+            "Dude Cube",
+            "PlacementDay1",
             playerOut.displayName,
             playerOut.id,
             overstats.player1,
@@ -176,6 +193,7 @@ describe("Sub request", () => {
             overstats.player2,
             signupMember.displayName,
             signupMember.id,
+            "None",
           ],
         ],
       },
@@ -183,7 +201,7 @@ describe("Sub request", () => {
       valueInputOption: "USER_ENTERED",
     });
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested date: Monday 1/19\nSheet row #0`,
+      `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested week: PlacementDay1\nSheet row #0`,
     );
     jest.useRealTimers();
   });
