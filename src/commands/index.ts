@@ -30,6 +30,7 @@ import { ExpungeBanCommand } from "./scrims/admin/bans/expunge-ban";
 import { LeagueSignupCommand } from "./league/league-signup";
 import { GetUserCommand } from "./overstat/get-user";
 import { LeagueSubRequestCommand } from "./league/sub-request";
+import { RoleAssignmentCommand } from "./league/admin/role-assign";
 
 export const commonCommands: Command[] = [
   // test commands
@@ -66,6 +67,7 @@ export const scrimCommands: Command[] = [
 export const leagueCommands: Command[] = [
   new LeagueSignupCommand(overstatService),
   new LeagueSubRequestCommand(overstatService),
+  new RoleAssignmentCommand(authService),
 ];
 
 export const commands: Command[] = [
