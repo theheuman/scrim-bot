@@ -113,6 +113,7 @@ export class ScrimSignups {
         overstatId: overstatId,
         overstatJson: stats,
       });
+      // TODO try catch to upload stats to hf here, catch and throw error that everything but hf upload succeeded
     }
   }
 
