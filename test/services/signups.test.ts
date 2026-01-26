@@ -22,7 +22,9 @@ import { OverstatServiceMock } from "../mocks/overstat.mock";
 import { DiscordService } from "../../src/services/discord";
 import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { BanService } from "../../src/services/ban";
+import { HuggingFaceService } from "../../src/services/hugging-face";
 import { BanServiceMock } from "../mocks/ban.mock";
+import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -40,8 +42,10 @@ describe("Signups", () => {
   let overstatServiceMock: OverstatServiceMock;
   let authServiceMock: AuthMock;
   let mockBanService: BanService;
+  let mockHuggingFaceService: HuggingFaceService;
 
   let insertPlayersSpy: SpyInstance;
+  let huggingFaceUploadSpy: SpyInstance;
 
   beforeEach(() => {
     dbMock = new DbMock();
@@ -49,6 +53,8 @@ describe("Signups", () => {
     overstatServiceMock = new OverstatServiceMock();
     prioServiceMock = new PrioServiceMock();
     mockBanService = new BanServiceMock() as BanService;
+    mockHuggingFaceService =
+      new HuggingFaceServiceMock() as unknown as HuggingFaceService;
 
     authServiceMock = new AuthMock();
     signups = new ScrimSignups(
@@ -59,6 +65,7 @@ describe("Signups", () => {
       authServiceMock as AuthService,
       new DiscordServiceMock() as DiscordService,
       mockBanService,
+      mockHuggingFaceService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -88,6 +95,10 @@ describe("Signups", () => {
       .mockImplementation((member) =>
         Promise.resolve(member === (theheuman as unknown as GuildMember)),
       );
+    huggingFaceUploadSpy = jest.spyOn(
+      mockHuggingFaceService,
+      "uploadOverstatJson",
+    );
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -178,6 +189,7 @@ describe("Signups", () => {
         { discordId: "456", displayName: "Zboy" },
         { discordId: "789", displayName: "Supreme" },
       ]);
+      const scrim = cache.getScrim(expectedSignup.discordChannelId);
       expect.assertions(8);
     });
 
@@ -663,6 +675,12 @@ describe("Signups", () => {
       });
       expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
+      expect(huggingFaceUploadSpy).toHaveBeenCalledWith(
+        overstatId,
+        time,
+        tournamentStats,
+      );
+
       expect(createNewScrimSpy).not.toHaveBeenCalled();
     });
 
@@ -725,6 +743,11 @@ describe("Signups", () => {
         [time, channelId, lobby3OverstatId, tournamentStats],
       ]);
       expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
+      expect(huggingFaceUploadSpy.mock.calls).toEqual([
+        [overstatId, time, tournamentStats],
+        [lobby2OverstatId, time, tournamentStats],
+        [lobby3OverstatId, time, tournamentStats],
+      ]);
     });
 
     it("Should create a new scrim to compute a lobby for a scrim that has already been computed with a different overstat", async () => {

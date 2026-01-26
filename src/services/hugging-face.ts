@@ -1,21 +1,22 @@
+import { appConfig } from "../config";
 import { OverstatTournamentResponse } from "../models/overstatModels";
-import { Scrim } from "../models/Scrims";
 
 export class HuggingFaceService {
-  private hfToken = "some token that will be loaded from config file later";
+  private hfToken = appConfig.huggingFaceToken;
 
-  constructor() {
-    // grab hugging face token from configuration
-  }
+  constructor() {}
 
-  async uploadOverstatJson(scrim: Scrim, stats: OverstatTournamentResponse) {
+  // throws if upload fails, returns commit url if successfull
+  // todo return url instead?
+  async uploadOverstatJson(
+    overstatId: string,
+    dateTime: Date,
+    stats: OverstatTournamentResponse,
+  ): Promise<string> {
     const repoId = "VESA-apex/apex-scrims";
 
-    const dateString = scrim.dateTime
-      .toISOString()
-      .split("T")[0]
-      .replace("-", "_");
-    const filePath = `scrims_${dateString}_id_${scrim.id}.json`;
+    const dateString = dateTime.toISOString().split("T")[0].replace("-", "_");
+    const filePath = `fake_scrims_${dateString}_id_${overstatId}.json`;
 
     const contentString = JSON.stringify(stats, null, 2);
     const base64Content = Buffer.from(contentString).toString("base64");
@@ -29,7 +30,7 @@ export class HuggingFaceService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          summary: `Upload stats for scrim ${scrim.id}`,
+          summary: `Upload stats for scrim ${overstatId}. ${dateString}`,
           operations: [
             {
               operation: "add",
@@ -50,6 +51,6 @@ export class HuggingFaceService {
     }
 
     const data = await response.json();
-    return data.commitHash;
+    return data.commitUrl;
   }
 }

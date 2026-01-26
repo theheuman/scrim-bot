@@ -10,6 +10,7 @@ import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
+import { HuggingFaceService } from "./hugging-face";
 
 export class ScrimSignups {
   constructor(
@@ -20,6 +21,7 @@ export class ScrimSignups {
     private authService: AuthService,
     private discordService: DiscordService,
     private banService: BanService,
+    private huggingFaceService: HuggingFaceService,
   ) {
     this.updateActiveScrims();
   }
@@ -113,7 +115,16 @@ export class ScrimSignups {
         overstatId: overstatId,
         overstatJson: stats,
       });
-      // TODO try catch to upload stats to hf here, catch and throw error that everything but hf upload succeeded
+      try {
+        await this.huggingFaceService.uploadOverstatJson(
+          overstatId,
+          scrim.dateTime,
+          stats,
+        );
+      } catch (e) {
+        console.error(e);
+        throw Error("Completed computation, but upload to hugging face failed");
+      }
     }
   }
 
@@ -121,6 +132,7 @@ export class ScrimSignups {
     newOverstatIds: string[],
     scrimInfo: { discordChannelID: string; scrimDateTime: Date },
   ) {
+    const errors: string[] = [];
     for (const overstatId of newOverstatIds) {
       const stats = await this.overstatService.getOverallStatsForId(overstatId);
       await this.db.createNewScrim(
@@ -128,6 +140,22 @@ export class ScrimSignups {
         scrimInfo.discordChannelID,
         overstatId,
         stats,
+      );
+      try {
+        await this.huggingFaceService.uploadOverstatJson(
+          overstatId,
+          scrimInfo.scrimDateTime,
+          stats,
+        );
+      } catch (e) {
+        console.error(e);
+        errors.push(overstatId);
+      }
+    }
+    if (errors.length > 0) {
+      throw Error(
+        "Scrims computed, but failed to upload stats to hugging face for the following overstat ids: " +
+          errors.join(", "),
       );
     }
   }
