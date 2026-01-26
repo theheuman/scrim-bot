@@ -45,7 +45,11 @@ describe("Signups", () => {
   let mockHuggingFaceService: HuggingFaceService;
 
   let insertPlayersSpy: SpyInstance;
-  let huggingFaceUploadSpy: SpyInstance;
+  let huggingFaceUploadSpy: SpyInstance<
+    Promise<string>,
+    [overstatId: string, dateTime: Date, stats: OverstatTournamentResponse],
+    string
+  >;
 
   beforeEach(() => {
     dbMock = new DbMock();
@@ -832,6 +836,66 @@ describe("Signups", () => {
         "No scrim found for that channel",
       );
       expect(getTournamentIdSpy).not.toHaveBeenCalled();
+    });
+
+    it("should throw an error if hf upload fails", async () => {
+      huggingFaceUploadSpy.mockImplementationOnce(() => {
+        throw Error("433 connection timeout");
+      });
+
+      const causeException = async () => {
+        await signups.computeScrim(channelId, [overstatLink]);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "Completed computation, but upload to hugging face failed. Error: 433 connection timeout",
+      );
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw an error when multiple hf uploads fails", async () => {
+      const lobby2OverstatLink = "link-different";
+      const lobby2OverstatId = "id-different";
+
+      const lobby3OverstatLink = "link-2-different";
+      const lobby3OverstatId = "id-2-different";
+
+      huggingFaceUploadSpy.mockImplementationOnce((sentOverstatId) => {
+        if (sentOverstatId === overstatId) {
+          return Promise.resolve("commit url");
+        } else if (sentOverstatId === lobby2OverstatId) {
+          throw Error("433 connection timeout");
+        } else if (sentOverstatId === lobby3OverstatId) {
+          throw Error("File too large or something");
+        } else {
+          fail();
+        }
+      });
+
+      getTournamentIdSpy.mockImplementation((link) => {
+        switch (link) {
+          case overstatLink:
+            return overstatId;
+          case lobby2OverstatLink:
+            return lobby2OverstatId;
+          case lobby3OverstatLink:
+            return lobby3OverstatId;
+        }
+      });
+
+      const causeException = async () => {
+        await signups.computeScrim(channelId, [
+          overstatLink,
+          lobby2OverstatLink,
+          lobby2OverstatLink,
+        ]);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "Completed computation, but upload to hugging face failed",
+      );
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
+      expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

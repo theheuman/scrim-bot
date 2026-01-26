@@ -122,8 +122,11 @@ export class ScrimSignups {
           stats,
         );
       } catch (e) {
+        // TODO, should not throw error here. Do we just console log it?
         console.error(e);
-        throw Error("Completed computation, but upload to hugging face failed");
+        throw Error(
+          "Completed computation, but upload to hugging face failed. " + e,
+        );
       }
     }
   }
@@ -149,13 +152,14 @@ export class ScrimSignups {
         );
       } catch (e) {
         console.error(e);
-        errors.push(overstatId);
+        errors.push(`${overstatId}: ${e}`);
       }
     }
     if (errors.length > 0) {
+      // TODO, should not throw error here. Do we just console log it? How do we communicate to user? Will they even let me know? Probably not. Wonder if I can get some kind of actual error indicator in here for myself
       throw Error(
         "Scrims computed, but failed to upload stats to hugging face for the following overstat ids: " +
-          errors.join(", "),
+          errors.join("\n"),
       );
     }
   }
