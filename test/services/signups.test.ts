@@ -860,7 +860,7 @@ describe("Signups", () => {
       const lobby3OverstatLink = "link-2-different";
       const lobby3OverstatId = "id-2-different";
 
-      huggingFaceUploadSpy.mockImplementationOnce((sentOverstatId) => {
+      huggingFaceUploadSpy.mockImplementation((sentOverstatId) => {
         if (sentOverstatId === overstatId) {
           return Promise.resolve("commit url");
         } else if (sentOverstatId === lobby2OverstatId) {
@@ -887,12 +887,12 @@ describe("Signups", () => {
         await signups.computeScrim(channelId, [
           overstatLink,
           lobby2OverstatLink,
-          lobby2OverstatLink,
+          lobby3OverstatLink,
         ]);
       };
 
       await expect(causeException).rejects.toThrow(
-        "Completed computation, but upload to hugging face failed",
+        "Scrims computed, but failed to upload stats to hugging face for the following overstat ids:\nid-different: Error: 433 connection timeout\nid-2-different: Error: File too large or something",
       );
       expect(updateScrimSpy).toHaveBeenCalledTimes(1);
       expect(createNewScrimSpy).toHaveBeenCalledTimes(2);

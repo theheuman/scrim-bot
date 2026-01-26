@@ -158,7 +158,7 @@ export class ScrimSignups {
     if (errors.length > 0) {
       // TODO, should not throw error here. Do we just console log it? How do we communicate to user? Will they even let me know? Probably not. Wonder if I can get some kind of actual error indicator in here for myself
       throw Error(
-        "Scrims computed, but failed to upload stats to hugging face for the following overstat ids: " +
+        "Scrims computed, but failed to upload stats to hugging face for the following overstat ids:\n" +
           errors.join("\n"),
       );
     }
