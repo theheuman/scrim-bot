@@ -862,9 +862,9 @@ describe("Signups", () => {
 
       huggingFaceUploadSpy.mockImplementation((sentOverstatId) => {
         if (sentOverstatId === overstatId) {
-          return Promise.resolve("commit url");
-        } else if (sentOverstatId === lobby2OverstatId) {
           throw Error("433 connection timeout");
+        } else if (sentOverstatId === lobby2OverstatId) {
+          return Promise.resolve("commit url");
         } else if (sentOverstatId === lobby3OverstatId) {
           throw Error("File too large or something");
         } else {

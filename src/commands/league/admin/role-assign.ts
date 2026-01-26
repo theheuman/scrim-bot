@@ -56,9 +56,9 @@ export class RoleAssignmentCommand extends AdminCommand {
     }
     let message: string;
     if (successCount > 0) {
-      message = `Successfully added the <@${role.id}> role to ${successCount} member(s).`;
+      message = `Successfully added the <@&${role.id}> role to ${successCount} member(s).`;
     } else {
-      message = `Failed to add <@${role.id}> to any users`;
+      message = `Failed to add <@&${role.id}> to any users`;
     }
     if (failures.length > 0) {
       message += this.getFailureString(failures, userIds.length);
