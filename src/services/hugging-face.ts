@@ -39,6 +39,6 @@ export class HuggingFaceService {
       ],
     });
 
-    return response.commit.url;
+    return `https://huggingface.co/datasets/${repoId}/blob/${response.commit.oid}/${filePath}`;
   }
 }
