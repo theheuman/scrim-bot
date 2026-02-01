@@ -1,3 +1,4 @@
+import { commit } from "@huggingface/hub";
 import { appConfig } from "../config";
 import { OverstatTournamentResponse } from "../models/overstatModels";
 
@@ -19,38 +20,25 @@ export class HuggingFaceService {
     const filePath = `fake_scrims_${dateString}_id_${overstatId}.json`;
 
     const contentString = JSON.stringify(stats, null, 2);
-    const base64Content = Buffer.from(contentString).toString("base64");
 
-    const response = await fetch(
-      `https://huggingface.co/api/datasets/${repoId}/commit/main`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.hfToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          summary: `Upload stats for scrim ${overstatId}. ${dateString}`,
-          operations: [
-            {
-              operation: "add",
-              path: filePath,
-              content: base64Content,
-              encoding: "base64",
-            },
-          ],
-        }),
+    const response = await commit({
+      credentials: {
+        accessToken: this.hfToken,
       },
-    );
+      repo: {
+        type: "dataset",
+        name: repoId,
+      },
+      title: `Upload stats for scrim ${overstatId}. ${dateString}`,
+      operations: [
+        {
+          operation: "addOrUpdate",
+          path: filePath,
+          content: new Blob([contentString]),
+        },
+      ],
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        `HF API Error: ${errorData.error || response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-    return data.commitUrl;
+    return response.commit.url;
   }
 }
