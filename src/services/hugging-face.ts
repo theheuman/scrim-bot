@@ -21,7 +21,7 @@ export class HuggingFaceService {
 
     const contentString = JSON.stringify(stats, null, 2);
 
-    const response = await commit({
+    await commit({
       credentials: {
         accessToken: this.hfToken,
       },
@@ -39,6 +39,6 @@ export class HuggingFaceService {
       ],
     });
 
-    return `https://huggingface.co/datasets/${repoId}/blob/${response.commit.oid}/${filePath}`;
+    return `https://huggingface.co/datasets/${repoId}/blob/main/${filePath}`;
   }
 }
