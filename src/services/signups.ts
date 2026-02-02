@@ -148,7 +148,6 @@ export class ScrimSignups {
           stats,
         );
       } catch (e) {
-        console.error(e);
         errors.push(`${overstatId}: ${e}`);
       }
     }

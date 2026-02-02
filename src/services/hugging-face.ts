@@ -21,8 +21,7 @@ export class HuggingFaceService {
 
   constructor() {}
 
-  // throws if upload fails, returns commit url if successfull
-  // todo return url instead?
+  // throws if upload fails, returns the file url on success
   async uploadOverstatJson(
     overstatId: string,
     dateTime: Date,
