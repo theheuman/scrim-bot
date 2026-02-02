@@ -10,6 +10,7 @@ import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
+import { HuggingFaceService } from "./hugging-face";
 
 export class ScrimSignups {
   constructor(
@@ -20,6 +21,7 @@ export class ScrimSignups {
     private authService: AuthService,
     private discordService: DiscordService,
     private banService: BanService,
+    private huggingFaceService: HuggingFaceService,
   ) {
     this.updateActiveScrims();
   }
@@ -113,6 +115,16 @@ export class ScrimSignups {
         overstatId: overstatId,
         overstatJson: stats,
       });
+      try {
+        await this.huggingFaceService.uploadOverstatJson(
+          overstatId,
+          scrim.dateTime,
+          stats,
+        );
+      } catch (e) {
+        // TODO use currently unimplemented discord service error message to send error in a relevant channel
+        console.error(e);
+      }
     }
   }
 
@@ -120,6 +132,7 @@ export class ScrimSignups {
     newOverstatIds: string[],
     scrimInfo: { discordChannelID: string; scrimDateTime: Date },
   ) {
+    const errors: string[] = [];
     for (const overstatId of newOverstatIds) {
       const stats = await this.overstatService.getOverallStatsForId(overstatId);
       await this.db.createNewScrim(
@@ -128,6 +141,19 @@ export class ScrimSignups {
         overstatId,
         stats,
       );
+      try {
+        await this.huggingFaceService.uploadOverstatJson(
+          overstatId,
+          scrimInfo.scrimDateTime,
+          stats,
+        );
+      } catch (e) {
+        errors.push(`${overstatId}: ${e}`);
+      }
+    }
+    if (errors.length > 0) {
+      // TODO use currently unimplemented discord service error message to send error in a relevant channel
+      console.error(errors);
     }
   }
 

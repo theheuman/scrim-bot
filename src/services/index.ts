@@ -9,9 +9,11 @@ import { StaticValueService } from "./static-values";
 import { DiscordService } from "./discord";
 import { client } from "../Client";
 import { BanService } from "./ban";
+import { HuggingFaceService } from "./hugging-face";
 
 // This file creates all the singleton services
 export const cache = new CacheService();
+export const huggingFaceService = new HuggingFaceService();
 export const overstatService = new OverstatService(nhostDb);
 export const staticValueService = new StaticValueService(nhostDb);
 
@@ -28,6 +30,7 @@ export const signupsService = new ScrimSignups(
   authService,
   discordService,
   banService,
+  huggingFaceService,
 );
 export const rosterService = new RosterService(
   nhostDb,

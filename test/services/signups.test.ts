@@ -22,7 +22,9 @@ import { OverstatServiceMock } from "../mocks/overstat.mock";
 import { DiscordService } from "../../src/services/discord";
 import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { BanService } from "../../src/services/ban";
+import { HuggingFaceService } from "../../src/services/hugging-face";
 import { BanServiceMock } from "../mocks/ban.mock";
+import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -40,8 +42,14 @@ describe("Signups", () => {
   let overstatServiceMock: OverstatServiceMock;
   let authServiceMock: AuthMock;
   let mockBanService: BanService;
+  let mockHuggingFaceService: HuggingFaceService;
 
   let insertPlayersSpy: SpyInstance;
+  let huggingFaceUploadSpy: SpyInstance<
+    Promise<string>,
+    [overstatId: string, dateTime: Date, stats: OverstatTournamentResponse],
+    string
+  >;
 
   beforeEach(() => {
     dbMock = new DbMock();
@@ -49,6 +57,8 @@ describe("Signups", () => {
     overstatServiceMock = new OverstatServiceMock();
     prioServiceMock = new PrioServiceMock();
     mockBanService = new BanServiceMock() as BanService;
+    mockHuggingFaceService =
+      new HuggingFaceServiceMock() as unknown as HuggingFaceService;
 
     authServiceMock = new AuthMock();
     signups = new ScrimSignups(
@@ -59,6 +69,7 @@ describe("Signups", () => {
       authServiceMock as AuthService,
       new DiscordServiceMock() as DiscordService,
       mockBanService,
+      mockHuggingFaceService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -88,6 +99,10 @@ describe("Signups", () => {
       .mockImplementation((member) =>
         Promise.resolve(member === (theheuman as unknown as GuildMember)),
       );
+    huggingFaceUploadSpy = jest.spyOn(
+      mockHuggingFaceService,
+      "uploadOverstatJson",
+    );
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -178,6 +193,7 @@ describe("Signups", () => {
         { discordId: "456", displayName: "Zboy" },
         { discordId: "789", displayName: "Supreme" },
       ]);
+      const scrim = cache.getScrim(expectedSignup.discordChannelId);
       expect.assertions(8);
     });
 
@@ -663,6 +679,12 @@ describe("Signups", () => {
       });
       expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
+      expect(huggingFaceUploadSpy).toHaveBeenCalledWith(
+        overstatId,
+        time,
+        tournamentStats,
+      );
+
       expect(createNewScrimSpy).not.toHaveBeenCalled();
     });
 
@@ -725,6 +747,11 @@ describe("Signups", () => {
         [time, channelId, lobby3OverstatId, tournamentStats],
       ]);
       expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
+      expect(huggingFaceUploadSpy.mock.calls).toEqual([
+        [overstatId, time, tournamentStats],
+        [lobby2OverstatId, time, tournamentStats],
+        [lobby3OverstatId, time, tournamentStats],
+      ]);
     });
 
     it("Should create a new scrim to compute a lobby for a scrim that has already been computed with a different overstat", async () => {
@@ -810,5 +837,67 @@ describe("Signups", () => {
       );
       expect(getTournamentIdSpy).not.toHaveBeenCalled();
     });
+
+    /* TODO: Update these tests to use the not yet implemented discord error reporting system 
+    it("should throw an error if hf upload fails", async () => {
+      huggingFaceUploadSpy.mockImplementationOnce(() => {
+        throw Error("433 connection timeout");
+      });
+
+      const causeException = async () => {
+        await signups.computeScrim(channelId, [overstatLink]);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "Completed computation, but upload to hugging face failed. Error: 433 connection timeout",
+      );
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw an error when multiple hf uploads fails", async () => {
+      const lobby2OverstatLink = "link-different";
+      const lobby2OverstatId = "id-different";
+
+      const lobby3OverstatLink = "link-2-different";
+      const lobby3OverstatId = "id-2-different";
+
+      huggingFaceUploadSpy.mockImplementation((sentOverstatId) => {
+        if (sentOverstatId === overstatId) {
+          throw Error("433 connection timeout");
+        } else if (sentOverstatId === lobby2OverstatId) {
+          return Promise.resolve("commit url");
+        } else if (sentOverstatId === lobby3OverstatId) {
+          throw Error("File too large or something");
+        } else {
+          fail();
+        }
+      });
+
+      getTournamentIdSpy.mockImplementation((link) => {
+        switch (link) {
+          case overstatLink:
+            return overstatId;
+          case lobby2OverstatLink:
+            return lobby2OverstatId;
+          case lobby3OverstatLink:
+            return lobby3OverstatId;
+        }
+      });
+
+      const causeException = async () => {
+        await signups.computeScrim(channelId, [
+          overstatLink,
+          lobby2OverstatLink,
+          lobby3OverstatLink,
+        ]);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "Scrims computed, but failed to upload stats to hugging face for the following overstat ids:\nid-different: Error: 433 connection timeout\nid-2-different: Error: File too large or something",
+      );
+      expect(updateScrimSpy).toHaveBeenCalledTimes(1);
+      expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
+    });
+    */
   });
 });

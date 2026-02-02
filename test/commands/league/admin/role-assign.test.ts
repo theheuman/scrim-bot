@@ -126,7 +126,7 @@ describe("Assign roles", () => {
       ],
     ]);
     expect(followupSpy).toHaveBeenCalledWith(
-      "Successfully added the <@discord role id> role to 3 member(s).",
+      "Successfully added the <@&discord role id> role to 3 member(s).",
     );
   });
 
@@ -144,7 +144,7 @@ describe("Assign roles", () => {
     await command.run(basicInteraction);
 
     expect(followupSpy).toHaveBeenCalledWith(
-      "Successfully added the <@discord role id> role to 2 member(s).\nFailed to add to 1 out of 3:\n456: Error: Discord hates you",
+      "Successfully added the <@&discord role id> role to 2 member(s).\nFailed to add to 1 out of 3:\n456: Error: Discord hates you",
     );
   });
 
@@ -154,7 +154,7 @@ describe("Assign roles", () => {
     await command.run(basicInteraction);
 
     expect(followupSpy).toHaveBeenCalledWith(
-      "Failed to add <@discord role id> to any users",
+      "Failed to add <@&discord role id> to any users",
     );
   });
 
@@ -166,7 +166,7 @@ describe("Assign roles", () => {
     await command.run(basicInteraction);
 
     expect(followupSpy).toHaveBeenCalledWith(
-      "Failed to add <@discord role id> to any users\nFailed to add to 3 out of 3:\n" +
+      "Failed to add <@&discord role id> to any users\nFailed to add to 3 out of 3:\n" +
         "123: Error: Discord hates you\n" +
         "456: Error: Discord hates you\n" +
         "789: Error: Discord hates you",
