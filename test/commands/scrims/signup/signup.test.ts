@@ -9,12 +9,12 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
-import { ScrimSignupMock } from "../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../src/services/signups";
 import { SignupCommand } from "../../../../src/commands/scrims/signup/sign-up";
 import { Scrim, ScrimSignup } from "../../../../src/models/Scrims";
 import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
+import { SignupServiceMock } from "../../../mocks/signups.mock";
+import { SignupService } from "../../../../src/services/signups";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -47,7 +47,7 @@ describe("Sign up", () => {
     roles: {},
   } as GuildMember;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockScrimSignups = new SignupServiceMock();
   const mockPrioService = new PrioServiceMock();
 
   const player1 = {
@@ -100,7 +100,7 @@ describe("Sign up", () => {
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
     command = new SignupCommand(
-      mockScrimSignups as unknown as ScrimSignups,
+      mockScrimSignups as unknown as SignupService,
       mockPrioService as PrioService,
     );
   });

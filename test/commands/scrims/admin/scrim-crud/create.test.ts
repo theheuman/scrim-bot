@@ -10,11 +10,11 @@ import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { CreateScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/create-scrim";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { ScrimSignupMock } from "../../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../../src/services/signups";
 import { StaticValueServiceMock } from "../../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../../src/services/static-values";
 import { ChannelType } from "discord-api-types/v10";
+import { ScrimService } from "../../../../../src/services/scrim-service";
+import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -43,7 +43,7 @@ describe("Create scrim", () => {
 
   let command: CreateScrimCommand;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockScrimService = new ScrimServiceMock();
   const mockStaticValueService = new StaticValueServiceMock();
 
   beforeAll(() => {
@@ -84,7 +84,7 @@ describe("Create scrim", () => {
     } as unknown as CustomInteraction;
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
-    signupsCreateScrimSpy = jest.spyOn(mockScrimSignups, "createScrim");
+    signupsCreateScrimSpy = jest.spyOn(mockScrimService, "createScrim");
     signupsCreateScrimSpy.mockImplementation(() => {
       return Promise.resolve("uuid-87623");
     });
@@ -101,7 +101,7 @@ describe("Create scrim", () => {
     signupsCreateScrimSpy.mockClear();
     command = new CreateScrimCommand(
       new AuthMock() as AuthService,
-      mockScrimSignups as unknown as ScrimSignups,
+      mockScrimService as unknown as ScrimService,
       mockStaticValueService as StaticValueService,
     );
   });

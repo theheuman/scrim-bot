@@ -1,7 +1,8 @@
 import { nhostDb } from "../db/nhost.db";
 import { CacheService } from "./cache";
 import { RosterService } from "./rosters";
-import { ScrimSignups } from "./signups";
+import { SignupService } from "./signups";
+import { ScrimService } from "./scrim-service";
 import { OverstatService } from "./overstat";
 import { PrioService } from "./prio";
 import { AuthService } from "./auth";
@@ -22,15 +23,20 @@ export const discordService = new DiscordService(client, staticValueService);
 export const authService = new AuthService(nhostDb, cache);
 export const prioService = new PrioService(nhostDb, cache);
 export const banService = new BanService(nhostDb, cache);
-export const signupsService = new ScrimSignups(
+export const signupsService = new SignupService(
   nhostDb,
   cache,
-  overstatService,
   prioService,
   authService,
   discordService,
   banService,
+);
+export const scrimService = new ScrimService(
+  nhostDb,
+  cache,
+  overstatService,
   huggingFaceService,
+  signupsService,
 );
 export const rosterService = new RosterService(
   nhostDb,

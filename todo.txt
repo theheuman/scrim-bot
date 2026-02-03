@@ -1,0 +1,14 @@
+What is getActiveScrimSignups doing
+Review architecture
+Get rid of cache service entirely?
+Test bot
+  create scrim
+  signup
+  sub
+  sub by player not on team?
+  edit team name
+  stop bot
+  start bot
+  verify edit commands still work
+  compute
+  close(stub in hugging face mock here)

@@ -1,13 +1,13 @@
 import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
-import { ScrimSignups } from "../../../services/signups";
+import { SignupService } from "../../../services/signups";
 import { StaticValueService } from "../../../services/static-values";
 import { ScrimSignup } from "../../../models/Scrims";
 import { GetSignupsHelper } from "../../utility/get-signups";
 
 export class CurrentPositionCommand extends MemberCommand {
   constructor(
-    private signupService: ScrimSignups,
+    private signupService: SignupService,
     private staticValueService: StaticValueService,
   ) {
     super(

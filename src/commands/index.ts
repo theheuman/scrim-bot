@@ -19,6 +19,7 @@ import {
   prioService,
   rosterService,
   signupsService,
+  scrimService,
   staticValueService,
   banService,
 } from "../services";
@@ -51,10 +52,10 @@ export const scrimCommands: Command[] = [
   new ScrimBanCommand(authService, banService),
   new ExpungeBanCommand(authService, banService),
 
-  new CreateScrimCommand(authService, signupsService, staticValueService),
+  new CreateScrimCommand(authService, scrimService, staticValueService),
   new GetSignupsCommand(authService, signupsService, staticValueService),
-  new ComputeScrimCommand(authService, signupsService),
-  new CloseScrimCommand(authService, signupsService),
+  new ComputeScrimCommand(authService, scrimService),
+  new CloseScrimCommand(authService, scrimService),
 
   new ChangeTeamNameCommand(rosterService),
   new DropoutCommand(rosterService),

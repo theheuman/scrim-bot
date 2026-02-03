@@ -13,12 +13,12 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { ScrimSignupMock } from "../../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../../src/services/signups";
 import { GetSignupsCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/get-signups";
 import { ScrimSignup } from "../../../../../src/models/Scrims";
 import { StaticValueServiceMock } from "../../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../../src/services/static-values";
+import { SignupServiceMock } from "../../../../mocks/signups.mock";
+import { SignupService } from "../../../../../src/services/signups";
 
 describe("Get signups", () => {
   let basicInteraction: CustomInteraction;
@@ -101,7 +101,7 @@ describe("Get signups", () => {
 
   let command: GetSignupsCommand;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockSignupService = new SignupServiceMock();
   const mockStaticValueService = new StaticValueServiceMock();
 
   beforeAll(() => {
@@ -119,7 +119,7 @@ describe("Get signups", () => {
     replySpy = jest.spyOn(basicInteraction, "invisibleReply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     followupSpy = jest.spyOn(basicInteraction, "followUp");
-    getSignupsSpy = jest.spyOn(mockScrimSignups, "getSignups");
+    getSignupsSpy = jest.spyOn(mockSignupService, "getSignups");
     getSignupsSpy.mockImplementation(() => {
       return Promise.resolve({
         mainList: mainListTeams,
@@ -142,7 +142,7 @@ describe("Get signups", () => {
     getMembersWithScrimPassRoleSpy.mockClear();
     command = new GetSignupsCommand(
       new AuthMock() as AuthService,
-      mockScrimSignups as unknown as ScrimSignups,
+      mockSignupService as unknown as SignupService,
       mockStaticValueService as unknown as StaticValueService,
     );
   });

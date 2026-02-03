@@ -9,9 +9,9 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { ScrimSignupMock } from "../../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../../src/services/signups";
 import { ComputeScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/compute-scrim";
+import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
+import { ScrimService } from "../../../../../src/services/scrim-service";
 
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -35,7 +35,7 @@ describe("Close scrim", () => {
 
   let command: ComputeScrimCommand;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockScrimService = new ScrimServiceMock();
 
   beforeAll(() => {
     member = {
@@ -64,7 +64,7 @@ describe("Close scrim", () => {
     } as unknown as CustomInteraction;
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
-    signupComputeScrimSpy = jest.spyOn(mockScrimSignups, "computeScrim");
+    signupComputeScrimSpy = jest.spyOn(mockScrimService, "computeScrim");
     signupComputeScrimSpy.mockReturnValue(Promise.resolve(["overstat.link"]));
   });
 
@@ -74,7 +74,7 @@ describe("Close scrim", () => {
     signupComputeScrimSpy.mockClear();
     command = new ComputeScrimCommand(
       new AuthMock() as AuthService,
-      mockScrimSignups as unknown as ScrimSignups,
+      mockScrimService as unknown as ScrimService,
     );
     getStringCallCount = 0;
   });
