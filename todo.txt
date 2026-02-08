@@ -1,6 +1,8 @@
-What is getActiveScrimSignups doing
+What is updateActiveScrims doing
+  Refreshing cache on startup
 Review architecture
 Get rid of cache service entirely?
+  I think yes, lets get rid of it now to get rid of awkward update active scrims method
 Test bot
   create scrim
   signup
