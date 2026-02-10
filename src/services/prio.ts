@@ -1,14 +1,10 @@
 import { DB } from "../db/db";
 import { User } from "discord.js";
-import { CacheService } from "./cache";
 import { Scrim, ScrimSignup } from "../models/Scrims";
 import { ExpungedPlayerPrio, PlayerMap, PlayerPrio } from "../models/Prio";
 
 export class PrioService {
-  constructor(
-    private db: DB,
-    private cache: CacheService,
-  ) {}
+  constructor(private db: DB) {}
 
   async setPlayerPrio(
     prioUsers: User[],
@@ -41,55 +37,13 @@ export class PrioService {
   }
 
   private async getPlayerIds(prioUsers: User[]): Promise<string[]> {
-    const { cacheMissedPlayers, playerIds } = this.getPlayers(prioUsers);
-    if (cacheMissedPlayers.length > 0) {
-      const cacheMissedPlayerIds =
-        await this.fetchCacheMissedPlayerIds(cacheMissedPlayers);
-      this.addPlayersToCache(cacheMissedPlayers, cacheMissedPlayerIds);
-      playerIds.push(...cacheMissedPlayerIds);
-    }
-    return playerIds;
-  }
-
-  private getPlayers(prioUsers: User[]) {
-    const prioPlayers = prioUsers.map((prioUser) =>
-      this.cache.getPlayer(prioUser.id as string),
-    );
-    let index = 0;
-    const cacheMissedPlayers: User[] = [];
-    const playerIds: string[] = [];
-    for (const player of prioPlayers) {
-      if (player === undefined) {
-        cacheMissedPlayers.push(prioUsers[index]);
-      } else {
-        playerIds.push(player.id);
-      }
-      index++;
-    }
-    return { cacheMissedPlayers, playerIds };
-  }
-
-  private async fetchCacheMissedPlayerIds(
-    cacheMissedPlayers: User[],
-  ): Promise<string[]> {
     const insertedPlayers = await this.db.insertPlayers(
-      cacheMissedPlayers.map((player) => ({
-        discordId: player.id,
-        displayName: player.displayName,
+      prioUsers.map((user) => ({
+        discordId: user.id,
+        displayName: user.displayName,
       })),
     );
     return insertedPlayers.map((player) => player.id);
-  }
-
-  private addPlayersToCache(players: User[], playerIds: string[]) {
-    playerIds.forEach((playerId, i) => {
-      const discordUser = players[i];
-      this.cache.setPlayer(playerId, {
-        id: playerId,
-        discordId: discordUser.id,
-        displayName: discordUser.displayName,
-      });
-    });
   }
 
   private generatePlayerMap(
