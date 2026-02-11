@@ -2,7 +2,6 @@ import { GuildMember, User } from "discord.js";
 import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { CacheService } from "./cache";
 import { Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
@@ -13,12 +12,11 @@ import { BanService } from "./ban";
 export class SignupService {
   constructor(
     private db: DB,
-    private cache: CacheService,
     private prioService: PrioService,
     private authService: AuthService,
     private discordService: DiscordService,
     private banService: BanService,
-  ) {}
+  ) { }
 
   async addTeam(
     discordChannelID: string,
@@ -26,7 +24,7 @@ export class SignupService {
     commandUser: GuildMember,
     players: User[],
   ): Promise<ScrimSignup> {
-    const scrim = this.cache.getScrim(discordChannelID);
+    const scrim = await this.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
     }
@@ -40,7 +38,8 @@ export class SignupService {
       throw Error("Duplicate player");
     }
 
-    const scrimSignups = this.cache.getSignups(scrim.id) ?? [];
+    const { mainList, waitList } = await this.getSignups(discordChannelID);
+    const scrimSignups = [...mainList, ...waitList];
     // yes this is a three deep for loop, this is a cry for help, please optimize this
     for (const team of scrimSignups) {
       if (team.teamName === teamName) {
@@ -84,7 +83,6 @@ export class SignupService {
       date: signupDate,
     };
     scrimSignups.push(scrimSignup);
-    this.cache.setSignups(scrim.id, scrimSignups);
     this.updateScrimSignupCount(scrim);
     return scrimSignup;
   }
@@ -116,7 +114,7 @@ export class SignupService {
     discordChannelID: string,
     discordIdsWithScrimPass?: string[],
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }> {
-    const scrim = this.cache.getScrim(discordChannelID);
+    const scrim = await this.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
     }
@@ -132,7 +130,6 @@ export class SignupService {
       teams,
       discordIdsWithScrimPass ?? [],
     );
-    this.cache.setSignups(scrim.id, prioTeams);
     return this.sortTeams(teams);
   }
 
@@ -209,12 +206,26 @@ export class SignupService {
     };
   }
 
-  getScrim(discordChannelID: string): Scrim | undefined {
-    return this.cache.getScrim(discordChannelID);
+  async getScrim(discordChannel: string): Promise<Scrim | null> {
+    const activeScrims = await this.db.getActiveScrims();
+    const dbScrim = activeScrims.find((scrim) => scrim.discord_channel === discordChannel)
+    if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
+      const mappedScrim: Scrim = {
+        active: true,
+        dateTime: new Date(dbScrim.date_time_field),
+        discordChannel: dbScrim.discord_channel,
+        id: dbScrim.id,
+      };
+      return mappedScrim;
+    }
+    else {
+      return null;
+    }
   }
 
   private async updateScrimSignupCount(scrim: Scrim) {
-    const count = this.cache.getSignups(scrim.id)?.length ?? 0;
+    const { mainList, waitList } = await this.getSignups(scrim.discordChannel);
+    const count = mainList.length + waitList.length;
     try {
       await this.discordService.updateSignupPostDescription(scrim, count);
     } catch (e) {

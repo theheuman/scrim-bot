@@ -1,8 +1,5 @@
-What is updateActiveScrims doing
-  Refreshing cache on startup
-Review architecture
-Get rid of cache service entirely?
-  I think yes, lets get rid of it now to get rid of awkward update active scrims method
+In the middle of getting rid of cache service
+  getScrim and getSignups is going to be something every service needs, how to not repeat code?
 Test bot
   create scrim
   signup

@@ -81,7 +81,7 @@ export class SignupCommand extends MemberCommand {
     interaction: CustomInteraction,
     signup: ScrimSignup,
   ) {
-    const scrim = this.signupService.getScrim(interaction.channelId); // Wait, SignupService needs getScrim?
+    const scrim = await this.signupService.getScrim(interaction.channelId);
     if (!scrim) {
       console.error(
         "Unable to get applicable prio on a signup because there is no scrim for this channel",

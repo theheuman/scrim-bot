@@ -4,7 +4,7 @@ import { Scrim, ScrimSignup } from "../models/Scrims";
 import { ExpungedPlayerPrio, PlayerMap, PlayerPrio } from "../models/Prio";
 
 export class PrioService {
-  constructor(private db: DB) {}
+  constructor(private db: DB) { }
 
   async setPlayerPrio(
     prioUsers: User[],
@@ -23,7 +23,7 @@ export class PrioService {
 
   // changes teams in place and returns the teams, does NOT sort
   async getTeamPrioForScrim(
-    scrim: Scrim,
+    scrim: { dateTime: Date },
     teams: ScrimSignup[],
     discordIdsWithScrimPass: string[],
   ): Promise<ScrimSignup[]> {

@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   private async updateAdminRoleMap(): Promise<Map<string, DiscordRole>> {
-    const map = await getAdminRoleMap();
+    const map = await this.getAdminRoleMap();
     this.adminRolesMap = map;
     return map;
   }
