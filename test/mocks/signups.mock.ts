@@ -4,9 +4,9 @@ import { User } from "discord.js";
 export class SignupServiceMock {
   constructor() {}
 
-  getScrim(discordChannelID: string): Scrim | undefined {
+  async getScrim(discordChannelID: string): Promise<Scrim | null> {
     console.log("Getting scrim in signup mock", discordChannelID);
-    return undefined;
+    return null;
   }
 
   async addTeam(

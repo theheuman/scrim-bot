@@ -10,22 +10,18 @@ export class ScrimService {
     private overstatService: OverstatService,
     private huggingFaceService: HuggingFaceService,
     private signupService: SignupService,
-  ) { }
+  ) {}
 
   async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
     const scrimId = await this.db.createNewScrim(dateTime, discordChannelID);
-    const scrim: Scrim = {
-      active: true,
-      dateTime: dateTime,
-      discordChannel: discordChannelID,
-      id: scrimId,
-    };
     return scrimId;
   }
 
   async getScrim(discordChannel: string): Promise<Scrim | null> {
     const activeScrims = await this.db.getActiveScrims();
-    const dbScrim = activeScrims.find((scrim) => scrim.discord_channel === discordChannel)
+    const dbScrim = activeScrims.find(
+      (scrim) => scrim.discord_channel === discordChannel,
+    );
     if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
       const mappedScrim: Scrim = {
         active: true,
@@ -34,8 +30,7 @@ export class ScrimService {
         id: dbScrim.id,
       };
       return mappedScrim;
-    }
-    else {
+    } else {
       return null;
     }
   }

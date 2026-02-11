@@ -124,7 +124,9 @@ describe("Sign up", () => {
   });
 
   it("Should complete signup but include prio warnings", async () => {
-    jest.spyOn(mockScrimSignups, "getScrim").mockReturnValueOnce({} as Scrim);
+    jest
+      .spyOn(mockScrimSignups, "getScrim")
+      .mockReturnValueOnce(Promise.resolve({} as Scrim));
     jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
       Promise.resolve([
         {

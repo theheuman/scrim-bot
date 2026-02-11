@@ -1,10 +1,10 @@
 import { DB } from "../db/db";
 import { User } from "discord.js";
-import { Scrim, ScrimSignup } from "../models/Scrims";
+import { ScrimSignup } from "../models/Scrims";
 import { ExpungedPlayerPrio, PlayerMap, PlayerPrio } from "../models/Prio";
 
 export class PrioService {
-  constructor(private db: DB) { }
+  constructor(private db: DB) {}
 
   async setPlayerPrio(
     prioUsers: User[],

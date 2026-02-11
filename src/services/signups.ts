@@ -16,7 +16,7 @@ export class SignupService {
     private authService: AuthService,
     private discordService: DiscordService,
     private banService: BanService,
-  ) { }
+  ) {}
 
   async addTeam(
     discordChannelID: string,
@@ -125,7 +125,8 @@ export class SignupService {
         SignupService.convertDbToScrimSignup(signupData);
       teams.push(teamData);
     }
-    const prioTeams = await this.prioService.getTeamPrioForScrim(
+    // this adds prio to the teams
+    await this.prioService.getTeamPrioForScrim(
       scrim,
       teams,
       discordIdsWithScrimPass ?? [],
@@ -208,7 +209,9 @@ export class SignupService {
 
   async getScrim(discordChannel: string): Promise<Scrim | null> {
     const activeScrims = await this.db.getActiveScrims();
-    const dbScrim = activeScrims.find((scrim) => scrim.discord_channel === discordChannel)
+    const dbScrim = activeScrims.find(
+      (scrim) => scrim.discord_channel === discordChannel,
+    );
     if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
       const mappedScrim: Scrim = {
         active: true,
@@ -217,8 +220,7 @@ export class SignupService {
         id: dbScrim.id,
       };
       return mappedScrim;
-    }
-    else {
+    } else {
       return null;
     }
   }
