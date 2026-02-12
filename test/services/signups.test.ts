@@ -8,7 +8,6 @@ import {
   MessagePayload,
   User,
 } from "discord.js";
-import { CacheService } from "../../src/services/cache";
 import { Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { PrioService } from "../../src/services/prio";
@@ -32,24 +31,23 @@ jest.mock("../../src/config", () => {
 
 describe("Signups", () => {
   let dbMock: DbMock;
-  let cache: CacheService;
   let signups: SignupService;
   let prioServiceMock: PrioServiceMock;
   let authServiceMock: AuthMock;
   let mockBanService: BanService;
+  const correctDiscordChannelId = "a forum post";
+  const correctScrimId = "32451";
 
   let insertPlayersSpy: SpyInstance;
 
   beforeEach(() => {
     dbMock = new DbMock();
-    cache = new CacheService();
     prioServiceMock = new PrioServiceMock();
     mockBanService = new BanServiceMock() as BanService;
 
     authServiceMock = new AuthMock();
     signups = new SignupService(
       dbMock,
-      cache,
       prioServiceMock as PrioService,
       authServiceMock as AuthService,
       new DiscordServiceMock() as DiscordService,
@@ -83,6 +81,17 @@ describe("Signups", () => {
       .mockImplementation((member) =>
         Promise.resolve(member === (theheuman as unknown as GuildMember)),
       );
+
+    jest.spyOn(dbMock, "getActiveScrims").mockReturnValue(
+      Promise.resolve([
+        {
+          id: correctScrimId,
+          date_time_field: "2026-01-01T20:00:00",
+          discord_channel: correctDiscordChannelId,
+          active: false,
+        },
+      ]),
+    );
   });
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
@@ -93,6 +102,17 @@ describe("Signups", () => {
   const mikey = { id: "32576", displayName: "//baev" } as User;
 
   describe("addTeam()", () => {
+    let getScrimSignupsWithPlayersSpy: SpyInstance<
+      Promise<ScrimSignupsWithPlayers[]>
+    >;
+
+    beforeEach(() => {
+      getScrimSignupsWithPlayersSpy = jest.spyOn(
+        dbMock,
+        "getScrimSignupsWithPlayers",
+      );
+    });
+
     it("Should add a team", async () => {
       jest.useFakeTimers();
       const now = new Date();
@@ -101,14 +121,9 @@ describe("Signups", () => {
         teamName: "Fineapples",
         scrimId: "32451",
         signupId: "4685",
-        discordChannelId: "a forum post",
+        discordChannelId: correctDiscordChannelId,
       };
 
-      cache.createScrim(expectedSignup.discordChannelId, {
-        id: expectedSignup.scrimId,
-        discordChannel: expectedSignup.discordChannelId,
-        active: true,
-      } as Scrim);
       jest
         .spyOn(dbMock, "addScrimSignup")
         .mockImplementation(
@@ -173,7 +188,6 @@ describe("Signups", () => {
         { discordId: "456", displayName: "Zboy" },
         { discordId: "789", displayName: "Supreme" },
       ]);
-      const scrim = cache.getScrim(expectedSignup.discordChannelId);
       expect.assertions(8);
     });
 
@@ -189,22 +203,37 @@ describe("Signups", () => {
 
     it("Should not add a team because duplicate team name", async () => {
       const expectedSignup = {
-        scrimId: "32451",
+        scrimId: correctScrimId,
         signupId: "4685",
-        discordChannelId: "a forum post",
+        discordChannelId: correctDiscordChannelId,
       };
 
-      cache.createScrim(expectedSignup.discordChannelId, {
-        id: expectedSignup.scrimId,
-        discordChannel: expectedSignup.discordChannelId,
-        active: true,
-      } as Scrim);
-
-      await signups.addTeam(
-        expectedSignup.discordChannelId,
-        "Fineapples",
-        theheuman as unknown as GuildMember,
-        [theheuman, revy, cTreazy],
+      getScrimSignupsWithPlayersSpy.mockReturnValueOnce(
+        Promise.resolve([
+          {
+            scrim_id: "",
+            date_time: "2026-01-01T20:00:00",
+            team_name: "Fineapples",
+            signup_player_id: "111",
+            signup_player_discord_id: theheuman.id,
+            signup_player_display_name: theheuman.displayName,
+            player_one_id: "111",
+            player_one_discord_id: theheuman.id,
+            player_one_display_name: theheuman.displayName,
+            player_one_overstat_id: "111",
+            player_one_elo: 0,
+            player_two_id: "222",
+            player_two_discord_id: revy.id,
+            player_two_display_name: revy.displayName,
+            player_two_overstat_id: "222",
+            player_two_elo: 0,
+            player_three_id: "333",
+            player_three_discord_id: cTreazy.id,
+            player_three_display_name: cTreazy.displayName,
+            player_three_overstat_id: "333",
+            player_three_elo: 0,
+          },
+        ]),
       );
 
       const causeException = async () => {
@@ -221,16 +250,38 @@ describe("Signups", () => {
 
     it("Should not add a team because duplicate player", async () => {
       const expectedSignup = {
-        scrimId: "32451",
+        scrimId: correctScrimId,
         signupId: "4685",
-        discordChannelId: "a forum post",
+        discordChannelId: correctDiscordChannelId,
       };
 
-      cache.createScrim(expectedSignup.discordChannelId, {
-        id: expectedSignup.scrimId,
-        discordChannel: expectedSignup.discordChannelId,
-        active: true,
-      } as Scrim);
+      getScrimSignupsWithPlayersSpy.mockReturnValueOnce(
+        Promise.resolve([
+          {
+            scrim_id: "",
+            date_time: "2026-01-01T20:00:00",
+            team_name: "Fineapples",
+            signup_player_id: "111",
+            signup_player_discord_id: theheuman.id,
+            signup_player_display_name: theheuman.displayName,
+            player_one_id: "111",
+            player_one_discord_id: theheuman.id,
+            player_one_display_name: theheuman.displayName,
+            player_one_overstat_id: "111",
+            player_one_elo: 0,
+            player_two_id: "222",
+            player_two_discord_id: revy.id,
+            player_two_display_name: revy.displayName,
+            player_two_overstat_id: "222",
+            player_two_elo: 0,
+            player_three_id: "333",
+            player_three_discord_id: cTreazy.id,
+            player_three_display_name: cTreazy.displayName,
+            player_three_overstat_id: "333",
+            player_three_elo: 0,
+          },
+        ]),
+      );
 
       const causeException = async () => {
         await signups.addTeam(
@@ -240,12 +291,6 @@ describe("Signups", () => {
           [theheuman, supreme, mikey],
         );
       };
-      await signups.addTeam(
-        expectedSignup.discordChannelId,
-        "Fineapples",
-        theheuman as unknown as GuildMember,
-        [theheuman, revy, cTreazy],
-      );
 
       await expect(causeException).rejects.toThrow(
         "Player already signed up on different team: TheHeuman <@123> on team Fineapples",
@@ -258,12 +303,6 @@ describe("Signups", () => {
         signupId: "4685",
         discordChannelId: "a forum post",
       };
-
-      cache.createScrim(expectedSignup.discordChannelId, {
-        id: expectedSignup.scrimId,
-        discordChannel: expectedSignup.discordChannelId,
-        active: true,
-      } as Scrim);
 
       const causeException = async () => {
         await signups.addTeam(
@@ -280,7 +319,6 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there are 2 of the same player on a team", async () => {
-      cache.setSignups("scrim 1", []);
       const causeException = async () => {
         await signups.addTeam(
           "scrim 1",
@@ -295,13 +333,6 @@ describe("Signups", () => {
 
     describe("Missing overstat id", () => {
       beforeEach(() => {
-        cache.createScrim("1", {
-          id: "2",
-          discordChannel: "1",
-          active: true,
-          dateTime: new Date(),
-        } as Scrim);
-
         insertPlayersSpy.mockReturnValueOnce(
           Promise.resolve([
             {
@@ -330,9 +361,10 @@ describe("Signups", () => {
           ]),
         );
       });
+
       it("Should add a team because signup member is an admin", async () => {
         const actualSignup = await signups.addTeam(
-          "1",
+          correctDiscordChannelId,
           "Dude Cube",
           theheuman as unknown as GuildMember,
           [theheuman, supreme, mikey],
@@ -344,7 +376,7 @@ describe("Signups", () => {
       it("Should not add a team because a player doesn't have an overstat id", async () => {
         const causeException = async () => {
           await signups.addTeam(
-            "1",
+            correctDiscordChannelId,
             "Dude Cube",
             supreme as unknown as GuildMember,
             [theheuman, supreme, mikey],
@@ -359,7 +391,7 @@ describe("Signups", () => {
       it("Should not add a team because a player is scrim banned", async () => {
         const causeException = async () => {
           await signups.addTeam(
-            "1",
+            correctDiscordChannelId,
             "Dude Cube",
             supreme as unknown as GuildMember,
             [theheuman, supreme, mikey],
@@ -434,12 +466,6 @@ describe("Signups", () => {
           }
           return Promise.resolve(teams);
         });
-      jest.spyOn(cache, "getScrim").mockReturnValue({
-        id: "",
-        dateTime: new Date(),
-        discordChannel: "",
-        active: false,
-      });
       jest
         .spyOn(dbMock, "getScrimSignupsWithPlayers")
         .mockReturnValue(
@@ -500,7 +526,7 @@ describe("Signups", () => {
           reasons: "Player 1 is an enemy of the people",
         }),
       ];
-      const teamsSignedUp = await signups.getSignups("");
+      const teamsSignedUp = await signups.getSignups(correctDiscordChannelId);
       expect(teamsSignedUp).toEqual({
         mainList: expectedMainTeams,
         waitList: expectedWaitTeams,
@@ -508,8 +534,9 @@ describe("Signups", () => {
     });
 
     it("Should throw error when no scrim", async () => {
-      cache.clear();
-
+      jest
+        .spyOn(dbMock, "getActiveScrims")
+        .mockReturnValueOnce(Promise.resolve([]));
       const causeException = async () => {
         await signups.getSignups("");
       };
