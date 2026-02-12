@@ -32,7 +32,6 @@ export const scrimService = new ScrimService(
   nhostDb,
   overstatService,
   huggingFaceService,
-  signupsService,
 );
 export const rosterService = new RosterService(
   nhostDb,

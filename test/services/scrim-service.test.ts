@@ -1,17 +1,8 @@
 import { DbMock } from "../mocks/db.mock";
-import { Player } from "../../src/models/Player";
-import {
-  GuildMember,
-  InteractionReplyOptions,
-  InteractionResponse,
-  MessagePayload,
-  User,
-} from "discord.js";
-import { CacheService } from "../../src/services/cache";
+import { GuildMember, User } from "discord.js";
 import { OverstatService } from "../../src/services/overstat";
-import { Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { Scrim } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
-import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 import SpyInstance = jest.SpyInstance;
 import { PrioServiceMock } from "../mocks/prio.mock";
 import { AuthMock } from "../mocks/auth.mock";
@@ -20,8 +11,6 @@ import { BanService } from "../../src/services/ban";
 import { HuggingFaceService } from "../../src/services/hugging-face";
 import { BanServiceMock } from "../mocks/ban.mock";
 import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
-import { SignupService } from "../../src/services/signups";
-import { SignupServiceMock } from "../mocks/signups.mock";
 import { ScrimService } from "../../src/services/scrim-service";
 
 jest.mock("../../src/config", () => {
@@ -34,7 +23,6 @@ jest.mock("../../src/config", () => {
 
 describe("ScrimService", () => {
   let dbMock: DbMock;
-  let cache: CacheService;
   let service: ScrimService;
   let prioServiceMock: PrioServiceMock;
   let overstatServiceMock: OverstatServiceMock;
@@ -51,22 +39,17 @@ describe("ScrimService", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    cache = new CacheService();
     overstatServiceMock = new OverstatServiceMock();
     prioServiceMock = new PrioServiceMock();
     mockBanService = new BanServiceMock() as BanService;
     mockHuggingFaceService =
       new HuggingFaceServiceMock() as unknown as HuggingFaceService;
-    const mockSignupService =
-      new SignupServiceMock() as unknown as SignupService;
 
     authServiceMock = new AuthMock();
     service = new ScrimService(
       dbMock,
-      cache,
       overstatServiceMock as OverstatService,
       mockHuggingFaceService,
-      mockSignupService as SignupService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -104,37 +87,9 @@ describe("ScrimService", () => {
 
   const theheuman = { id: "123", displayName: "TheHeuman" } as User;
 
-  describe("updateActiveScrims()", () => {
-    it("Should get active scrims", async () => {
-      cache.clear();
-      cache.createScrim("something", {
-        id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-        dateTime: new Date(),
-        discordChannel: "something",
-        active: true,
-      });
-      cache.setSignups("ebb385a2-ba18-43b7-b0a3-44f2ff5589b9", []);
-      jest.spyOn(dbMock, "getActiveScrims").mockImplementation(() => {
-        return Promise.resolve([
-          {
-            id: "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-            discord_channel: "something",
-            date_time_field: "2024-10-14T20:10:35.706+00:00",
-          },
-        ]);
-      });
-
-      await service.updateActiveScrims();
-      expect(cache.getScrim("something")?.id).toEqual(
-        "ebb385a2-ba18-43b7-b0a3-44f2ff5589b9",
-      );
-    });
-  });
-
   describe("createScrim()", () => {
     it("Should create scrim", async () => {
       const channelId = "a valid id";
-      cache.clear();
 
       const createNewSpy = jest.spyOn(dbMock, "createNewScrim");
       createNewSpy.mockReturnValue(Promise.resolve("a valid scrim id"));
@@ -142,33 +97,46 @@ describe("ScrimService", () => {
       const now = new Date();
       await service.createScrim(channelId, now);
       expect(createNewSpy).toHaveBeenCalledWith(now, channelId);
-      expect(cache.getScrim(channelId)?.id).toEqual("a valid scrim id");
     });
   });
 
   describe("closeScrim()", () => {
-    it("Should delete a scrim and its associated signups", async () => {
+    it("Should delete a scrim", async () => {
       const channelId = "a valid id";
-      const scrimId = "32451";
-      cache.clear();
-      cache.createScrim(channelId, {
-        active: true,
-        id: scrimId,
-        discordChannel: channelId,
-        dateTime: new Date(),
-      });
-      cache.setSignups(scrimId, []);
-      jest
-        .spyOn(dbMock, "closeScrim")
-        .mockImplementation((discordChannelId: string) => {
-          expect(discordChannelId).toEqual(channelId);
-          return Promise.resolve([scrimId]);
-        });
+      jest.spyOn(dbMock, "getActiveScrims").mockReturnValue(
+        Promise.resolve([
+          {
+            discord_channel: channelId,
+            id: "123",
+            date_time_field: "2020-01-01",
+          },
+        ]),
+      );
+      const closeScrimSpy = jest.spyOn(dbMock, "closeScrim");
+      closeScrimSpy.mockReturnValue(
+        Promise.resolve(["deleted signup id", "deleted signup id 2"]),
+      );
 
       await service.closeScrim(channelId);
-      expect(cache.getScrim(channelId)?.id).toBeUndefined();
-      expect(cache.getSignups(channelId)).toBeUndefined();
-      expect.assertions(3);
+      expect(closeScrimSpy).toHaveBeenCalledWith(channelId);
+    });
+
+    it("Should fail to close a scrim because it doesn't exist", async () => {
+      const channelId = "a valid id";
+      jest
+        .spyOn(dbMock, "getActiveScrims")
+        .mockReturnValue(Promise.resolve([]));
+      const closeScrimSpy = jest.spyOn(dbMock, "closeScrim");
+
+      const causeException = async () => {
+        await service.closeScrim(channelId);
+      };
+
+      await expect(causeException).rejects.toThrow(
+        "No scrim found for that channel",
+      );
+
+      expect(closeScrimSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -217,9 +185,6 @@ describe("ScrimService", () => {
 
       getTournamentIdSpy.mockReturnValue(overstatId);
       overallStatsForIdSpy.mockReturnValue(Promise.resolve(tournamentStats));
-
-      cache.clear();
-      cache.setSignups(scrimId, []);
     });
 
     it("Should compute a scrim", async () => {

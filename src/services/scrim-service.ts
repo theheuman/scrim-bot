@@ -2,14 +2,12 @@ import { DB } from "../db/db";
 import { OverstatService } from "./overstat";
 import { HuggingFaceService } from "./hugging-face";
 import { Scrim } from "../models/Scrims";
-import { SignupService } from "./signups";
 
 export class ScrimService {
   constructor(
     private db: DB,
     private overstatService: OverstatService,
     private huggingFaceService: HuggingFaceService,
-    private signupService: SignupService,
   ) {}
 
   async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
