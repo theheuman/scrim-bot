@@ -59,7 +59,7 @@ export const scrimCommands: Command[] = [
 
   new ChangeTeamNameCommand(rosterService),
   new DropoutCommand(rosterService),
-  new SignupCommand(signupsService, prioService),
+  new SignupCommand(signupsService, prioService, scrimService),
   new SubPlayerCommand(rosterService),
   new CurrentPositionCommand(signupsService, staticValueService),
 ];

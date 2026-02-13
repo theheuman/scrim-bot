@@ -46,6 +46,11 @@ export class SignupServiceMock {
     return { mainList: [], waitList: [] };
   }
 
+  async getRawSignups(scrim: Scrim): Promise<ScrimSignup[]> {
+    console.log("Getting raw signups in mock", scrim);
+    return [];
+  }
+
   getScrimId(discordChannel: string): string | undefined {
     console.log("Creating scrim in signup mock", discordChannel);
     return "";

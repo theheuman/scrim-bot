@@ -8,6 +8,7 @@ import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
+import { ScrimService } from "./scrim-service";
 
 export class SignupService {
   constructor(
@@ -16,6 +17,7 @@ export class SignupService {
     private authService: AuthService,
     private discordService: DiscordService,
     private banService: BanService,
+    private scrimService: ScrimService,
   ) {}
 
   async addTeam(
@@ -24,7 +26,7 @@ export class SignupService {
     commandUser: GuildMember,
     players: User[],
   ): Promise<ScrimSignup> {
-    const scrim = await this.getScrim(discordChannelID);
+    const scrim = await this.scrimService.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
     }
@@ -114,17 +116,11 @@ export class SignupService {
     discordChannelID: string,
     discordIdsWithScrimPass?: string[],
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }> {
-    const scrim = await this.getScrim(discordChannelID);
+    const scrim = await this.scrimService.getScrim(discordChannelID);
     if (!scrim) {
       throw Error("No scrim found for that channel");
     }
-    const scrimData = await this.db.getScrimSignupsWithPlayers(scrim.id);
-    const teams: ScrimSignup[] = [];
-    for (const signupData of scrimData) {
-      const teamData: ScrimSignup =
-        SignupService.convertDbToScrimSignup(signupData);
-      teams.push(teamData);
-    }
+    const teams = await this.getRawSignups(scrim);
     // this adds prio to the teams
     await this.prioService.getTeamPrioForScrim(
       scrim,
@@ -207,22 +203,15 @@ export class SignupService {
     };
   }
 
-  async getScrim(discordChannel: string): Promise<Scrim | null> {
-    const activeScrims = await this.db.getActiveScrims();
-    const dbScrim = activeScrims.find(
-      (scrim) => scrim.discord_channel === discordChannel,
-    );
-    if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
-      const mappedScrim: Scrim = {
-        active: true,
-        dateTime: new Date(dbScrim.date_time_field),
-        discordChannel: dbScrim.discord_channel,
-        id: dbScrim.id,
-      };
-      return mappedScrim;
-    } else {
-      return null;
+  async getRawSignups(scrim: Scrim): Promise<ScrimSignup[]> {
+    const scrimData = await this.db.getScrimSignupsWithPlayers(scrim.id);
+    const teams: ScrimSignup[] = [];
+    for (const signupData of scrimData) {
+      const teamData: ScrimSignup =
+        SignupService.convertDbToScrimSignup(signupData);
+      teams.push(teamData);
     }
+    return teams;
   }
 
   private async updateScrimSignupCount(scrim: Scrim) {

@@ -29,8 +29,8 @@ export class ScrimServiceMock {
     return Promise.resolve();
   }
 
-  getScrim(discordChannelID: string): Scrim | undefined {
+  getScrim(discordChannelID: string): Promise<Scrim | null> {
     console.log("Getting scrim in signup mock", discordChannelID);
-    return undefined;
+    return Promise.resolve(null);
   }
 }

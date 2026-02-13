@@ -7,6 +7,7 @@ import { BanService } from "./ban";
 import { Player } from "../models/Player";
 import { StaticValueService } from "./static-values";
 import { SignupService } from "./signups";
+import { ScrimService } from "./scrim-service";
 
 export class RosterService {
   constructor(
@@ -15,7 +16,9 @@ export class RosterService {
     private discordService: DiscordService,
     private banService: BanService,
     private staticValueService: StaticValueService,
-  ) { }
+    private scrimService: ScrimService,
+    private signupService: SignupService,
+  ) {}
 
   async replaceTeammate(
     memberUsingCommand: GuildMember,
@@ -129,36 +132,6 @@ export class RosterService {
     teamToBeChanged.teamName = newTeamName;
   }
 
-  private async getScrim(discordChannel: string): Promise<Scrim | null> {
-    const activeScrims = await this.db.getActiveScrims();
-    const dbScrim = activeScrims.find((scrim) => scrim.discord_channel === discordChannel)
-    if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
-      const mappedScrim: Scrim = {
-        active: true,
-        dateTime: new Date(dbScrim.date_time_field),
-        discordChannel: dbScrim.discord_channel,
-        id: dbScrim.id,
-      };
-      return mappedScrim;
-    }
-    else {
-      return null;
-    }
-  }
-
-  private async getSignups(
-    scrim: Scrim,
-  ): Promise<ScrimSignup[]> {
-    const scrimData = await this.db.getScrimSignupsWithPlayers(scrim.id);
-    const teams: ScrimSignup[] = [];
-    for (const signupData of scrimData) {
-      const teamData: ScrimSignup =
-        SignupService.convertDbToScrimSignup(signupData);
-      teams.push(teamData);
-    }
-    return teams;
-  }
-
   private async getDataIfAuthorized(
     memberUsingCommand: GuildMember,
     discordChannel: string,
@@ -169,13 +142,13 @@ export class RosterService {
     teamToBeChanged: ScrimSignup;
     isAdmin: boolean;
   }> {
-    const scrim = await this.getScrim(discordChannel);
+    const scrim = await this.scrimService.getScrim(discordChannel);
     if (!scrim) {
       throw Error(
         "No scrim matching that scrim channel present, contact admin",
       );
     }
-    const signups = await this.getSignups(scrim);
+    const signups = await this.signupService.getRawSignups(scrim);
     const teamToBeChanged = signups.find((team) => team.teamName === teamName);
     if (!teamToBeChanged) {
       throw Error("No team with that name");
@@ -198,13 +171,13 @@ export class RosterService {
   }
 
   private async updateScrimSignupCount(discordChannel: string) {
-    const scrim = await this.getScrim(discordChannel);
+    const scrim = await this.scrimService.getScrim(discordChannel);
 
     try {
       if (!scrim) {
         throw Error("No scrim for that channel");
       }
-      const count = (await this.getSignups(scrim)).length;
+      const count = (await this.signupService.getRawSignups(scrim)).length;
       await this.discordService.updateSignupPostDescription(scrim, count);
     } catch (e) {
       console.error(

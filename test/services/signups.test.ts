@@ -20,6 +20,8 @@ import { DiscordService } from "../../src/services/discord";
 import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { BanService } from "../../src/services/ban";
 import { BanServiceMock } from "../mocks/ban.mock";
+import { ScrimServiceMock } from "../mocks/scrim-service.mock";
+import { ScrimService } from "../../src/services/scrim-service";
 
 jest.mock("../../src/config", () => {
   return {
@@ -35,6 +37,7 @@ describe("Signups", () => {
   let prioServiceMock: PrioServiceMock;
   let authServiceMock: AuthMock;
   let mockBanService: BanService;
+  let scrimServiceMock: ScrimServiceMock;
   const correctDiscordChannelId = "a forum post";
   const correctScrimId = "32451";
 
@@ -46,12 +49,14 @@ describe("Signups", () => {
     mockBanService = new BanServiceMock() as BanService;
 
     authServiceMock = new AuthMock();
+    scrimServiceMock = new ScrimServiceMock();
     signups = new SignupService(
       dbMock,
       prioServiceMock as PrioService,
       authServiceMock as AuthService,
       new DiscordServiceMock() as DiscordService,
       mockBanService,
+      scrimServiceMock as unknown as ScrimService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -82,15 +87,13 @@ describe("Signups", () => {
         Promise.resolve(member === (theheuman as unknown as GuildMember)),
       );
 
-    jest.spyOn(dbMock, "getActiveScrims").mockReturnValue(
-      Promise.resolve([
-        {
-          id: correctScrimId,
-          date_time_field: "2026-01-01T20:00:00",
-          discord_channel: correctDiscordChannelId,
-          active: false,
-        },
-      ]),
+    jest.spyOn(scrimServiceMock, "getScrim").mockReturnValue(
+      Promise.resolve({
+        id: correctScrimId,
+        dateTime: new Date("2026-01-01T20:00:00"),
+        discordChannel: correctDiscordChannelId,
+        active: false,
+      }),
     );
   });
 
@@ -192,6 +195,9 @@ describe("Signups", () => {
     });
 
     it("Should not add a team because there is no scrim for that channel", async () => {
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValueOnce(Promise.resolve(null));
       const causeException = async () => {
         await signups.addTeam("", "", theheuman as unknown as GuildMember, []);
       };
@@ -535,8 +541,8 @@ describe("Signups", () => {
 
     it("Should throw error when no scrim", async () => {
       jest
-        .spyOn(dbMock, "getActiveScrims")
-        .mockReturnValueOnce(Promise.resolve([]));
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValueOnce(Promise.resolve(null));
       const causeException = async () => {
         await signups.getSignups("");
       };

@@ -11,6 +11,10 @@ import { BanService } from "../../src/services/ban";
 import { BanServiceMock } from "../mocks/ban.mock";
 import { StaticValueService } from "../../src/services/static-values";
 import { StaticValueServiceMock } from "../mocks/static-values.mock";
+import { ScrimServiceMock } from "../mocks/scrim-service.mock";
+import { SignupServiceMock } from "../mocks/signups.mock";
+import { ScrimService } from "../../src/services/scrim-service";
+import { SignupService } from "../../src/services/signups";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
@@ -18,36 +22,36 @@ describe("Rosters", () => {
   let authService: AuthMock;
   let banServiceMock: BanService;
   let staticValueService: StaticValueService;
+  let scrimServiceMock: ScrimServiceMock;
+  let signupServiceMock: SignupServiceMock;
   const discordChannel = "034528";
-  let getScrimSignupsSpy: jest.SpyInstance;
-  let getActiveScrimsSpy: jest.SpyInstance;
 
   beforeEach(() => {
     dbMock = new DbMock();
     authService = new AuthMock();
     banServiceMock = new BanServiceMock() as BanService;
     staticValueService = new StaticValueServiceMock() as StaticValueService;
+    scrimServiceMock = new ScrimServiceMock();
+    signupServiceMock = new SignupServiceMock();
     rosters = new RosterService(
       dbMock,
       authService as AuthService,
       new DiscordServiceMock() as DiscordService,
       banServiceMock,
       staticValueService,
+      scrimServiceMock as unknown as ScrimService,
+      signupServiceMock as unknown as SignupService,
     );
     jest
       .spyOn(authService, "memberIsAdmin")
       .mockReturnValue(Promise.resolve(true));
 
-    const scrimReturnValues = generateScrimReturnValues([], []);
-
-    getScrimSignupsSpy = jest.spyOn(dbMock, "getScrimSignupsWithPlayers");
-    getScrimSignupsSpy.mockReturnValue(
-      Promise.resolve(scrimReturnValues.scrimSignups),
-    );
-    getActiveScrimsSpy = jest.spyOn(dbMock, "getActiveScrims");
-    getActiveScrimsSpy.mockReturnValue(
-      Promise.resolve(scrimReturnValues.activeScrims),
-    );
+    jest
+      .spyOn(scrimServiceMock, "getScrim")
+      .mockReturnValue(Promise.resolve(null));
+    jest
+      .spyOn(signupServiceMock, "getRawSignups")
+      .mockReturnValue(Promise.resolve([]));
   });
 
   const zboy: { user: User; member: GuildMember; player: Player } = {
@@ -95,17 +99,12 @@ describe("Rosters", () => {
         active: true,
         discordChannel,
       };
-      const scrimReturnValues = generateScrimReturnValues(
-        [getFineapples()],
-        [scrim],
-      );
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([getFineapples()]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       const dbSpy = jest.spyOn(dbMock, "removeScrimSignup");
       await rosters.removeSignup(
@@ -117,14 +116,12 @@ describe("Rosters", () => {
     });
 
     it("Should not remove a team because there is no scrim with that id", async () => {
-      const scrimReturnValues = generateScrimReturnValues([], []);
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(null));
 
       const causeException = async () => {
         await rosters.removeSignup(
@@ -147,17 +144,12 @@ describe("Rosters", () => {
         discordChannel,
       };
 
-      const scrimReturnValues = generateScrimReturnValues(
-        [getFineapples()],
-        [scrim],
-      );
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([getFineapples()]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
       const causeException = async () => {
         await rosters.removeSignup(
           zboy.member,
@@ -184,17 +176,12 @@ describe("Rosters", () => {
         date: new Date(),
       };
 
-      const scrimReturnValues = generateScrimReturnValues(
-        [differentFineapples],
-        [scrim],
-      );
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([differentFineapples]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       jest
         .spyOn(authService, "memberIsAdmin")
@@ -225,17 +212,12 @@ describe("Rosters", () => {
       const dbSpy = jest.spyOn(dbMock, "changeTeamNameNoAuth");
 
       const fineapples = getFineapples();
-      const scrimReturnValues = generateScrimReturnValues(
-        [fineapples],
-        [scrim],
-      );
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([fineapples]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       await rosters.changeTeamName(
         zboy.member,
@@ -262,17 +244,12 @@ describe("Rosters", () => {
       };
 
       const fineapples = getFineapples();
-      const scrimReturnValues = generateScrimReturnValues(
-        [fineapples, dudeCube],
-        [scrim],
-      );
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([fineapples, dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
       const causeException = async () => {
         await rosters.changeTeamName(
           zboy.member,
@@ -304,14 +281,12 @@ describe("Rosters", () => {
         date: new Date(),
       };
 
-      const scrimReturnValues = generateScrimReturnValues([dudeCube], [scrim]);
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest
@@ -347,17 +322,12 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
         date: new Date(),
       };
-      const scrimReturnValues = generateScrimReturnValues(
-        [dudeCube, getFineapples()],
-        [scrim],
-      );
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube, getFineapples()]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest
@@ -395,14 +365,12 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
         date: new Date(),
       };
-      const scrimReturnValues = generateScrimReturnValues([dudeCube], [scrim]);
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
 
@@ -440,14 +408,12 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
         date: new Date(),
       };
-      const scrimReturnValues = generateScrimReturnValues([dudeCube], [scrim]);
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
 
@@ -489,14 +455,12 @@ describe("Rosters", () => {
         .spyOn(dbMock, "insertPlayerIfNotExists")
         .mockReturnValue(Promise.resolve(zboy.player));
 
-      const scrimReturnValues = generateScrimReturnValues([dudeCube], [scrim]);
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest.spyOn(banServiceMock, "teamHasBan").mockReturnValue(
         Promise.resolve({
@@ -539,14 +503,12 @@ describe("Rosters", () => {
         signupPlayer: theheuman.player,
         date: new Date(),
       };
-      const scrimReturnValues = generateScrimReturnValues([dudeCube], [scrim]);
-
-      getScrimSignupsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.scrimSignups),
-      );
-      getActiveScrimsSpy.mockReturnValue(
-        Promise.resolve(scrimReturnValues.activeScrims),
-      );
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
 
       const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
       jest.spyOn(banServiceMock, "teamHasBan").mockReturnValue(
@@ -577,37 +539,3 @@ describe("Rosters", () => {
     });
   });
 });
-
-const generateScrimReturnValues = (signups: ScrimSignup[], scrims: Scrim[]) => {
-  return {
-    scrimSignups: signups.map((signup) => ({
-      scrim_id: "",
-      date_time: signup.date.toISOString(),
-      team_name: signup.teamName,
-      signup_player_id: signup.signupPlayer.id,
-      signup_player_discord_id: signup.signupPlayer.discordId,
-      signup_player_display_name: signup.signupPlayer.displayName,
-      player_one_id: signup.players[0].id,
-      player_one_discord_id: signup.players[0].discordId,
-      player_one_display_name: signup.players[0].displayName,
-      player_one_overstat_id: "111",
-      player_one_elo: 0,
-      player_two_id: signup.players[1].id,
-      player_two_discord_id: signup.players[1].discordId,
-      player_two_display_name: signup.players[1].displayName,
-      player_two_overstat_id: "222",
-      player_two_elo: 0,
-      player_three_id: signup.players[2].id,
-      player_three_discord_id: signup.players[2].discordId,
-      player_three_display_name: signup.players[2].displayName,
-      player_three_overstat_id: "333",
-      player_three_elo: 0,
-    })),
-    activeScrims: scrims.map((scrim) => ({
-      id: scrim.id,
-      date_time_field: scrim.dateTime.toISOString(),
-      active: scrim.active,
-      discord_channel: scrim.discordChannel,
-    })),
-  };
-};

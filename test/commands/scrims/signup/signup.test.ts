@@ -15,6 +15,8 @@ import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
 import { SignupServiceMock } from "../../../mocks/signups.mock";
 import { SignupService } from "../../../../src/services/signups";
+import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
+import { ScrimService } from "../../../../src/services/scrim-service";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -49,6 +51,7 @@ describe("Sign up", () => {
 
   const mockScrimSignups = new SignupServiceMock();
   const mockPrioService = new PrioServiceMock();
+  const mockScrimService = new ScrimServiceMock();
 
   const player1 = {
     displayName: "Player 1",
@@ -102,6 +105,7 @@ describe("Sign up", () => {
     command = new SignupCommand(
       mockScrimSignups as unknown as SignupService,
       mockPrioService as PrioService,
+      mockScrimService as ScrimService,
     );
   });
 
@@ -125,7 +129,7 @@ describe("Sign up", () => {
 
   it("Should complete signup but include prio warnings", async () => {
     jest
-      .spyOn(mockScrimSignups, "getScrim")
+      .spyOn(mockScrimService, "getScrim")
       .mockReturnValueOnce(Promise.resolve({} as Scrim));
     jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
       Promise.resolve([
