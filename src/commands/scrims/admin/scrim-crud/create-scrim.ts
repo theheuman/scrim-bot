@@ -1,7 +1,7 @@
 import { ForumChannel, PublicThreadChannel } from "discord.js";
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
-import { ScrimSignups } from "../../../../services/signups";
+import { ScrimService } from "../../../../services/scrim-service";
 import { formatInTimeZone } from "date-fns-tz";
 import { AuthService } from "../../../../services/auth";
 import { StaticValueService } from "../../../../services/static-values";
@@ -21,7 +21,7 @@ export class CreateScrimCommand extends AdminCommand {
 
   constructor(
     authService: AuthService,
-    private signupService: ScrimSignups,
+    private scrimService: ScrimService,
     private staticValueService: StaticValueService,
   ) {
     super(
@@ -80,7 +80,7 @@ export class CreateScrimCommand extends AdminCommand {
     }
 
     try {
-      await this.signupService.createScrim(createdThread.id, scrimDate);
+      await this.scrimService.createScrim(createdThread.id, scrimDate);
     } catch (error) {
       try {
         await createdThread.delete("Scrim not created correctly in db");

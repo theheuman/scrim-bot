@@ -1,7 +1,7 @@
 import { ScrimSignup } from "../../../../models/Scrims";
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
-import { ScrimSignups } from "../../../../services/signups";
+import { SignupService } from "../../../../services/signups";
 import { AuthService } from "../../../../services/auth";
 import * as fs from "node:fs";
 import { StaticValueService } from "../../../../services/static-values";
@@ -12,7 +12,7 @@ import { GetSignupsHelper } from "../../../utility/get-signups";
 export class GetSignupsCommand extends AdminCommand {
   constructor(
     authService: AuthService,
-    private signupService: ScrimSignups,
+    private signupService: SignupService,
     private staticValueService: StaticValueService,
   ) {
     super(authService, "get-signups", "Gets signups for this scrim");

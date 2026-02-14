@@ -1,15 +1,17 @@
 import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
-import { ScrimSignups } from "../../../services/signups";
+import { SignupService } from "../../../services/signups";
 import { isGuildMember } from "../../../utility/utility";
 import { ScrimSignup } from "../../../models/Scrims";
 import { Player } from "../../../models/Player";
 import { PrioService } from "../../../services/prio";
+import { ScrimService } from "../../../services/scrim-service";
 
 export class SignupCommand extends MemberCommand {
   constructor(
-    private signupService: ScrimSignups,
+    private signupService: SignupService,
     private prioService: PrioService,
+    private scrimService: ScrimService,
   ) {
     super("signup", "Creates a new scrim signup");
     this.addStringInput("teamname", "Team name", {
@@ -81,7 +83,7 @@ export class SignupCommand extends MemberCommand {
     interaction: CustomInteraction,
     signup: ScrimSignup,
   ) {
-    const scrim = this.signupService.getScrim(interaction.channelId);
+    const scrim = await this.scrimService.getScrim(interaction.channelId);
     if (!scrim) {
       console.error(
         "Unable to get applicable prio on a signup because there is no scrim for this channel",

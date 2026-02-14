@@ -1,12 +1,12 @@
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
-import { ScrimSignups } from "../../../../services/signups";
+import { ScrimService } from "../../../../services/scrim-service";
 import { AuthService } from "../../../../services/auth";
 
 export class ComputeScrimCommand extends AdminCommand {
   constructor(
     authService: AuthService,
-    private signupService: ScrimSignups,
+    private scrimService: ScrimService,
   ) {
     super(authService, "compute-scrim", "Computes stats for this scrim");
     this.addStringInput(
@@ -50,7 +50,7 @@ export class ComputeScrimCommand extends AdminCommand {
     });
 
     try {
-      const linksComputed = await this.signupService.computeScrim(
+      const linksComputed = await this.scrimService.computeScrim(
         channelId,
         overstatLinks,
       );

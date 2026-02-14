@@ -9,12 +9,14 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
-import { ScrimSignupMock } from "../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../src/services/signups";
 import { SignupCommand } from "../../../../src/commands/scrims/signup/sign-up";
 import { Scrim, ScrimSignup } from "../../../../src/models/Scrims";
 import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
+import { SignupServiceMock } from "../../../mocks/signups.mock";
+import { SignupService } from "../../../../src/services/signups";
+import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
+import { ScrimService } from "../../../../src/services/scrim-service";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -47,8 +49,9 @@ describe("Sign up", () => {
     roles: {},
   } as GuildMember;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockScrimSignups = new SignupServiceMock();
   const mockPrioService = new PrioServiceMock();
+  const mockScrimService = new ScrimServiceMock();
 
   const player1 = {
     displayName: "Player 1",
@@ -100,8 +103,9 @@ describe("Sign up", () => {
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
     command = new SignupCommand(
-      mockScrimSignups as unknown as ScrimSignups,
+      mockScrimSignups as unknown as SignupService,
       mockPrioService as PrioService,
+      mockScrimService as ScrimService,
     );
   });
 
@@ -124,7 +128,9 @@ describe("Sign up", () => {
   });
 
   it("Should complete signup but include prio warnings", async () => {
-    jest.spyOn(mockScrimSignups, "getScrim").mockReturnValueOnce({} as Scrim);
+    jest
+      .spyOn(mockScrimService, "getScrim")
+      .mockReturnValueOnce(Promise.resolve({} as Scrim));
     jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
       Promise.resolve([
         {
