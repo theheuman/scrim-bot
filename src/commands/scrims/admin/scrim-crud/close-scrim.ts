@@ -1,12 +1,12 @@
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
-import { ScrimSignups } from "../../../../services/signups";
+import { ScrimService } from "../../../../services/scrim-service";
 import { AuthService } from "../../../../services/auth";
 
 export class CloseScrimCommand extends AdminCommand {
   constructor(
     authService: AuthService,
-    private signupService: ScrimSignups,
+    private scrimService: ScrimService,
   ) {
     super(
       authService,
@@ -29,7 +29,7 @@ export class CloseScrimCommand extends AdminCommand {
     });
 
     try {
-      await this.signupService.closeScrim(channel.id);
+      await this.scrimService.closeScrim(channel.id);
     } catch (error) {
       await interaction.editReply("Scrim not closed. " + error);
       return;
