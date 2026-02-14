@@ -12,6 +12,8 @@ import { HuggingFaceService } from "../../src/services/hugging-face";
 import { BanServiceMock } from "../mocks/ban.mock";
 import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
 import { ScrimService } from "../../src/services/scrim-service";
+import { EloServiceMock } from "../mocks/elo.mock";
+import { EloService } from "../../src/services/elo/elo-service";
 
 jest.mock("../../src/config", () => {
   return {
@@ -29,6 +31,7 @@ describe("ScrimService", () => {
   let authServiceMock: AuthMock;
   let mockBanService: BanService;
   let mockHuggingFaceService: HuggingFaceService;
+  let eloServiceMock: EloServiceMock;
 
   let insertPlayersSpy: SpyInstance;
   let huggingFaceUploadSpy: SpyInstance<
@@ -46,10 +49,12 @@ describe("ScrimService", () => {
       new HuggingFaceServiceMock() as unknown as HuggingFaceService;
 
     authServiceMock = new AuthMock();
+    eloServiceMock = new EloServiceMock();
     service = new ScrimService(
       dbMock,
       overstatServiceMock as OverstatService,
       mockHuggingFaceService,
+      eloServiceMock as unknown as EloService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -149,7 +154,26 @@ describe("ScrimService", () => {
     const tournamentStats: OverstatTournamentResponse = {
       total: 6,
       source: "statscode",
-      games: [],
+      games: [
+        {
+          gameId: 1,
+          teams: [
+            {
+              teamId: 101,
+              player_stats: [
+                {
+                  playerId: 123,
+                  teamPlacement: 1,
+                  kills: 10,
+                  assists: 5,
+                  damageDealt: 1000,
+                  revivesGiven: 2,
+                },
+              ],
+            },
+          ],
+        },
+      ],
       teams: [],
       analytics: {
         qualityScore: 7.8947900682011936,
@@ -185,6 +209,9 @@ describe("ScrimService", () => {
 
       getTournamentIdSpy.mockReturnValue(overstatId);
       overallStatsForIdSpy.mockReturnValue(Promise.resolve(tournamentStats));
+
+      // Mock Elo processing
+      eloServiceMock.processTournament.mockReturnValue(Promise.resolve());
     });
 
     it("Should compute a scrim", async () => {
@@ -211,6 +238,10 @@ describe("ScrimService", () => {
       expect(huggingFaceUploadSpy).toHaveBeenCalledWith(
         overstatId,
         time,
+        tournamentStats,
+      );
+
+      expect(eloServiceMock.processTournament).toHaveBeenCalledWith(
         tournamentStats,
       );
 

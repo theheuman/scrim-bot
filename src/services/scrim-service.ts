@@ -2,12 +2,14 @@ import { DB } from "../db/db";
 import { OverstatService } from "./overstat";
 import { HuggingFaceService } from "./hugging-face";
 import { Scrim } from "../models/Scrims";
+import { EloService } from "./elo/elo-service";
 
 export class ScrimService {
   constructor(
     private db: DB,
     private overstatService: OverstatService,
     private huggingFaceService: HuggingFaceService,
+    private eloService: EloService,
   ) {}
 
   async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
@@ -87,6 +89,9 @@ export class ScrimService {
         overstatId: overstatId,
         overstatJson: stats,
       });
+
+      await this.eloService.processTournament(stats);
+
       try {
         await this.huggingFaceService.uploadOverstatJson(
           overstatId,
@@ -113,6 +118,10 @@ export class ScrimService {
         overstatId,
         stats,
       );
+
+      // Calculate and save Elo
+      await this.eloService.processTournament(stats);
+
       try {
         await this.huggingFaceService.uploadOverstatJson(
           overstatId,

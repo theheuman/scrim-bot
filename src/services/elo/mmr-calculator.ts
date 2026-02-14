@@ -1,4 +1,4 @@
-export class MMRCalculatorService {
+export class MMRCalculator {
   static readonly INITIAL_MMR = 1500;
   static placementWeight = 0.55;
   static combatWeight = 0.3;

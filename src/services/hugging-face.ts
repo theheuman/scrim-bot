@@ -1,4 +1,4 @@
-import { commit } from "@huggingface/hub";
+import { commit, listFiles } from "@huggingface/hub";
 import { appConfig } from "../config";
 import { OverstatTournamentResponse } from "../models/overstatModels";
 import { Agent, fetch as undiciFetch } from "undici";
@@ -18,8 +18,51 @@ const customFetch = (url: URL | RequestInfo, init?: RequestInit) => {
 
 export class HuggingFaceService {
   private hfToken = appConfig.huggingFaceToken;
+  private readonly REPO_ID = "VESA-apex/apex-scrims";
 
   constructor() {}
+
+  async listFiles(): Promise<string[]> {
+    const files = listFiles({
+      repo: {
+        type: "dataset",
+        name: this.REPO_ID,
+      },
+      credentials: {
+        accessToken: this.hfToken,
+      },
+      fetch: customFetch,
+    });
+    const filePaths: string[] = [];
+    for await (const file of files) {
+      if (
+        file.type === "file" &&
+        file.path.endsWith(".json") &&
+        file.path.startsWith("scrim_")
+      ) {
+        filePaths.push(file.path);
+      }
+    }
+    return filePaths;
+  }
+
+  async downloadFile(path: string): Promise<OverstatTournamentResponse> {
+    const url = `https://huggingface.co/datasets/${this.REPO_ID}/resolve/main/${path}`;
+    const response = await customFetch(url, {
+      headers: {
+        Authorization: `Bearer ${this.hfToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download file ${path}: ${response.statusText}`,
+      );
+    }
+
+    const data = await response.json();
+    return data as OverstatTournamentResponse;
+  }
 
   // throws if upload fails, returns the file url on success
   async uploadOverstatJson(
@@ -27,8 +70,6 @@ export class HuggingFaceService {
     dateTime: Date,
     stats: OverstatTournamentResponse,
   ): Promise<string> {
-    const repoId = "VESA-apex/apex-scrims";
-
     const dateString = dateTime
       .toISOString()
       .split("T")[0]
@@ -44,7 +85,7 @@ export class HuggingFaceService {
       },
       repo: {
         type: "dataset",
-        name: repoId,
+        name: this.REPO_ID,
       },
       title: `Upload stats for scrim ${overstatId}. ${dateString}`,
       operations: [
@@ -57,6 +98,6 @@ export class HuggingFaceService {
       fetch: customFetch,
     });
 
-    return `https://huggingface.co/datasets/${repoId}/blob/main/${filePath}`;
+    return `https://huggingface.co/datasets/${this.REPO_ID}/blob/main/${filePath}`;
   }
 }

@@ -22,6 +22,7 @@ import {
   scrimService,
   staticValueService,
   banService,
+  eloService,
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
@@ -31,6 +32,7 @@ import { ExpungeBanCommand } from "./scrims/admin/bans/expunge-ban";
 import { LeagueSignupCommand } from "./league/league-signup";
 import { GetUserCommand } from "./overstat/get-user";
 import { RoleAssignmentCommand } from "./league/admin/role-assign";
+import { ComputeAllEloCommand } from "./scrims/admin/compute-all-elo";
 
 export const commonCommands: Command[] = [
   // test commands
@@ -55,6 +57,7 @@ export const scrimCommands: Command[] = [
   new CreateScrimCommand(authService, scrimService, staticValueService),
   new GetSignupsCommand(authService, signupsService, staticValueService),
   new ComputeScrimCommand(authService, scrimService),
+  new ComputeAllEloCommand(authService, eloService),
   new CloseScrimCommand(authService, scrimService),
 
   new ChangeTeamNameCommand(rosterService),

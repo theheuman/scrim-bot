@@ -341,7 +341,7 @@ export abstract class DB {
         comparator: "eq",
         value: overstatId,
       },
-      ["id", "display_name", "discord_id"],
+      ["id", "display_name", "discord_id", "elo"],
     );
     if (dbData.length > 0) {
       return {
@@ -349,10 +349,52 @@ export abstract class DB {
         displayName: dbData[0].display_name as string,
         id: dbData[0].id as string,
         overstatId,
+        elo: dbData[0].elo as number | undefined,
       };
     } else {
       return undefined;
     }
+  }
+
+  async getPlayersByOverstatIds(overstatIds: string[]): Promise<Player[]> {
+    if (overstatIds.length === 0) return [];
+
+    // We need to use "or" operator with multiple expressions
+    const expressions: Expression[] = overstatIds.map((id) => ({
+      fieldName: "overstat_id",
+      comparator: "eq",
+      value: id,
+    }));
+
+    const dbData = await this.get(
+      DbTable.players,
+      {
+        operator: "or",
+        expressions: expressions,
+      },
+      ["id", "display_name", "discord_id", "overstat_id", "elo"],
+    );
+
+    return dbData.map((data) => ({
+      id: data.id as string,
+      discordId: data.discord_id as string,
+      displayName: data.display_name as string,
+      overstatId: data.overstat_id as string,
+      elo: data.elo as number | undefined,
+    }));
+  }
+
+  async updatePlayerElo(overstatId: string, elo: number): Promise<void> {
+    await this.update(
+      DbTable.players,
+      {
+        fieldName: "overstat_id",
+        comparator: "eq",
+        value: overstatId,
+      },
+      { elo },
+      ["id"],
+    );
   }
 
   async getScrimsByDiscordChannel(discordChannelID: string): Promise<Scrim[]> {
