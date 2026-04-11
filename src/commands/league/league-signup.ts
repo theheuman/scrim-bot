@@ -6,7 +6,8 @@ import { Snowflake, User } from "discord.js";
 import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
 import { auth, sheets } from "@googleapis/sheets";
-import { SheetHelper, SpreadSheetType } from "../../utility/sheet-helper";
+import { SheetHelper } from "../../utility/sheet-helper";
+import { DB } from "../../db/db";
 
 export class LeagueSignupCommand extends MemberCommand {
   inputNames = {
@@ -40,7 +41,10 @@ export class LeagueSignupCommand extends MemberCommand {
     comments: "additional-comments",
   };
 
-  constructor(private overstatService: OverstatService) {
+  constructor(
+    private overstatService: OverstatService,
+    private db: DB,
+  ) {
     super("league-signup", "Signup for the league");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
@@ -356,13 +360,20 @@ export class LeagueSignupCommand extends MemberCommand {
       ],
     ];
 
+    const sheetsClient = sheets({ version: "v4" });
+    const activeSeason = await this.db.getActiveLeagueSeason();
+    if (!activeSeason) {
+      throw new Error("No season found with active signups.");
+    }
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      SpreadSheetType.PROD_SHEET,
+      {
+        id: activeSeason.googleSheetId,
+        range: `${activeSeason.googleSheetName}!${activeSeason.googleSheetRangeStart}`,
+      },
     );
 
-    const sheetsClient = sheets({ version: "v4" });
     const response = await sheetsClient.spreadsheets.values.append(request);
     console.log(response.data);
     const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(

@@ -390,6 +390,49 @@ export abstract class DB {
     >;
   }
 
+  async getActiveLeagueSeason(date: Date = new Date()): Promise<{
+    id: string;
+    googleSheetId: string;
+    googleSheetName: string;
+    googleSheetRangeStart: string;
+  } | null> {
+    const dbData = await this.get(
+      DbTable.leagueSeasons,
+      {
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "signup_start_date",
+            comparator: "lte",
+            value: date,
+          },
+          {
+            fieldName: "signup_end_date",
+            comparator: "gte",
+            value: date,
+          },
+        ],
+      },
+      [
+        "id",
+        "google_sheet_id",
+        "google_sheet_name",
+        "google_sheet_range_start",
+      ],
+    );
+
+    if (dbData.length > 0) {
+      return {
+        id: dbData[0].id as string,
+        googleSheetId: dbData[0].google_sheet_id as string,
+        googleSheetName: dbData[0].google_sheet_name as string,
+        googleSheetRangeStart: dbData[0].google_sheet_range_start as string,
+      };
+    } else {
+      return null;
+    }
+  }
+
   async getScrimSignupsWithPlayers(
     scrimId: string,
   ): Promise<ScrimSignupsWithPlayers[]> {

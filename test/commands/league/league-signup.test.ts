@@ -22,6 +22,7 @@ import Resource$Spreadsheets = GoogleSheets.sheets_v4.Resource$Spreadsheets;
 import Sheets = GoogleSheets.sheets_v4.Sheets;
 import Params$Resource$Spreadsheets$Values$Append = GoogleSheets.sheets_v4.Params$Resource$Spreadsheets$Values$Append;
 import { DB } from "../../../src/db/db";
+import { DbMock } from "../../mocks/db.mock";
 
 class MockGoogleAuth {
   getClient() {
@@ -44,6 +45,16 @@ describe("Sign up", () => {
   let googleSheetsRequestSpy: SpyInstance<
     Promise<GaxiosResponseWithHTTP2<Readable>>,
     [request: Params$Resource$Spreadsheets$Values$Append],
+    string
+  >;
+  let dbGetActiveLeagueSeasonSpy: SpyInstance<
+    Promise<{
+      id: string;
+      googleSheetId: string;
+      googleSheetName: string;
+      googleSheetRangeStart: string;
+    } | null>,
+    [date?: Date],
     string
   >;
   let getPlayerOverstatSpy: SpyInstance;
@@ -73,11 +84,14 @@ describe("Sign up", () => {
   } as User;
 
   let mockOverstatService: OverstatService;
+  let mockDb: DbMock;
 
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
+    mockDb = new DbMock();
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
+      mockDb,
     );
     basicInteraction = {
       channelId: "forum thread id",
@@ -152,17 +166,30 @@ describe("Sign up", () => {
           overstatLink,
         );
       });
+    dbGetActiveLeagueSeasonSpy = jest.spyOn(mockDb, "getActiveLeagueSeason");
+    dbGetActiveLeagueSeasonSpy.mockReturnValue(
+      Promise.resolve({
+        id: "1",
+        googleSheetId: "google_sheet_id",
+        googleSheetName: "tab_name",
+        googleSheetRangeStart: "A1",
+      }),
+    );
   });
 
   beforeEach(() => {
-    followUpSpy.mockClear();
-    googleSheetsRequestSpy.mockClear();
-    command = new LeagueSignupCommand(mockOverstatService);
+    command = new LeagueSignupCommand(mockOverstatService, mockDb);
     getPlayerOverstatSpy = jest
       .spyOn(mockOverstatService, "getPlayerOverstat")
       .mockImplementation(() => {
         throw Error("Rejected get player overstat promise");
       });
+    followUpSpy.mockClear();
+    googleSheetsRequestSpy.mockClear();
+    invisibleReplySpy.mockClear();
+    dbGetActiveLeagueSeasonSpy.mockClear();
+    getPlayerOverstatSpy.mockClear();
+    googleSheetsSpy.mockClear();
   });
 
   it("Should complete signup", async () => {
@@ -172,7 +199,7 @@ describe("Sign up", () => {
     await command.run(basicInteraction);
     expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
       auth: undefined,
-      range: "Discord Submittals!A1",
+      range: "tab_name!A1",
       requestBody: {
         values: [
           [
@@ -206,7 +233,7 @@ describe("Sign up", () => {
           ],
         ],
       },
-      spreadsheetId: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
+      spreadsheetId: "google_sheet_id",
       valueInputOption: "USER_ENTERED",
     });
     expect(followUpSpy).toHaveBeenCalledWith(
@@ -234,7 +261,7 @@ describe("Sign up", () => {
     await command.run(basicInteraction);
     expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
       auth: undefined,
-      range: "Discord Submittals!A1",
+      range: "tab_name!A1",
       requestBody: {
         values: [
           [
@@ -268,7 +295,7 @@ describe("Sign up", () => {
           ],
         ],
       },
-      spreadsheetId: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
+      spreadsheetId: "google_sheet_id",
       valueInputOption: "USER_ENTERED",
     });
     expect(followUpSpy).toHaveBeenCalledWith(
@@ -344,7 +371,15 @@ describe("Sign up", () => {
       );
     });
 
-    it("Should complete signup with db filled overstat", async () => {
+    it("should not complete the signup because the no active league season", async () => {
+      dbGetActiveLeagueSeasonSpy.mockReturnValueOnce(Promise.resolve(null));
+      await command.run(basicInteraction);
+      expect(followUpSpy).toHaveBeenCalledWith(
+        `Team not signed up. Error: No season found with active signups.`,
+      );
+    });
+
+    it("Should not complete signup since overstat link is not valid", async () => {
       getPlayerOverstatSpy.mockReturnValue(
         Promise.resolve(getPlayerOverstatUrl("123")),
       );
@@ -393,6 +428,7 @@ describe("Sign up", () => {
   const getPlayerRank = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
+      new DbMock(),
     );
     if (
       key ===
@@ -419,6 +455,7 @@ describe("Sign up", () => {
   const getPlayerDivision = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
+      new DbMock(),
     );
     if (
       key ===
@@ -448,6 +485,7 @@ describe("Sign up", () => {
   const getPlayerOverstat = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
+      new DbMock(),
     );
     if (
       key ===
@@ -477,6 +515,7 @@ describe("Sign up", () => {
   const getPlayerPlatform = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
+      new DbMock(),
     );
     if (
       key ===

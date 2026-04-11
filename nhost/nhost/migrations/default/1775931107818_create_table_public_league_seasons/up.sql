@@ -1,0 +1,1 @@
+CREATE TABLE public.league_seasons (id uuid DEFAULT gen_random_uuid() NOT NULL, name text UNIQUE NOT NULL, signup_start_date timestamptz NOT NULL, signup_prio_end_date timestamptz NOT NULL, signup_end_date timestamptz NOT NULL, start_date timestamptz NOT NULL, PRIMARY KEY (id));
