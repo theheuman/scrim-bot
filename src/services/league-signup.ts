@@ -47,7 +47,7 @@ export interface SheetsPlayer {
   overstatLink: string | undefined;
 }
 
-export class LeagueSignupService {
+export class LeagueService {
   constructor(private db: DB) {}
 
   async signup(

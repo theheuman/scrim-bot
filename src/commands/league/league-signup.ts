@@ -4,7 +4,7 @@ import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
 import { User } from "discord.js";
 import {
-  LeagueSignupService,
+  LeagueService,
   SheetsPlayer,
   PlayerRank,
   Platform,
@@ -45,7 +45,7 @@ export class LeagueSignupCommand extends MemberCommand {
 
   constructor(
     private overstatService: OverstatService,
-    private leagueSignupService: LeagueSignupService,
+    private leagueSignupService: LeagueService,
   ) {
     super("league-signup", "Signup for the league");
     this.addStringInput(this.inputNames.teamName, "Team name", {

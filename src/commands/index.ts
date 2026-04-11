@@ -22,7 +22,7 @@ import {
   scrimService,
   staticValueService,
   banService,
-  leagueSignupService,
+  leagueService,
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
@@ -66,7 +66,7 @@ export const scrimCommands: Command[] = [
 ];
 
 export const leagueCommands: Command[] = [
-  new LeagueSignupCommand(overstatService, leagueSignupService),
+  new LeagueSignupCommand(overstatService, leagueService),
   new RoleAssignmentCommand(authService),
 ];
 
