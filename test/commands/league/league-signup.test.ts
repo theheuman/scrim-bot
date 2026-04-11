@@ -9,6 +9,7 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
+import { LeagueSignupService } from "../../../src/services/league-signup";
 import * as GoogleSheets from "@googleapis/sheets";
 
 import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
@@ -91,7 +92,7 @@ describe("Sign up", () => {
     mockDb = new DbMock();
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      mockDb,
+      new LeagueSignupService(mockDb),
     );
     basicInteraction = {
       channelId: "forum thread id",
@@ -178,7 +179,10 @@ describe("Sign up", () => {
   });
 
   beforeEach(() => {
-    command = new LeagueSignupCommand(mockOverstatService, mockDb);
+    command = new LeagueSignupCommand(
+      mockOverstatService,
+      new LeagueSignupService(mockDb),
+    );
     getPlayerOverstatSpy = jest
       .spyOn(mockOverstatService, "getPlayerOverstat")
       .mockImplementation(() => {
@@ -428,7 +432,7 @@ describe("Sign up", () => {
   const getPlayerRank = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new DbMock(),
+      new LeagueSignupService(new DbMock()),
     );
     if (
       key ===
@@ -455,7 +459,7 @@ describe("Sign up", () => {
   const getPlayerDivision = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new DbMock(),
+      new LeagueSignupService(new DbMock()),
     );
     if (
       key ===
@@ -485,7 +489,7 @@ describe("Sign up", () => {
   const getPlayerOverstat = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new DbMock(),
+      new LeagueSignupService(new DbMock()),
     );
     if (
       key ===
@@ -515,7 +519,7 @@ describe("Sign up", () => {
   const getPlayerPlatform = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new DbMock(),
+      new LeagueSignupService(new DbMock()),
     );
     if (
       key ===
