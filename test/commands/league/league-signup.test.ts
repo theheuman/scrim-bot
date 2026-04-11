@@ -9,27 +9,14 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
-import { LeagueSignupService } from "../../../src/services/league-signup";
-import * as GoogleSheets from "@googleapis/sheets";
-
-import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
-import { Readable } from "stream";
-import { OverstatServiceMock } from "../../mocks/overstat.mock";
+import { LeagueService } from "../../../src/services/league-signup";
+import { LeagueServiceMock } from "../../mocks/league.mock";
 import {
   getPlayerOverstatUrl,
   OverstatService,
 } from "../../../src/services/overstat";
-import Resource$Spreadsheets = GoogleSheets.sheets_v4.Resource$Spreadsheets;
-import Sheets = GoogleSheets.sheets_v4.Sheets;
-import Params$Resource$Spreadsheets$Values$Append = GoogleSheets.sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { DB } from "../../../src/db/db";
-import { DbMock } from "../../mocks/db.mock";
-
-class MockGoogleAuth {
-  getClient() {
-    return undefined;
-  }
-}
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -43,23 +30,8 @@ describe("Sign up", () => {
     [message: string],
     string
   >;
-  let googleSheetsRequestSpy: SpyInstance<
-    Promise<GaxiosResponseWithHTTP2<Readable>>,
-    [request: Params$Resource$Spreadsheets$Values$Append],
-    string
-  >;
-  let dbGetActiveLeagueSeasonSpy: SpyInstance<
-    Promise<{
-      id: string;
-      googleSheetId: string;
-      googleSheetName: string;
-      googleSheetRangeStart: string;
-    } | null>,
-    [date?: Date],
-    string
-  >;
   let getPlayerOverstatSpy: SpyInstance;
-  let googleSheetsSpy: SpyInstance;
+  let signupSpy: SpyInstance;
 
   let command: LeagueSignupCommand;
 
@@ -85,14 +57,14 @@ describe("Sign up", () => {
   } as User;
 
   let mockOverstatService: OverstatService;
-  let mockDb: DbMock;
+  let mockLeagueService: LeagueService;
 
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
-    mockDb = new DbMock();
+    mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new LeagueSignupService(mockDb),
+      mockLeagueService,
     );
     basicInteraction = {
       channelId: "forum thread id",
@@ -137,29 +109,8 @@ describe("Sign up", () => {
     } as unknown as CustomInteraction;
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     invisibleReplySpy = jest.spyOn(basicInteraction, "invisibleReply");
+    signupSpy = jest.spyOn(mockLeagueService, "signup").mockResolvedValue(0);
 
-    const googleValuesMethods = {
-      append: (
-        request: Params$Resource$Spreadsheets$Values$Append,
-      ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
-        Promise.resolve({
-          data: {
-            updates: {
-              updatedRange: "'Discord Submittals'!A1:Y1",
-            },
-            request: "Request data " + request.key,
-          },
-        } as GaxiosResponseWithHTTP2),
-    };
-    googleSheetsRequestSpy = jest.spyOn(googleValuesMethods, "append");
-    googleSheetsSpy = jest.spyOn(GoogleSheets, "sheets").mockReturnValue({
-      spreadsheets: {
-        values: googleValuesMethods,
-      } as unknown as Resource$Spreadsheets,
-    } as Sheets);
-    jest
-      .spyOn(GoogleSheets.auth, "GoogleAuth")
-      .mockReturnValue(new MockGoogleAuth() as unknown as GoogleAuth);
     jest
       .spyOn(mockOverstatService, "getPlayerId")
       .mockImplementation((overstatLink) => {
@@ -167,33 +118,19 @@ describe("Sign up", () => {
           overstatLink,
         );
       });
-    dbGetActiveLeagueSeasonSpy = jest.spyOn(mockDb, "getActiveLeagueSeason");
-    dbGetActiveLeagueSeasonSpy.mockReturnValue(
-      Promise.resolve({
-        id: "1",
-        googleSheetId: "google_sheet_id",
-        googleSheetName: "tab_name",
-        googleSheetRangeStart: "A1",
-      }),
-    );
   });
 
   beforeEach(() => {
-    command = new LeagueSignupCommand(
-      mockOverstatService,
-      new LeagueSignupService(mockDb),
-    );
+    command = new LeagueSignupCommand(mockOverstatService, mockLeagueService);
     getPlayerOverstatSpy = jest
       .spyOn(mockOverstatService, "getPlayerOverstat")
       .mockImplementation(() => {
         throw Error("Rejected get player overstat promise");
       });
     followUpSpy.mockClear();
-    googleSheetsRequestSpy.mockClear();
     invisibleReplySpy.mockClear();
-    dbGetActiveLeagueSeasonSpy.mockClear();
     getPlayerOverstatSpy.mockClear();
-    googleSheetsSpy.mockClear();
+    signupSpy.mockClear();
   });
 
   it("Should complete signup", async () => {
@@ -201,45 +138,39 @@ describe("Sign up", () => {
     jest.useFakeTimers();
     jest.setSystemTime(date);
     await command.run(basicInteraction);
-    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
-      auth: undefined,
-      range: "tab_name!A1",
-      requestBody: {
-        values: [
-          [
-            date.toISOString(),
-            "team name",
-            "Mondays",
-            "2 days a week, 2 years, EEC",
-            "2 returning players",
-            player1.displayName,
-            player1.id,
-            overstats.player1,
-            "Division1",
-            "Bronze",
-            "pc",
-            "No elo on record",
-            player2.displayName,
-            player2.id,
-            overstats.player2,
-            "Division2",
-            "Silver",
-            "playstation",
-            "No elo on record",
-            player3.displayName,
-            player3.id,
-            "No overstat",
-            "None",
-            "Gold",
-            "xbox",
-            "No elo on record",
-            "Additional comments provided by the user",
-          ],
-        ],
+    expect(signupSpy).toHaveBeenCalledWith(
+      "team name",
+      "Mondays",
+      "2 days a week, 2 years, EEC",
+      {
+        elo: undefined,
+        platform: platforms.player1,
+        name: player1.displayName,
+        discordId: player1.id,
+        rank: ranks.player1,
+        overstatLink: overstats.player1,
+        previous_season_vesa_division: divisions.player1,
       },
-      spreadsheetId: "google_sheet_id",
-      valueInputOption: "USER_ENTERED",
-    });
+      {
+        elo: undefined,
+        platform: platforms.player2,
+        name: player2.displayName,
+        discordId: player2.id,
+        rank: ranks.player2,
+        overstatLink: overstats.player2,
+        previous_season_vesa_division: divisions.player2,
+      },
+      {
+        elo: undefined,
+        platform: platforms.player3,
+        name: player3.displayName,
+        discordId: player3.id,
+        rank: ranks.player3,
+        overstatLink: undefined,
+        previous_season_vesa_division: divisions.player3,
+      },
+      "Additional comments provided by the user",
+    );
     expect(followUpSpy).toHaveBeenCalledWith(
       `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually`,
     );
@@ -263,45 +194,39 @@ describe("Sign up", () => {
     jest.useFakeTimers();
     jest.setSystemTime(date);
     await command.run(basicInteraction);
-    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
-      auth: undefined,
-      range: "tab_name!A1",
-      requestBody: {
-        values: [
-          [
-            date.toISOString(),
-            "team name",
-            "Mondays",
-            "2 days a week, 2 years, EEC",
-            "2 returning players",
-            player1.displayName,
-            player1.id,
-            overstats.player1,
-            "Division1",
-            "Bronze",
-            "pc",
-            "No elo on record",
-            player2.displayName,
-            player2.id,
-            overstats.player2,
-            "Division2",
-            "Silver",
-            "playstation",
-            "No elo on record",
-            player3.displayName,
-            player3.id,
-            "overstat from db",
-            "None",
-            "Gold",
-            "xbox",
-            "No elo on record",
-            "Additional comments provided by the user",
-          ],
-        ],
+    expect(signupSpy).toHaveBeenCalledWith(
+      "team name",
+      "Mondays",
+      "2 days a week, 2 years, EEC",
+      {
+        elo: undefined,
+        platform: platforms.player1,
+        name: player1.displayName,
+        discordId: player1.id,
+        rank: ranks.player1,
+        overstatLink: overstats.player1,
+        previous_season_vesa_division: divisions.player1,
       },
-      spreadsheetId: "google_sheet_id",
-      valueInputOption: "USER_ENTERED",
-    });
+      {
+        elo: undefined,
+        platform: platforms.player2,
+        name: player2.displayName,
+        discordId: player2.id,
+        rank: ranks.player2,
+        overstatLink: overstats.player2,
+        previous_season_vesa_division: divisions.player2,
+      },
+      {
+        elo: undefined,
+        platform: platforms.player3,
+        name: player3.displayName,
+        discordId: player3.id,
+        rank: ranks.player3,
+        overstatLink: "overstat from db",
+        previous_season_vesa_division: divisions.player3,
+      },
+      "Additional comments provided by the user",
+    );
     expect(followUpSpy).toHaveBeenCalledWith(
       `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually`,
     );
@@ -309,29 +234,11 @@ describe("Sign up", () => {
   });
 
   it("Should complete signup but warn that response can't be parsed", async () => {
-    const localGoogleValueMethods = {
-      append: (
-        request: Params$Resource$Spreadsheets$Values$Append,
-      ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
-        Promise.resolve({
-          data: {
-            updates: {
-              updatedRange: "weird unparseable string",
-            },
-            request: "Request data " + request.key,
-          },
-        } as GaxiosResponseWithHTTP2),
-    };
-    googleSheetsSpy.mockReturnValueOnce({
-      spreadsheets: {
-        values: localGoogleValueMethods,
-      } as unknown as Resource$Spreadsheets,
-    } as Sheets);
-    const localGoogleRequestSpy = jest.spyOn(localGoogleValueMethods, "append");
+    signupSpy.mockResolvedValueOnce(null);
 
     await command.run(basicInteraction);
-    // re initialize request spy to spy on the local append method
-    expect(localGoogleRequestSpy).toHaveBeenCalled();
+
+    expect(signupSpy).toHaveBeenCalled();
     expect(followUpSpy).toHaveBeenCalledWith(
       `Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting`,
     );
@@ -354,9 +261,7 @@ describe("Sign up", () => {
     });
 
     it("should not complete the signup because google did a bad", async () => {
-      googleSheetsRequestSpy.mockImplementationOnce(async () => {
-        throw Error("Sheets Failure");
-      });
+      signupSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
       await command.run(basicInteraction);
       expect(followUpSpy).toHaveBeenCalledWith(
         "Team not signed up. Error: Sheets Failure",
@@ -376,7 +281,9 @@ describe("Sign up", () => {
     });
 
     it("should not complete the signup because the no active league season", async () => {
-      dbGetActiveLeagueSeasonSpy.mockReturnValueOnce(Promise.resolve(null));
+      signupSpy.mockRejectedValueOnce(
+        new Error("No season found with active signups."),
+      );
       await command.run(basicInteraction);
       expect(followUpSpy).toHaveBeenCalledWith(
         `Team not signed up. Error: No season found with active signups.`,
@@ -432,7 +339,7 @@ describe("Sign up", () => {
   const getPlayerRank = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new LeagueSignupService(new DbMock()),
+      new LeagueServiceMock() as unknown as LeagueService,
     );
     if (
       key ===
@@ -459,7 +366,7 @@ describe("Sign up", () => {
   const getPlayerDivision = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new LeagueSignupService(new DbMock()),
+      new LeagueServiceMock() as unknown as LeagueService,
     );
     if (
       key ===
@@ -489,7 +396,7 @@ describe("Sign up", () => {
   const getPlayerOverstat = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new LeagueSignupService(new DbMock()),
+      new LeagueServiceMock() as unknown as LeagueService,
     );
     if (
       key ===
@@ -519,7 +426,7 @@ describe("Sign up", () => {
   const getPlayerPlatform = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
       mockOverstatService,
-      new LeagueSignupService(new DbMock()),
+      new LeagueServiceMock() as unknown as LeagueService,
     );
     if (
       key ===

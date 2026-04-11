@@ -45,7 +45,7 @@ export class LeagueSignupCommand extends MemberCommand {
 
   constructor(
     private overstatService: OverstatService,
-    private leagueSignupService: LeagueService,
+    private leagueService: LeagueService,
   ) {
     super("league-signup", "Signup for the league");
     this.addStringInput(this.inputNames.teamName, "Team name", {
@@ -221,7 +221,7 @@ export class LeagueSignupCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const signupNumber = await this.leagueSignupService.signup(
+      const signupNumber = await this.leagueService.signup(
         teamName,
         teamNoDays ?? "Open schedule",
         compExperience,
