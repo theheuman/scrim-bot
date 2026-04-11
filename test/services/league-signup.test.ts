@@ -95,6 +95,8 @@ describe("League Service", () => {
         googleSheetId: "google_sheet_id",
         googleSheetName: "tab_name",
         googleSheetRangeStart: "A1",
+        signupPrioEndDate: "2025-12-25T00:00:00Z",
+        startDate: "2026-01-01T00:00:00Z",
       }),
     );
   });
@@ -120,7 +122,7 @@ describe("League Service", () => {
       "Additional comments provided by the user",
     );
 
-    expect(result).toBe(0); // Assuming the row number mock returns 1 - 1 = 0
+    expect(result?.rowNumber).toBe(0); // Assuming the row number mock returns 1 - 1 = 0
     expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
       auth: undefined,
       range: "tab_name!A1",

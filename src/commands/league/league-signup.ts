@@ -221,7 +221,7 @@ export class LeagueSignupCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const signupNumber = await this.leagueService.signup(
+      const signupResult = await this.leagueService.signup(
         teamName,
         teamNoDays ?? "Open schedule",
         compExperience,
@@ -230,7 +230,7 @@ export class LeagueSignupCommand extends MemberCommand {
         player3,
         additionalComments ?? "",
       );
-      if (signupNumber === null) {
+      if (!signupResult) {
         await interaction.followUp(
           "Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting",
         );
@@ -243,8 +243,20 @@ export class LeagueSignupCommand extends MemberCommand {
           discordId: signupPlayer.id,
         },
       });
+
+      let additionalInfo = "";
+      const currentDate = new Date();
+      if (new Date(signupResult.seasonInfo.startDate) < currentDate) {
+        additionalInfo =
+          "\nThe season is already ongoing, the team will be placed on the waitlist to fill in for teams that drop out.";
+      } else if (
+        new Date(signupResult.seasonInfo.signupPrioEndDate) < currentDate
+      ) {
+        additionalInfo = "\nSignup occurred after the priority window ended.";
+      }
+
       await interaction.followUp(
-        `${signupString}\nSignup #${signupNumber}. Your priority based on returning players will be determined by admins manually`,
+        `${signupString}\nSignup #${signupResult.rowNumber}. Your priority based on returning players will be determined by admins manually${additionalInfo}`,
       );
     } catch (e) {
       await interaction.followUp(`Team not signed up. ${e}`);

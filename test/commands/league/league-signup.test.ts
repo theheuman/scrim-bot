@@ -109,7 +109,13 @@ describe("Sign up", () => {
     } as unknown as CustomInteraction;
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     invisibleReplySpy = jest.spyOn(basicInteraction, "invisibleReply");
-    signupSpy = jest.spyOn(mockLeagueService, "signup").mockResolvedValue(0);
+    signupSpy = jest.spyOn(mockLeagueService, "signup").mockResolvedValue({
+      rowNumber: 0,
+      seasonInfo: {
+        signupPrioEndDate: new Date("2026-01-01T00:00:00Z").toISOString(),
+        startDate: new Date("2026-02-01T00:00:00Z").toISOString(),
+      },
+    });
 
     jest
       .spyOn(mockOverstatService, "getPlayerId")
@@ -242,6 +248,44 @@ describe("Sign up", () => {
     expect(followUpSpy).toHaveBeenCalledWith(
       `Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting`,
     );
+  });
+
+  it("Should complete signup and warn that season is ongoing", async () => {
+    signupSpy.mockResolvedValueOnce({
+      rowNumber: 0,
+      seasonInfo: {
+        signupPrioEndDate: new Date("2025-10-01T00:00:00Z").toISOString(),
+        startDate: new Date("2025-11-01T00:00:00Z").toISOString(),
+      },
+    });
+    const date = new Date("2025-12-26T18:55:23.264Z");
+    jest.useFakeTimers();
+    jest.setSystemTime(date);
+
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually\nThe season is already ongoing, the team will be placed on the waitlist to fill in for teams that drop out.`,
+    );
+    jest.useRealTimers();
+  });
+
+  it("Should complete signup and warn about priority date", async () => {
+    signupSpy.mockResolvedValueOnce({
+      rowNumber: 0,
+      seasonInfo: {
+        signupPrioEndDate: new Date("2025-11-01T00:00:00Z").toISOString(),
+        startDate: new Date("2026-01-01T00:00:00Z").toISOString(),
+      },
+    });
+    const date = new Date("2025-12-26T18:55:23.264Z");
+    jest.useFakeTimers();
+    jest.setSystemTime(date);
+
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `__team name__\nSigned up by: <@player1id>.\nPlayers: <@player1id>, <@player2id>, <@player3id>.\nSignup #0. Your priority based on returning players will be determined by admins manually\nSignup occurred after the priority window ended.`,
+    );
+    jest.useRealTimers();
   });
 
   describe("errors", () => {

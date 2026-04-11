@@ -47,6 +47,14 @@ export interface SheetsPlayer {
   overstatLink: string | undefined;
 }
 
+export interface SignupResult {
+  rowNumber: number;
+  seasonInfo: {
+    signupPrioEndDate: string;
+    startDate: string;
+  };
+}
+
 export class LeagueService {
   constructor(private db: DB) {}
 
@@ -58,7 +66,7 @@ export class LeagueService {
     player2: SheetsPlayer,
     player3: SheetsPlayer,
     additionalComments: string,
-  ): Promise<number | null> {
+  ): Promise<SignupResult | null> {
     const authClient = await this.getAuthClient();
 
     const returningPlayersCount = [player1, player2, player3].reduce(
@@ -104,7 +112,18 @@ export class LeagueService {
     const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
       response.data.updates,
     );
-    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
+
+    if (!rowNumber) {
+      return null;
+    } else {
+      return {
+        rowNumber: rowNumber - SheetHelper.STARTING_CELL_OFFSET,
+        seasonInfo: {
+          signupPrioEndDate: activeSeason.signupPrioEndDate,
+          startDate: activeSeason.startDate,
+        },
+      };
+    }
   }
 
   private convertSheetsPlayer(player: SheetsPlayer): (string | number)[] {
