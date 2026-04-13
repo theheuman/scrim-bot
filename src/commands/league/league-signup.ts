@@ -20,7 +20,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player1inputNames: {
       user: "player1",
       rank: "player1-rank",
-      lastSeasonDivision: "player1-s12-vesa-division",
+      lastSeasonDivision: "player1-previous-vesa-division",
       overstatLink: "player1-overstat-link",
       platform: "player1-platform",
     },
@@ -28,7 +28,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player2inputNames: {
       user: "player2",
       rank: "player2-rank",
-      lastSeasonDivision: "player2-s12-vesa-division",
+      lastSeasonDivision: "player2-previous-vesa-division",
       overstatLink: "player2-overstat-link",
       platform: "player2-platform",
     },
@@ -36,7 +36,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player3inputNames: {
       user: "player3",
       rank: "player3-rank",
-      lastSeasonDivision: "player3-s12-vesa-division",
+      lastSeasonDivision: "player3-previous-vesa-division",
       overstatLink: "player3-overstat-link",
       platform: "player3-platform",
     },
@@ -70,19 +70,19 @@ export class LeagueSignupCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.player1inputNames.rank,
-      "Player 1 last seasons peak rank",
+      "Player 1 last apex seasons peak rank",
       PlayerRank,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player2inputNames.rank,
-      "Player 2 last seasons peak rank",
+      "Player 2 last apex seasons peak rank",
       PlayerRank,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player3inputNames.rank,
-      "Player 3 last seasons peak rank",
+      "Player 3 last apex seasons peak rank",
       PlayerRank,
       true,
     );
@@ -130,19 +130,19 @@ export class LeagueSignupCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.player1inputNames.lastSeasonDivision,
-      "Player 1 VESA season 12 division",
+      "Player 1 most recent VESA season division",
       VesaDivision,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player2inputNames.lastSeasonDivision,
-      "Player 2 VESA season 12 division",
+      "Player 2 most recent VESA season division",
       VesaDivision,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player3inputNames.lastSeasonDivision,
-      "Player 3 VESA season 12 division",
+      "Player 3 most recent VESA season division",
       VesaDivision,
       true,
     );
