@@ -6,6 +6,10 @@ export class StaticValueServiceMock {
     return "3568173514";
   }
 
+  async getScrimScoresChannelId(): Promise<string | undefined> {
+    return "scores-channel-id";
+  }
+
   async getScrimInfoTimes(scrimDate: Date): Promise<{
     lobbyPostDate: Date;
     lowPrioDate: Date;

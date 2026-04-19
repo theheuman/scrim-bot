@@ -130,7 +130,7 @@ describe("Compute scrim", () => {
     await command.run(basicInteraction);
     expect(sendScoresComputedMessageSpy).toHaveBeenCalledTimes(1);
     expect(sendScoresComputedMessageSpy).toHaveBeenCalledWith(mockDateTime, [
-      { name: "MockLobbyName", link: "overstat.link" },
+      { name: "Mock Lobby Name", link: "overstat.link" },
     ]);
   });
 

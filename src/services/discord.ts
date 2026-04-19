@@ -59,7 +59,7 @@ export class DiscordService {
       throw new Error("Scores channel not found or not a text channel");
     }
     const lobbyLines = lobbies
-      .map((lobby) => `${lobby.name}: ${lobby.link}`)
+      .map((lobby) => `[${lobby.name}](<${lobby.link}>)`)
       .join("\n");
     await channel.send(`${formatDateForDiscord(date)}\n${lobbyLines}`);
   }

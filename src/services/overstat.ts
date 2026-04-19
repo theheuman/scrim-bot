@@ -33,7 +33,9 @@ export class OverstatService {
     const url = new URL(overstatLink);
     const tournamentName = url.pathname.split("/")[3];
     const namePart = tournamentName.split(".").slice(1).join(".");
-    return namePart || tournamentName;
+    return (namePart || tournamentName)
+      .replace(/_/g, " ")
+      .replace(/ \d{1,2} \d{1,2} \d{4}$/, "");
   }
 
   validateLinkUrl(overstatLink: string): string {

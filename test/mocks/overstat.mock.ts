@@ -34,7 +34,7 @@ export class OverstatServiceMock {
 
   getLobbyName(overstatLink: string): string {
     console.log("Mock overstat service getLobbyName", overstatLink);
-    return "MockLobbyName";
+    return "Mock Lobby Name";
   }
 
   getPlayerId(overstatLink: string): string {
