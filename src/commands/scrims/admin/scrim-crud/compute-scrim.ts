@@ -2,11 +2,15 @@ import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { ScrimService } from "../../../../services/scrim-service";
 import { AuthService } from "../../../../services/auth";
+import { DiscordService } from "../../../../services/discord";
+import { OverstatService } from "../../../../services/overstat";
 
 export class ComputeScrimCommand extends AdminCommand {
   constructor(
     authService: AuthService,
     private scrimService: ScrimService,
+    private discordService: DiscordService,
+    private overstatService: OverstatService,
   ) {
     super(authService, "compute-scrim", "Computes stats for this scrim");
     this.addStringInput(
@@ -50,18 +54,39 @@ export class ComputeScrimCommand extends AdminCommand {
     });
 
     try {
-      const linksComputed = await this.scrimService.computeScrim(
-        channelId,
-        overstatLinks,
-      );
+      const { links: linksComputed, dateTime } =
+        await this.scrimService.computeScrim(channelId, overstatLinks);
       await interaction.deleteReply();
       const prefix =
         linksComputed.length === 1 ? "scrim lobby" : "scrim lobbies";
       await interaction.followUp(
         `${linksComputed.length} ${prefix} successfully computed, you can now close the scrim`,
       );
+      await this.sendScoresComputedMessage(
+        interaction,
+        dateTime,
+        linksComputed,
+      );
     } catch (error) {
       await interaction.editReply(`Scrim not computed. ${error}`);
+    }
+  }
+
+  private async sendScoresComputedMessage(
+    interaction: CustomInteraction,
+    dateTime: Date,
+    links: string[],
+  ) {
+    const lobbies = links.map((link) => ({
+      name: this.overstatService.getLobbyName(link),
+      link,
+    }));
+    try {
+      await this.discordService.sendScoresComputedMessage(dateTime, lobbies);
+    } catch (error) {
+      await interaction.followUp(
+        `Warning: Failed to send scores notification. ${error}`,
+      );
     }
   }
 }

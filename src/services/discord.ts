@@ -42,6 +42,28 @@ export class DiscordService {
     await description.edit(updatedMessage);
   }
 
+  async sendScoresComputedMessage(
+    date: Date,
+    lobbies: { name: string; link: string }[],
+  ): Promise<void> {
+    const channelId = await this.staticValueService.getScrimScoresChannelId();
+    if (!channelId) {
+      throw new Error("Scores channel ID not configured");
+    }
+    const guild = this.client.guilds.cache.get(appConfig.discord.guildId.scrim);
+    if (!guild) {
+      throw new Error("Guild not found");
+    }
+    const channel = guild.channels.cache.get(channelId);
+    if (!channel || !channel.isTextBased()) {
+      throw new Error("Scores channel not found or not a text channel");
+    }
+    const lobbyLines = lobbies
+      .map((lobby) => `[${lobby.name}](<${lobby.link}>)`)
+      .join("\n");
+    await channel.send(`${formatDateForDiscord(date)}\n${lobbyLines}`);
+  }
+
   private async replaceScrimVariablesFromScrim(
     text: string,
     scrim: Scrim,

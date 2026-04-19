@@ -63,7 +63,7 @@ export class ScrimService {
       discordChannelID,
     });
 
-    return overstatLinks;
+    return { links: overstatLinks, dateTime: scrims[0].dateTime };
   }
 
   private async computeAlreadyCreatedScrims(
