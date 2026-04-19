@@ -25,6 +25,10 @@ export class StaticValueService {
     return this.scrimPassRoleId;
   }
 
+  async getScrimScoresChannelId(): Promise<string | undefined> {
+    return this.fetchStaticValue("scrim_scores_channel_id");
+  }
+
   private async fetchStaticValue(key: string): Promise<string | undefined> {
     const dbResult: { value: DbValue }[] = await this.db.get(
       DbTable.staticKeyValues,

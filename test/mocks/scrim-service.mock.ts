@@ -15,13 +15,13 @@ export class ScrimServiceMock {
   async computeScrim(
     discordChannelID: string,
     overstatLinks: string[],
-  ): Promise<string[]> {
+  ): Promise<{ links: string[]; dateTime: Date }> {
     console.log(
       "Computing scrim in signup mock",
       discordChannelID,
       overstatLinks,
     );
-    return Promise.resolve(overstatLinks);
+    return Promise.resolve({ links: overstatLinks, dateTime: new Date() });
   }
 
   async closeScrim(discordChannelID: string) {

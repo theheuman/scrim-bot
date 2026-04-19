@@ -32,6 +32,11 @@ export class OverstatServiceMock {
     return "12345";
   }
 
+  getLobbyName(overstatLink: string): string {
+    console.log("Mock overstat service getLobbyName", overstatLink);
+    return "MockLobbyName";
+  }
+
   getPlayerId(overstatLink: string): string {
     console.log("Mock overstat service getPlayerId", overstatLink);
     return "12345";

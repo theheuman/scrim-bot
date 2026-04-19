@@ -198,7 +198,9 @@ describe("ScrimService", () => {
           },
         ]),
       );
-      await service.computeScrim(channelId, [overstatLink]);
+      const result = await service.computeScrim(channelId, [overstatLink]);
+      expect(result).toEqual({ links: [overstatLink], dateTime: time });
+
       expect(overallStatsForIdSpy).toHaveBeenCalledWith(overstatId);
       expect(overallStatsForIdSpy).toHaveBeenCalledTimes(1);
 
@@ -246,11 +248,16 @@ describe("ScrimService", () => {
             return lobby3OverstatId;
         }
       });
-      await service.computeScrim(channelId, [
+      const result = await service.computeScrim(channelId, [
         overstatLink,
         lobby2OverstatLink,
         lobby3OverstatLink,
       ]);
+      expect(result).toEqual({
+        links: [overstatLink, lobby2OverstatLink, lobby3OverstatLink],
+        dateTime: time,
+      });
+
       expect(getTournamentIdSpy.mock.calls).toEqual([
         [overstatLink],
         [lobby2OverstatLink],
@@ -308,7 +315,10 @@ describe("ScrimService", () => {
         }
       });
 
-      await service.computeScrim(channelId, [newLobbyOverstatLink]);
+      const result = await service.computeScrim(channelId, [
+        newLobbyOverstatLink,
+      ]);
+      expect(result).toEqual({ links: [newLobbyOverstatLink], dateTime: time });
 
       // need to spy on db.get
       expect(getTournamentIdSpy).toHaveBeenCalledWith(newLobbyOverstatLink);
@@ -340,7 +350,9 @@ describe("ScrimService", () => {
         ]),
       );
 
-      await service.computeScrim(channelId, [overstatLink]);
+      const result = await service.computeScrim(channelId, [overstatLink]);
+      expect(result).toEqual({ links: [overstatLink], dateTime: time });
+
       expect(overallStatsForIdSpy).toHaveBeenCalledWith(overstatId);
 
       expect(getTournamentIdSpy).toHaveBeenCalledWith(overstatLink);

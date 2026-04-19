@@ -15,6 +15,7 @@ import { SignupCommand } from "./scrims/signup/sign-up";
 import { SubPlayerCommand } from "./scrims/signup/sub-player";
 import {
   authService,
+  discordService,
   overstatService,
   prioService,
   rosterService,
@@ -55,7 +56,12 @@ export const scrimCommands: Command[] = [
 
   new CreateScrimCommand(authService, scrimService, staticValueService),
   new GetSignupsCommand(authService, signupsService, staticValueService),
-  new ComputeScrimCommand(authService, scrimService),
+  new ComputeScrimCommand(
+    authService,
+    scrimService,
+    discordService,
+    overstatService,
+  ),
   new CloseScrimCommand(authService, scrimService),
 
   new ChangeTeamNameCommand(rosterService),

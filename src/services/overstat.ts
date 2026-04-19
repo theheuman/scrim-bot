@@ -29,6 +29,13 @@ export class OverstatService {
     return tournamentId;
   }
 
+  public getLobbyName(overstatLink: string): string {
+    const url = new URL(overstatLink);
+    const tournamentName = url.pathname.split("/")[3];
+    const namePart = tournamentName.split(".").slice(1).join(".");
+    return namePart || tournamentName;
+  }
+
   validateLinkUrl(overstatLink: string): string {
     const url = new URL(overstatLink);
     if (url.hostname !== "overstat.gg") {
