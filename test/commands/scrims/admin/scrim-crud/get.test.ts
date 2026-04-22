@@ -19,6 +19,13 @@ import { StaticValueServiceMock } from "../../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../../src/services/static-values";
 import { SignupServiceMock } from "../../../../mocks/signups.mock";
 import { SignupService } from "../../../../../src/services/signups";
+import { MmrServiceMock } from "../../../../mocks/mmr.mock";
+import { MmrService } from "../../../../../src/services/mmr";
+
+jest.mock("node:fs", () => ({
+  writeFileSync: jest.fn(),
+  unlink: jest.fn(),
+}));
 
 describe("Get signups", () => {
   let basicInteraction: CustomInteraction;
@@ -46,6 +53,10 @@ describe("Get signups", () => {
     Promise<Role | null>,
     [id: Snowflake, options?: BaseFetchOptions],
     string
+  >;
+  let getMmrMapSpy: SpyInstance<
+    Promise<Map<string, number>>,
+    [forceRefresh?: boolean]
   >;
 
   const fakeDate = new Date();
@@ -103,6 +114,40 @@ describe("Get signups", () => {
 
   const mockSignupService = new SignupServiceMock();
   const mockStaticValueService = new StaticValueServiceMock();
+  const mockMmrService = new MmrServiceMock();
+
+  function generateTeams(count: number): ScrimSignup[] {
+    return Array.from({ length: count }, (_, i) => ({
+      teamName: `Team ${i}`,
+      players: [
+        {
+          id: `p${i}a`,
+          discordId: `discord${i}a`,
+          displayName: `Player ${i}A`,
+          overstatId: `overstat${i}a`,
+        },
+        {
+          id: `p${i}b`,
+          discordId: `discord${i}b`,
+          displayName: `Player ${i}B`,
+          overstatId: `overstat${i}b`,
+        },
+        {
+          id: `p${i}c`,
+          discordId: `discord${i}c`,
+          displayName: `Player ${i}C`,
+          overstatId: `overstat${i}c`,
+        },
+      ],
+      signupId: `signup${i}`,
+      signupPlayer: {
+        id: `cap${i}`,
+        discordId: `capDiscord${i}`,
+        displayName: `Cap ${i}`,
+      },
+      date: fakeDate,
+    }));
+  }
 
   beforeAll(() => {
     basicInteraction = {
@@ -110,6 +155,9 @@ describe("Get signups", () => {
       invisibleReply: jest.fn(),
       editReply: jest.fn(),
       followUp: jest.fn(),
+      options: {
+        getBoolean: jest.fn().mockReturnValue(null),
+      },
       guild: {
         roles: {
           fetch: () => jest.fn(),
@@ -132,6 +180,7 @@ describe("Get signups", () => {
     getMembersWithScrimPassRoleSpy.mockReturnValue(
       Promise.resolve({ members: [] } as unknown as Role),
     );
+    getMmrMapSpy = jest.spyOn(mockMmrService, "getMmrMap");
   });
 
   beforeEach(() => {
@@ -140,10 +189,12 @@ describe("Get signups", () => {
     editReplySpy.mockClear();
     getSignupsSpy.mockClear();
     getMembersWithScrimPassRoleSpy.mockClear();
+    getMmrMapSpy.mockClear();
     command = new GetSignupsCommand(
       new AuthMock() as AuthService,
       mockSignupService as unknown as SignupService,
       mockStaticValueService as unknown as StaticValueService,
+      mockMmrService as unknown as MmrService,
     );
   });
 
@@ -215,6 +266,32 @@ describe("Get signups", () => {
       expect(editReplySpy).toHaveBeenCalledWith(
         "Could not fetch signups. Error: No scrim found for that channel",
       );
+    });
+  });
+
+  describe("MMR sorting", () => {
+    it("should not call mmr service when total signups are 40 or fewer", async () => {
+      await command.run(basicInteraction);
+      expect(getMmrMapSpy).not.toHaveBeenCalled();
+    });
+
+    it("should call mmr service with forceRefresh=false when total signups exceed 40", async () => {
+      getSignupsSpy.mockReturnValueOnce(
+        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
+      );
+      await command.run(basicInteraction);
+      expect(getMmrMapSpy).toHaveBeenCalledWith(false);
+    });
+
+    it("should call mmr service with forceRefresh=true when refresh-mmr option is set", async () => {
+      getSignupsSpy.mockReturnValueOnce(
+        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
+      );
+      (basicInteraction.options.getBoolean as jest.Mock).mockReturnValueOnce(
+        true,
+      );
+      await command.run(basicInteraction);
+      expect(getMmrMapSpy).toHaveBeenCalledWith(true);
     });
   });
 });

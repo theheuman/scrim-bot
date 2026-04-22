@@ -11,6 +11,7 @@ import { client } from "../Client";
 import { BanService } from "./ban";
 import { HuggingFaceService } from "./hugging-face";
 import { LeagueService } from "./league-signup";
+import { MmrService } from "./mmr";
 
 // This file creates all the singleton services
 export const huggingFaceService = new HuggingFaceService();
@@ -45,3 +46,4 @@ export const rosterService = new RosterService(
   signupsService,
 );
 export const leagueService = new LeagueService(nhostDb);
+export const mmrService = new MmrService();

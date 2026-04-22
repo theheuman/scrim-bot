@@ -24,6 +24,7 @@ import {
   staticValueService,
   banService,
   leagueService,
+  mmrService,
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
@@ -55,7 +56,12 @@ export const scrimCommands: Command[] = [
   new ExpungeBanCommand(authService, banService),
 
   new CreateScrimCommand(authService, scrimService, staticValueService),
-  new GetSignupsCommand(authService, signupsService, staticValueService),
+  new GetSignupsCommand(
+    authService,
+    signupsService,
+    staticValueService,
+    mmrService,
+  ),
   new ComputeScrimCommand(
     authService,
     scrimService,
