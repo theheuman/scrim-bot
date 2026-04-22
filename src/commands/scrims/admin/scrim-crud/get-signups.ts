@@ -55,11 +55,22 @@ export class GetSignupsCommand extends AdminCommand {
     const files: { attachment: string; name: string }[] = [];
     const tempFiles: string[] = [];
 
+    let mmrMap = new Map<string, number>();
+    try {
+      mmrMap = await this.mmrService.getMmrMap(forceRefresh);
+    } catch (e) {
+      await interaction.followUp({
+        content: "Could not fetch MMR data, MMR columns will show n/a. " + e,
+        ephemeral: true,
+      });
+    }
+
     try {
       const priorityCsvName = await this.generatePriorityCsv(
         channelId,
         mainList,
         waitList,
+        mmrMap,
       );
       files.push({ attachment: priorityCsvName, name: "signups.csv" });
       tempFiles.push(priorityCsvName);
@@ -69,7 +80,6 @@ export class GetSignupsCommand extends AdminCommand {
 
     if (mainList.length + waitList.length > MMR_SORT_THRESHOLD) {
       try {
-        const mmrMap = await this.mmrService.getMmrMap(forceRefresh);
         const mmrCsvName = await this.generateMmrCsv(
           channelId,
           mainList,
@@ -127,10 +137,13 @@ export class GetSignupsCommand extends AdminCommand {
     channelId: string,
     mainList: ScrimSignup[],
     waitList: ScrimSignup[],
+    mmrMap: Map<string, number>,
   ): Promise<string> {
     const teamCsvStringConverter = (team: ScrimSignup) => {
       const teamNameColumn = `${team.teamName} ${this.formatPlayer(team.players[0])}`;
-      const playerColumns = team.players.map(this.getPlayerCsvFields);
+      const playerColumns = team.players.map((p) =>
+        this.getPlayerCsvFields(p, mmrMap),
+      );
       return [teamNameColumn, ...playerColumns].join(",");
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
@@ -187,7 +200,7 @@ export class GetSignupsCommand extends AdminCommand {
           ? getPlayerOverstatUrl(p.overstatId)
           : "";
         const mmr =
-          playerMmrs[i] !== undefined ? playerMmrs[i]!.toFixed(3) : "UNKNOWN";
+          playerMmrs[i] !== undefined ? playerMmrs[i]!.toFixed(3) : "n/a";
         return `${p.displayName},${overstatUrl},${mmr}`;
       });
       rows.push(
@@ -220,12 +233,15 @@ export class GetSignupsCommand extends AdminCommand {
     return { team, missingMmr, teamMmr, playerMmrs };
   }
 
-  getPlayerCsvFields(player: Player) {
+  getPlayerCsvFields(player: Player, mmrMap: Map<string, number>) {
     const requiredFields = `${player.displayName} <@${player.discordId}>`;
     let overstatField = "";
     if (player.overstatId) {
       overstatField = " " + getPlayerOverstatUrl(player.overstatId);
     }
-    return requiredFields + overstatField;
+    const mmr = player.overstatId
+      ? (mmrMap.get(player.overstatId)?.toFixed(3) ?? "n/a")
+      : "n/a";
+    return `${requiredFields}${overstatField},${mmr}`;
   }
 }
