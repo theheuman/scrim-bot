@@ -2,7 +2,7 @@ import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { SignupService } from "../../../services/signups";
 import { isGuildMember } from "../../../utility/utility";
-import { ScrimSignup } from "../../../models/Scrims";
+import { PrioType, ScrimSignup } from "../../../models/Scrims";
 import { Player } from "../../../models/Player";
 import { PrioService } from "../../../services/prio";
 import { ScrimService } from "../../../services/scrim-service";
@@ -88,6 +88,9 @@ export class SignupCommand extends MemberCommand {
       console.error(
         "Unable to get applicable prio on a signup because there is no scrim for this channel",
       );
+      return;
+    }
+    if (scrim.prioType !== PrioType.regular) {
       return;
     }
     const scrimSignupsWithPrio = await this.prioService.getTeamPrioForScrim(
