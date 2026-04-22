@@ -8,7 +8,7 @@ import {
   MessagePayload,
   User,
 } from "discord.js";
-import { Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { PrioType, Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
@@ -93,6 +93,7 @@ describe("Signups", () => {
         dateTime: new Date("2026-01-01T20:00:00"),
         discordChannel: correctDiscordChannelId,
         active: false,
+        prioType: PrioType.regular,
       }),
     );
   });
@@ -537,6 +538,124 @@ describe("Signups", () => {
         mainList: expectedMainTeams,
         waitList: expectedWaitTeams,
       });
+    });
+
+    it("Should sort teams by signup date only when prio type is off", async () => {
+      jest.spyOn(scrimServiceMock, "getScrim").mockReturnValueOnce(
+        Promise.resolve({
+          id: correctScrimId,
+          dateTime: new Date("2026-01-01T20:00:00"),
+          discordChannel: correctDiscordChannelId,
+          active: false,
+          prioType: PrioType.off,
+        }),
+      );
+
+      const highPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-28T20:10:35.706+00:00",
+        team_name: "High Prio",
+      } as ScrimSignupsWithPlayers;
+      const lowPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-10T20:10:35.706+00:00",
+        team_name: "Low Prio",
+      } as ScrimSignupsWithPlayers;
+      const mediumPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-13T20:10:35.706+00:00",
+        team_name: "Medium Prio",
+      } as ScrimSignupsWithPlayers;
+
+      jest
+        .spyOn(prioServiceMock, "getTeamPrioForScrim")
+        .mockImplementation((_, teams: ScrimSignup[]) => {
+          for (const team of teams) {
+            switch (team.teamName) {
+              case highPrioTeam.team_name:
+                team.prio = { amount: 1, reasons: "High prio" };
+                break;
+              case mediumPrioTeam.team_name:
+                team.prio = { amount: 0, reasons: "" };
+                break;
+              case lowPrioTeam.team_name:
+                team.prio = { amount: -1, reasons: "Low prio" };
+                break;
+            }
+          }
+          return Promise.resolve(teams);
+        });
+      jest
+        .spyOn(dbMock, "getScrimSignupsWithPlayers")
+        .mockReturnValue(
+          Promise.resolve([highPrioTeam, mediumPrioTeam, lowPrioTeam]),
+        );
+
+      const { mainList, waitList } = await signups.getSignups(
+        correctDiscordChannelId,
+      );
+      const allTeams = [...mainList, ...waitList];
+      expect(allTeams.map((t) => t.teamName)).toEqual([
+        "Low Prio",
+        "Medium Prio",
+        "High Prio",
+      ]);
+    });
+
+    it("Should sort teams by signup date only when prio type is league", async () => {
+      jest.spyOn(scrimServiceMock, "getScrim").mockReturnValueOnce(
+        Promise.resolve({
+          id: correctScrimId,
+          dateTime: new Date("2026-01-01T20:00:00"),
+          discordChannel: correctDiscordChannelId,
+          active: false,
+          prioType: PrioType.league,
+        }),
+      );
+
+      const highPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-28T20:10:35.706+00:00",
+        team_name: "High Prio",
+      } as ScrimSignupsWithPlayers;
+      const lowPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-10T20:10:35.706+00:00",
+        team_name: "Low Prio",
+      } as ScrimSignupsWithPlayers;
+      const mediumPrioTeam: ScrimSignupsWithPlayers = {
+        date_time: "2024-10-13T20:10:35.706+00:00",
+        team_name: "Medium Prio",
+      } as ScrimSignupsWithPlayers;
+
+      jest
+        .spyOn(prioServiceMock, "getTeamPrioForScrim")
+        .mockImplementation((_, teams: ScrimSignup[]) => {
+          for (const team of teams) {
+            switch (team.teamName) {
+              case highPrioTeam.team_name:
+                team.prio = { amount: 1, reasons: "High prio" };
+                break;
+              case mediumPrioTeam.team_name:
+                team.prio = { amount: 0, reasons: "" };
+                break;
+              case lowPrioTeam.team_name:
+                team.prio = { amount: -1, reasons: "Low prio" };
+                break;
+            }
+          }
+          return Promise.resolve(teams);
+        });
+      jest
+        .spyOn(dbMock, "getScrimSignupsWithPlayers")
+        .mockReturnValue(
+          Promise.resolve([highPrioTeam, mediumPrioTeam, lowPrioTeam]),
+        );
+
+      const { mainList, waitList } = await signups.getSignups(
+        correctDiscordChannelId,
+      );
+      const allTeams = [...mainList, ...waitList];
+      expect(allTeams.map((t) => t.teamName)).toEqual([
+        "Low Prio",
+        "Medium Prio",
+        "High Prio",
+      ]);
     });
 
     it("Should throw error when no scrim", async () => {

@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
-import { Scrim } from "../models/Scrims";
+import { PrioType, Scrim } from "../models/Scrims";
 
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
@@ -66,6 +66,7 @@ export abstract class DB {
     discordChannelID: string,
     overstatId: string | null = null,
     overstatJson: JSON | null = null,
+    prioType: string | null = null,
   ): Promise<string> {
     const ids = await this.post(DbTable.scrims, [
       {
@@ -73,6 +74,7 @@ export abstract class DB {
         discord_channel: discordChannelID,
         overstat_id: overstatId,
         overstat_json: overstatJson,
+        prio_type: prioType,
       },
     ]);
     return ids[0];
@@ -363,7 +365,7 @@ export abstract class DB {
         comparator: "eq",
         value: discordChannelID,
       },
-      ["id", "overstat_id", "date_time_field", "active"],
+      ["id", "overstat_id", "date_time_field", "active", "prio_type"],
     );
     return dbResult.map((entry) => ({
       id: entry.id as string,
@@ -371,21 +373,28 @@ export abstract class DB {
       overstatId: entry.overstat_id as string,
       discordChannel: discordChannelID,
       active: entry.active as boolean,
+      prioType: entry.prio_type as PrioType,
     }));
   }
 
   getActiveScrims(): Promise<
-    { discord_channel: string; id: string; date_time_field: string }[]
+    {
+      discord_channel: string;
+      id: string;
+      date_time_field: string;
+      prio_type: string;
+    }[]
   > {
     return this.get(
       DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
-      ["discord_channel", "id", "date_time_field"],
+      ["discord_channel", "id", "date_time_field", "prio_type"],
     ) as Promise<
       {
         discord_channel: string;
         id: string;
         date_time_field: string;
+        prio_type: string;
       }[]
     >;
   }

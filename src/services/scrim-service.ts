@@ -1,7 +1,7 @@
 import { DB } from "../db/db";
 import { OverstatService } from "./overstat";
 import { HuggingFaceService } from "./hugging-face";
-import { Scrim } from "../models/Scrims";
+import { PrioType, Scrim } from "../models/Scrims";
 
 export class ScrimService {
   constructor(
@@ -10,8 +10,18 @@ export class ScrimService {
     private huggingFaceService: HuggingFaceService,
   ) {}
 
-  async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
-    const scrimId = await this.db.createNewScrim(dateTime, discordChannelID);
+  async createScrim(
+    discordChannelID: string,
+    dateTime: Date,
+    prioType: PrioType | null = null,
+  ): Promise<string> {
+    const scrimId = await this.db.createNewScrim(
+      dateTime,
+      discordChannelID,
+      null,
+      null,
+      prioType,
+    );
     return scrimId;
   }
 
@@ -26,6 +36,7 @@ export class ScrimService {
         dateTime: new Date(dbScrim.date_time_field),
         discordChannel: dbScrim.discord_channel,
         id: dbScrim.id,
+        prioType: dbScrim.prio_type as PrioType,
       };
       return mappedScrim;
     } else {

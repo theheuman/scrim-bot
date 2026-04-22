@@ -2,7 +2,7 @@ import { DbMock } from "../mocks/db.mock";
 import { Player } from "../../src/models/Player";
 import { GuildMember, User } from "discord.js";
 import { RosterService } from "../../src/services/rosters";
-import { ScrimSignup, Scrim } from "../../src/models/Scrims";
+import { PrioType, Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { AuthService } from "../../src/services/auth";
 import { AuthMock } from "../mocks/auth.mock";
 import { DiscordServiceMock } from "../mocks/discord-service.mock";
@@ -98,6 +98,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       jest
         .spyOn(signupServiceMock, "getRawSignups")
@@ -142,6 +143,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
 
       jest
@@ -167,6 +169,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const differentFineapples: ScrimSignup = {
         teamName: "Different Fineapples",
@@ -207,6 +210,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
 
       const dbSpy = jest.spyOn(dbMock, "changeTeamNameNoAuth");
@@ -234,6 +238,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -272,6 +277,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -314,6 +320,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -357,6 +364,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -400,6 +408,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -443,6 +452,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",
@@ -495,6 +505,7 @@ describe("Rosters", () => {
         dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
         active: true,
         discordChannel,
+        prioType: PrioType.regular,
       };
       const dudeCube: ScrimSignup = {
         teamName: "Dude Cube",

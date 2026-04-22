@@ -1,0 +1,4 @@
+-- Could not auto-generate a down migration
+-- Please write an appropriate down migration for the SQL below:
+-- ALTER TABLE public.scrims DROP COLUMN IF EXISTS skill;
+-- ALTER TABLE public.scrims ADD prio_type text DEFAULT 'regular' NOT NULL;

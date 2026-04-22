@@ -84,6 +84,7 @@ export class DbMock extends DB {
       discord_channel: string;
       id: string;
       date_time_field: string;
+      prio_type: string;
     }[]
   > {
     return Promise.resolve([]);

@@ -11,12 +11,14 @@ import {
   isForumChannel,
   replaceScrimVariables,
 } from "../../../../utility/utility";
+import { PrioType } from "../../../../models/Scrims";
 
 export class CreateScrimCommand extends AdminCommand {
   inputNames = {
     date: "datetime",
     name: "name",
     channel: "forum-channel",
+    prioType: "prio-type",
   };
 
   constructor(
@@ -41,6 +43,11 @@ export class CreateScrimCommand extends AdminCommand {
         maxLength: 25,
       },
     );
+    this.addChoiceInput(
+      this.inputNames.prioType,
+      "Prio type for the scrim (default: regular)",
+      PrioType,
+    );
   }
 
   async run(interaction: CustomInteraction) {
@@ -54,6 +61,9 @@ export class CreateScrimCommand extends AdminCommand {
       [ChannelType.GuildForum],
     );
     const scrimName = interaction.options.getString(this.inputNames.name) ?? "";
+    const prioType =
+      interaction.options.getChoice(this.inputNames.prioType, PrioType) ??
+      PrioType.regular;
 
     // just to triple check
     if (!isForumChannel(channel)) {
@@ -80,7 +90,11 @@ export class CreateScrimCommand extends AdminCommand {
     }
 
     try {
-      await this.scrimService.createScrim(createdThread.id, scrimDate);
+      await this.scrimService.createScrim(
+        createdThread.id,
+        scrimDate,
+        prioType,
+      );
     } catch (error) {
       try {
         await createdThread.delete("Scrim not created correctly in db");
