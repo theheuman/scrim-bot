@@ -15,6 +15,7 @@ import { StaticValueService } from "../../../../../src/services/static-values";
 import { ChannelType } from "discord-api-types/v10";
 import { ScrimService } from "../../../../../src/services/scrim-service";
 import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
+import { PrioType } from "../../../../../src/models/Scrims";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -31,7 +32,7 @@ describe("Create scrim", () => {
   >;
   let signupsCreateScrimSpy: SpyInstance<
     Promise<string>,
-    [channelId: string, scrimDate: Date],
+    [channelId: string, scrimDate: Date, prioType?: PrioType | null],
     string
   >;
   const channelCreatedSpy = jest.fn();
@@ -75,6 +76,7 @@ describe("Create scrim", () => {
           return fakeScrimDate;
         },
         getChannel: () => forumChannel,
+        getChoice: () => null,
       },
       reply: jest.fn(),
       editReply: jest.fn(),
@@ -106,7 +108,7 @@ describe("Create scrim", () => {
     );
   });
 
-  it("Should create scrim", async () => {
+  it("Should create scrim with default prio type when none selected", async () => {
     await command.run(basicInteraction);
     expect(followUpSpy).toHaveBeenCalledWith(
       "Scrim created. Channel: <#forum thread id>",
@@ -118,6 +120,24 @@ describe("Create scrim", () => {
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "forum thread id",
       fakeScrimDate,
+      PrioType.regular,
+    );
+  });
+
+  it("Should create scrim with league prio type", async () => {
+    const leagueInteraction = {
+      ...basicInteraction,
+      options: {
+        ...basicInteraction.options,
+        getChoice: () => PrioType.league,
+      },
+    } as unknown as CustomInteraction;
+    jest.spyOn(leagueInteraction, "followUp");
+    await command.run(leagueInteraction);
+    expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
+      "forum thread id",
+      fakeScrimDate,
+      PrioType.league,
     );
   });
 
@@ -134,6 +154,7 @@ describe("Create scrim", () => {
             return fakeScrimDate;
           },
           getChannel: () => ({ type: ChannelType.GuildText }),
+          getChoice: () => null,
         },
         editReply: jest.fn(),
       } as unknown as CustomInteraction;

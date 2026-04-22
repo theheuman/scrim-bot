@@ -10,7 +10,7 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { SignupCommand } from "../../../../src/commands/scrims/signup/sign-up";
-import { Scrim, ScrimSignup } from "../../../../src/models/Scrims";
+import { PrioType, Scrim, ScrimSignup } from "../../../../src/models/Scrims";
 import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
 import { SignupServiceMock } from "../../../mocks/signups.mock";
@@ -130,7 +130,9 @@ describe("Sign up", () => {
   it("Should complete signup but include prio warnings", async () => {
     jest
       .spyOn(mockScrimService, "getScrim")
-      .mockReturnValueOnce(Promise.resolve({} as Scrim));
+      .mockReturnValueOnce(
+        Promise.resolve({ prioType: PrioType.regular } as Scrim),
+      );
     jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
       Promise.resolve([
         {
@@ -153,6 +155,26 @@ describe("Sign up", () => {
         "This team has prio entries which will be in effect for the scrim.\nTheHeuman: Broke rules;\nTotal prio amount: -1",
       ephemeral: true,
     });
+  });
+
+  it("Should complete signup without prio warning when prio type is off", async () => {
+    jest
+      .spyOn(mockScrimService, "getScrim")
+      .mockReturnValueOnce(
+        Promise.resolve({ prioType: PrioType.off } as Scrim),
+      );
+    const getTeamPrioSpy = jest.spyOn(mockPrioService, "getTeamPrioForScrim");
+    getTeamPrioSpy.mockClear();
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
+    );
+    expect(getTeamPrioSpy).not.toHaveBeenCalled();
+    expect(followUpSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("prio entries"),
+      }),
+    );
   });
 
   it("Should complete signup without warnings", async () => {

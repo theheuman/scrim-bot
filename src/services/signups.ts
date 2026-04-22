@@ -2,7 +2,7 @@ import { GuildMember, User } from "discord.js";
 import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { Scrim, ScrimSignup } from "../models/Scrims";
+import { PrioType, Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
 import { AuthService } from "./auth";
@@ -127,10 +127,13 @@ export class SignupService {
       teams,
       discordIdsWithScrimPass ?? [],
     );
-    return this.sortTeams(teams);
+    return this.sortTeams(teams, scrim.prioType);
   }
 
-  private sortTeams(teams: ScrimSignup[]): {
+  private sortTeams(
+    teams: ScrimSignup[],
+    prioType: PrioType,
+  ): {
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
   } {
@@ -138,13 +141,15 @@ export class SignupService {
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
     const sortedTeams = [...teams].sort((teamA, teamB) => {
-      const lowPrioResult =
-        (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
-      if (lowPrioResult === 0) {
-        // lower date is better, so subtract b from a
-        return teamA.date.valueOf() - teamB.date.valueOf();
+      if (prioType === PrioType.regular) {
+        const lowPrioResult =
+          (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
+        if (lowPrioResult !== 0) {
+          return lowPrioResult;
+        }
       }
-      return lowPrioResult;
+      // lower date is better, so subtract b from a
+      return teamA.date.valueOf() - teamB.date.valueOf();
     });
     return {
       mainList: sortedTeams.splice(0, waitlistCutoff),

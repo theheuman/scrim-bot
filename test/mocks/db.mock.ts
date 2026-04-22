@@ -8,6 +8,7 @@ import {
 } from "../../src/db/types";
 import { Player, PlayerInsert } from "../../src/models/Player";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
+import { PrioType } from "../../src/models/Scrims";
 
 export class DbMock extends DB {
   customQueryResponse: JSONValue;
@@ -81,9 +82,10 @@ export class DbMock extends DB {
 
   override getActiveScrims(): Promise<
     {
-      discord_channel: string;
+      discordChannel: string;
       id: string;
-      date_time_field: string;
+      dateTimeField: string;
+      prioType: PrioType;
     }[]
   > {
     return Promise.resolve([]);

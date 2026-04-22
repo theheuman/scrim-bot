@@ -68,7 +68,7 @@ export const scrimCommands: Command[] = [
   new DropoutCommand(rosterService),
   new SignupCommand(signupsService, prioService, scrimService),
   new SubPlayerCommand(rosterService),
-  new CurrentPositionCommand(signupsService, staticValueService),
+  new CurrentPositionCommand(signupsService, staticValueService, scrimService),
 ];
 
 export const leagueCommands: Command[] = [

@@ -1,7 +1,7 @@
 import { DB } from "../db/db";
 import { OverstatService } from "./overstat";
 import { HuggingFaceService } from "./hugging-face";
-import { Scrim } from "../models/Scrims";
+import { PrioType, Scrim } from "../models/Scrims";
 
 export class ScrimService {
   constructor(
@@ -10,22 +10,33 @@ export class ScrimService {
     private huggingFaceService: HuggingFaceService,
   ) {}
 
-  async createScrim(discordChannelID: string, dateTime: Date): Promise<string> {
-    const scrimId = await this.db.createNewScrim(dateTime, discordChannelID);
+  async createScrim(
+    discordChannelID: string,
+    dateTime: Date,
+    prioType: PrioType | null = null,
+  ): Promise<string> {
+    const scrimId = await this.db.createNewScrim(
+      dateTime,
+      discordChannelID,
+      null,
+      null,
+      prioType,
+    );
     return scrimId;
   }
 
   async getScrim(discordChannel: string): Promise<Scrim | null> {
     const activeScrims = await this.db.getActiveScrims();
     const dbScrim = activeScrims.find(
-      (scrim) => scrim.discord_channel === discordChannel,
+      (scrim) => scrim.discordChannel === discordChannel,
     );
-    if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
+    if (dbScrim && dbScrim.id && dbScrim.discordChannel) {
       const mappedScrim: Scrim = {
         active: true,
-        dateTime: new Date(dbScrim.date_time_field),
-        discordChannel: dbScrim.discord_channel,
+        dateTime: new Date(dbScrim.dateTimeField),
+        discordChannel: dbScrim.discordChannel,
         id: dbScrim.id,
+        prioType: dbScrim.prioType,
       };
       return mappedScrim;
     } else {

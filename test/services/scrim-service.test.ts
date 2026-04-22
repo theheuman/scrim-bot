@@ -1,7 +1,7 @@
 import { DbMock } from "../mocks/db.mock";
 import { GuildMember, User } from "discord.js";
 import { OverstatService } from "../../src/services/overstat";
-import { Scrim } from "../../src/models/Scrims";
+import { PrioType, Scrim } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import SpyInstance = jest.SpyInstance;
 import { PrioServiceMock } from "../mocks/prio.mock";
@@ -96,7 +96,13 @@ describe("ScrimService", () => {
 
       const now = new Date();
       await service.createScrim(channelId, now);
-      expect(createNewSpy).toHaveBeenCalledWith(now, channelId);
+      expect(createNewSpy).toHaveBeenCalledWith(
+        now,
+        channelId,
+        null,
+        null,
+        null,
+      );
     });
   });
 
@@ -106,9 +112,10 @@ describe("ScrimService", () => {
       jest.spyOn(dbMock, "getActiveScrims").mockReturnValue(
         Promise.resolve([
           {
-            discord_channel: channelId,
+            discordChannel: channelId,
             id: "123",
-            date_time_field: "2020-01-01",
+            dateTimeField: "2020-01-01",
+            prioType: PrioType.regular,
           },
         ]),
       );
@@ -195,6 +202,7 @@ describe("ScrimService", () => {
             id: scrimId,
             discordChannel: channelId,
             dateTime: time,
+            prioType: PrioType.regular,
           },
         ]),
       );
@@ -227,6 +235,7 @@ describe("ScrimService", () => {
             id: scrimId,
             discordChannel: channelId,
             dateTime: time,
+            prioType: PrioType.regular,
           },
         ]),
       );
@@ -299,6 +308,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             dateTime: time,
             overstatId,
+            prioType: PrioType.regular,
           },
         ]),
       );
@@ -346,6 +356,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             dateTime: time,
             overstatId,
+            prioType: PrioType.regular,
           },
         ]),
       );
