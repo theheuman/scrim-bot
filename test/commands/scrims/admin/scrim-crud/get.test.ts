@@ -27,6 +27,14 @@ jest.mock("node:fs", () => ({
   unlink: jest.fn(),
 }));
 
+jest.mock("../../../../../src/config", () => {
+  return {
+    appConfig: {
+      lobbySize: 20,
+    },
+  };
+});
+
 describe("Get signups", () => {
   let basicInteraction: CustomInteraction;
   let replySpy: SpyInstance<
@@ -168,12 +176,6 @@ describe("Get signups", () => {
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     followupSpy = jest.spyOn(basicInteraction, "followUp");
     getSignupsSpy = jest.spyOn(mockSignupService, "getSignups");
-    getSignupsSpy.mockImplementation(() => {
-      return Promise.resolve({
-        mainList: mainListTeams,
-        waitList: waitListTeams,
-      });
-    });
     const guild: Guild = basicInteraction.guild as Guild;
     // @ts-expect-error its trying to match the incorrect method
     getMembersWithScrimPassRoleSpy = jest.spyOn(guild.roles, "fetch");
@@ -187,9 +189,14 @@ describe("Get signups", () => {
     replySpy.mockClear();
     followupSpy.mockClear();
     editReplySpy.mockClear();
-    getSignupsSpy.mockClear();
     getMembersWithScrimPassRoleSpy.mockClear();
     getMmrMapSpy.mockClear();
+    getSignupsSpy.mockImplementation(() => {
+      return Promise.resolve({
+        mainList: mainListTeams,
+        waitList: waitListTeams,
+      });
+    });
     command = new GetSignupsCommand(
       new AuthMock() as AuthService,
       mockSignupService as unknown as SignupService,
@@ -270,28 +277,32 @@ describe("Get signups", () => {
   });
 
   describe("MMR sorting", () => {
-    it("should not call mmr service when total signups are 40 or fewer", async () => {
-      await command.run(basicInteraction);
-      expect(getMmrMapSpy).not.toHaveBeenCalled();
-    });
-
-    it("should call mmr service with forceRefresh=false when total signups exceed 40", async () => {
-      getSignupsSpy.mockReturnValueOnce(
-        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
-      );
+    it("should call mmr service with forceRefresh=false by default", async () => {
       await command.run(basicInteraction);
       expect(getMmrMapSpy).toHaveBeenCalledWith(false);
     });
 
     it("should call mmr service with forceRefresh=true when refresh-mmr option is set", async () => {
-      getSignupsSpy.mockReturnValueOnce(
-        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
-      );
       (basicInteraction.options.getBoolean as jest.Mock).mockReturnValueOnce(
         true,
       );
       await command.run(basicInteraction);
       expect(getMmrMapSpy).toHaveBeenCalledWith(true);
+    });
+
+    it("should include mmr csv in reply when total signups exceed 40", async () => {
+      getSignupsSpy.mockReturnValueOnce(
+        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
+      );
+      await command.run(basicInteraction);
+      expect(followupSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          files: expect.arrayContaining([
+            expect.objectContaining({ name: "signups.csv" }),
+            expect.objectContaining({ name: "signups-mmr.csv" }),
+          ]),
+        }),
+      );
     });
   });
 });
