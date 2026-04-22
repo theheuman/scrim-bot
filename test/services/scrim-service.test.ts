@@ -112,10 +112,10 @@ describe("ScrimService", () => {
       jest.spyOn(dbMock, "getActiveScrims").mockReturnValue(
         Promise.resolve([
           {
-            discord_channel: channelId,
+            discordChannel: channelId,
             id: "123",
-            date_time_field: "2020-01-01",
-            prio_type: "regular",
+            dateTimeField: "2020-01-01",
+            prioType: PrioType.regular,
           },
         ]),
       );

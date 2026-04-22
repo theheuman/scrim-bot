@@ -6,6 +6,12 @@ export enum PrioType {
   league = "league",
 }
 
+export function parsePrioType(value: string): PrioType {
+  return Object.values(PrioType).includes(value as PrioType)
+    ? (value as PrioType)
+    : PrioType.regular;
+}
+
 export interface Scrim {
   id: string;
   dateTime: Date;

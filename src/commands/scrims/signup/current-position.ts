@@ -34,6 +34,11 @@ export class CurrentPositionCommand extends MemberCommand {
     }
 
     const scrim = await this.scrimService.getScrim(interaction.channelId);
+    if (!scrim) {
+      console.error(
+        "Unable to get scrim for current position command, defaulting to regular prio type",
+      );
+    }
     const prioActive = scrim?.prioType === PrioType.regular;
 
     const { mainList, waitList } = channelSignups;

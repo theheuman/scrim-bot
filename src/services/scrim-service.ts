@@ -28,15 +28,15 @@ export class ScrimService {
   async getScrim(discordChannel: string): Promise<Scrim | null> {
     const activeScrims = await this.db.getActiveScrims();
     const dbScrim = activeScrims.find(
-      (scrim) => scrim.discord_channel === discordChannel,
+      (scrim) => scrim.discordChannel === discordChannel,
     );
-    if (dbScrim && dbScrim.id && dbScrim.discord_channel) {
+    if (dbScrim && dbScrim.id && dbScrim.discordChannel) {
       const mappedScrim: Scrim = {
         active: true,
-        dateTime: new Date(dbScrim.date_time_field),
-        discordChannel: dbScrim.discord_channel,
+        dateTime: new Date(dbScrim.dateTimeField),
+        discordChannel: dbScrim.discordChannel,
         id: dbScrim.id,
-        prioType: dbScrim.prio_type as PrioType,
+        prioType: dbScrim.prioType,
       };
       return mappedScrim;
     } else {
