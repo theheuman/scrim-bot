@@ -78,7 +78,7 @@ export class GetSignupsCommand extends AdminCommand {
       await interaction.editReply("Problem generating signups csv. " + e);
     }
 
-    if (mainList.length + waitList.length > MMR_SORT_THRESHOLD) {
+    if (mainList.length > MMR_SORT_THRESHOLD) {
       try {
         const mmrCsvName = await this.generateMmrCsv(
           channelId,
@@ -140,7 +140,9 @@ export class GetSignupsCommand extends AdminCommand {
     mmrMap: Map<string, number>,
   ): Promise<string> {
     const teamCsvStringConverter = (team: ScrimSignup) => {
-      const teamNameColumn = `${team.teamName} ${this.formatPlayer(team.players[0])}`;
+      const teamNameColumn = team.players[0]
+        ? `${team.teamName} ${this.formatPlayer(team.players[0])}`
+        : team.teamName;
       const playerColumns = team.players.map((p) =>
         this.getPlayerCsvFields(p, mmrMap),
       );
@@ -194,7 +196,9 @@ export class GetSignupsCommand extends AdminCommand {
       }
       const flag = missingMmr ? "UNKNOWN" : "";
       const mmrDisplay = missingMmr ? "UNKNOWN" : teamMmr.toFixed(3);
-      const pings = `${team.teamName} <@${team.players[0].discordId}>`;
+      const pings = team.players[0]
+        ? `${team.teamName} <@${team.players[0].discordId}>`
+        : team.teamName;
       const playerCols = team.players.map((p, i) => {
         const overstatUrl = p.overstatId
           ? getPlayerOverstatUrl(p.overstatId)
@@ -233,7 +237,7 @@ export class GetSignupsCommand extends AdminCommand {
     return { team, missingMmr, teamMmr, playerMmrs };
   }
 
-  getPlayerCsvFields(player: Player, mmrMap: Map<string, number>) {
+  private getPlayerCsvFields(player: Player, mmrMap: Map<string, number>) {
     const requiredFields = `${player.displayName} <@${player.discordId}>`;
     let overstatField = "";
     if (player.overstatId) {

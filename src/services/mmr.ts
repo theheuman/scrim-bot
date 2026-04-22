@@ -50,6 +50,11 @@ export class MmrService {
       throw new Error(`MMR API responded with status ${response.status}`);
     }
     const json: MmrApiResponse = await response.json();
+    if (!Array.isArray(json.data)) {
+      throw new Error(
+        `MMR API returned unexpected shape: status=${json.status}`,
+      );
+    }
     const cache: MmrCache = {
       fetchedAt: new Date().toISOString(),
       data: json.data,

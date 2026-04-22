@@ -144,7 +144,7 @@ export abstract class Command extends SlashCommandBuilder {
     isRequired: boolean = false,
   ) {
     this.addBooleanOption((option) =>
-      option.setName(name).setDescription(description).setRequired(isRequired),
+      this.addOption(option, name, description, isRequired),
     );
     this.loggableArguments.push({
       required: isRequired,

@@ -21,6 +21,7 @@ import { SignupServiceMock } from "../../../../mocks/signups.mock";
 import { SignupService } from "../../../../../src/services/signups";
 import { MmrServiceMock } from "../../../../mocks/mmr.mock";
 import { MmrService } from "../../../../../src/services/mmr";
+import * as fs from "node:fs";
 
 jest.mock("node:fs", () => ({
   writeFileSync: jest.fn(),
@@ -191,6 +192,7 @@ describe("Get signups", () => {
     editReplySpy.mockClear();
     getMembersWithScrimPassRoleSpy.mockClear();
     getMmrMapSpy.mockClear();
+    (fs.writeFileSync as jest.Mock).mockClear();
     getSignupsSpy.mockImplementation(() => {
       return Promise.resolve({
         mainList: mainListTeams,
@@ -290,7 +292,34 @@ describe("Get signups", () => {
       expect(getMmrMapSpy).toHaveBeenCalledWith(true);
     });
 
-    it("should include mmr csv in reply when total signups exceed 40", async () => {
+    it("should still generate priority csv and warn when mmr fetch fails", async () => {
+      getMmrMapSpy.mockRejectedValueOnce(new Error("API down"));
+      await command.run(basicInteraction);
+      expect(followupSpy).toHaveBeenCalledWith({
+        content: expect.stringContaining("Could not fetch MMR data"),
+        ephemeral: true,
+      });
+      expect(followupSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          files: expect.arrayContaining([
+            expect.objectContaining({ name: "signups.csv" }),
+          ]),
+        }),
+      );
+    });
+
+    it("should not include mmr csv when main list is 40 teams or fewer", async () => {
+      await command.run(basicInteraction);
+      expect(followupSpy).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          files: expect.arrayContaining([
+            expect.objectContaining({ name: "signups-mmr.csv" }),
+          ]),
+        }),
+      );
+    });
+
+    it("should include mmr csv in reply when main list exceeds 40", async () => {
       getSignupsSpy.mockReturnValueOnce(
         Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
       );
@@ -303,6 +332,28 @@ describe("Get signups", () => {
           ]),
         }),
       );
+    });
+
+    it("should write player mmr values into the mmr csv", async () => {
+      const knownMmrMap = new Map([
+        ["overstat0a", 0.9],
+        ["overstat0b", 0.8],
+        ["overstat0c", 0.7],
+      ]);
+      getMmrMapSpy.mockResolvedValueOnce(knownMmrMap);
+      getSignupsSpy.mockReturnValueOnce(
+        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
+      );
+      await command.run(basicInteraction);
+      const writeFileSyncMock = fs.writeFileSync as jest.Mock;
+      const mmrCsvCall = writeFileSyncMock.mock.calls.find((call) =>
+        (call[0] as string).includes("mmr"),
+      );
+      expect(mmrCsvCall).toBeDefined();
+      const csvContent = mmrCsvCall![1] as string;
+      expect(csvContent).toContain("0.900");
+      expect(csvContent).toContain("0.800");
+      expect(csvContent).toContain("0.700");
     });
   });
 });
