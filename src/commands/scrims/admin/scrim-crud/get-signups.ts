@@ -245,8 +245,8 @@ export class GetSignupsCommand extends AdminCommand {
       overstatField = " " + getPlayerOverstatUrl(player.overstatId);
     }
     const mmr = player.overstatId
-      ? (mmrMap.get(player.overstatId)?.toFixed(3) ?? "n/a")
-      : "n/a";
-    return `${requiredFields}${overstatField},${mmr}`;
+      ? (mmrMap.get(player.overstatId)?.toFixed(3) ?? "")
+      : "";
+    return `${requiredFields}${overstatField} ${mmr}`;
   }
 }
