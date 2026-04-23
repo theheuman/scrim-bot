@@ -32,7 +32,7 @@ export class DbMock extends DB {
     this.insertPlayerIfNotExistsResponse = {
       id: "valid id",
     } as Player;
-    this.downloadFileResponse = new Blob(["{})"]);
+    this.downloadFileResponse = new Blob(["{}"]);
   }
 
   downloadFileById(_fileId: string): Promise<Blob> {
