@@ -13,7 +13,7 @@ export class ScrimService {
   async createScrim(
     discordChannelID: string,
     dateTime: Date,
-    prioType: PrioType | null = null,
+    prioType?: PrioType,
   ): Promise<string> {
     const scrimId = await this.db.createNewScrim(
       dateTime,
@@ -72,6 +72,7 @@ export class ScrimService {
     await this.computeNewScrims(newOverstatIds, {
       scrimDateTime: scrims[0].dateTime,
       discordChannelID,
+      prioType: scrims[0].prioType,
     });
 
     return { links: overstatLinks, dateTime: scrims[0].dateTime };
@@ -113,7 +114,11 @@ export class ScrimService {
 
   private async computeNewScrims(
     newOverstatIds: string[],
-    scrimInfo: { discordChannelID: string; scrimDateTime: Date },
+    scrimInfo: {
+      discordChannelID: string;
+      scrimDateTime: Date;
+      prioType: PrioType;
+    },
   ) {
     const errors: string[] = [];
     for (const overstatId of newOverstatIds) {
@@ -123,6 +128,7 @@ export class ScrimService {
         scrimInfo.discordChannelID,
         overstatId,
         stats,
+        scrimInfo.prioType,
       );
       try {
         await this.huggingFaceService.uploadOverstatJson(
