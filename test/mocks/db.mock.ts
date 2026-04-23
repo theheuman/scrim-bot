@@ -18,6 +18,7 @@ export class DbMock extends DB {
   addScrimSignupResponse: string;
   insertPlayersResponse: Player[];
   insertPlayerIfNotExistsResponse: Player;
+  downloadFileResponse: Blob;
 
   constructor() {
     super();
@@ -31,6 +32,15 @@ export class DbMock extends DB {
     this.insertPlayerIfNotExistsResponse = {
       id: "valid id",
     } as Player;
+    this.downloadFileResponse = new Blob(["{})"]);
+  }
+
+  downloadFileById(_fileId: string): Promise<Blob> {
+    return Promise.resolve(this.downloadFileResponse);
+  }
+
+  downloadFileByName(_fileName: string): Promise<Blob> {
+    return Promise.resolve(this.downloadFileResponse);
   }
 
   customQuery(query: string): Promise<JSONValue> {
