@@ -66,7 +66,7 @@ export class GetSignupsCommand extends AdminCommand {
     }
 
     try {
-      const priorityCsvName = await this.generatePriorityCsv(
+      const priorityCsvName = this.generatePriorityCsv(
         channelId,
         mainList,
         waitList,
@@ -78,13 +78,9 @@ export class GetSignupsCommand extends AdminCommand {
       await interaction.editReply("Problem generating signups csv. " + e);
     }
 
-    if (mainList.length > MMR_SORT_THRESHOLD) {
+    if (mainList.length >= MMR_SORT_THRESHOLD) {
       try {
-        const mmrCsvName = await this.generateMmrCsv(
-          channelId,
-          mainList,
-          mmrMap,
-        );
+        const mmrCsvName = this.generateMmrCsv(channelId, mainList, mmrMap);
         files.push({ attachment: mmrCsvName, name: "signups-mmr.csv" });
         tempFiles.push(mmrCsvName);
       } catch (e) {
@@ -133,12 +129,12 @@ export class GetSignupsCommand extends AdminCommand {
   }
 
   // string returned is the file location
-  private async generatePriorityCsv(
+  private generatePriorityCsv(
     channelId: string,
     mainList: ScrimSignup[],
     waitList: ScrimSignup[],
     mmrMap: Map<string, number>,
-  ): Promise<string> {
+  ): string {
     const teamCsvStringConverter = (team: ScrimSignup) => {
       const teamNameColumn = team.players[0]
         ? `${team.teamName} ${this.formatPlayer(team.players[0])}`
@@ -149,7 +145,11 @@ export class GetSignupsCommand extends AdminCommand {
       return [teamNameColumn, ...playerColumns].join(",");
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
-    const separator = "\n,,,\n";
+    const sampleTeam = mainList[0] ?? waitList[0];
+    const separatorCommas = sampleTeam
+      ? ",".repeat(teamCsvStringConverter(sampleTeam).split(",").length - 1)
+      : ",,,";
+    const separator = `\n${separatorCommas}\n`;
     const waitListString = waitList.map(teamCsvStringConverter).join("\n");
     const content = mainListString + separator + waitListString;
     const fileName = "temp-signup-" + channelId + ".csv";
@@ -158,11 +158,11 @@ export class GetSignupsCommand extends AdminCommand {
   }
 
   // string returned is the file location
-  private async generateMmrCsv(
+  private generateMmrCsv(
     channelId: string,
     mainList: ScrimSignup[],
     mmrMap: Map<string, number>,
-  ): Promise<string> {
+  ): string {
     const header =
       "missing_mmr_flag,team_name,team_mmr,team_discord_pings," +
       "player1_name,player1_overstat_url,player1_mmr," +
@@ -230,7 +230,8 @@ export class GetSignupsCommand extends AdminCommand {
     const playerMmrs = team.players.map((p) =>
       p.overstatId ? mmrMap.get(p.overstatId) : undefined,
     );
-    const missingMmr = playerMmrs.some((mmr) => mmr === undefined);
+    const missingMmr =
+      team.players.length === 0 || playerMmrs.some((mmr) => mmr === undefined);
     const known = playerMmrs.filter((mmr): mmr is number => mmr !== undefined);
     const teamMmr =
       known.length > 0 ? known.reduce((a, b) => a + b, 0) / known.length : 0;

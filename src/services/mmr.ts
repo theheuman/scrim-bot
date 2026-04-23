@@ -66,6 +66,7 @@ export class MmrService {
   private buildMap(data: MmrEntry[]): Map<string, number> {
     const map = new Map<string, number>();
     for (const entry of data) {
+      // nucleusHash from apm is currently the overstatId of a Player, this may change in future so keep an eye on it
       map.set(entry.nucleusHash, entry.weighted_overall_contribution);
     }
     return map;

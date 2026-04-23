@@ -193,6 +193,7 @@ describe("Get signups", () => {
     getMembersWithScrimPassRoleSpy.mockClear();
     getMmrMapSpy.mockClear();
     (fs.writeFileSync as jest.Mock).mockClear();
+    getSignupsSpy.mockClear();
     getSignupsSpy.mockImplementation(() => {
       return Promise.resolve({
         mainList: mainListTeams,
@@ -308,7 +309,10 @@ describe("Get signups", () => {
       );
     });
 
-    it("should not include mmr csv when main list is 40 teams or fewer", async () => {
+    it("should not include mmr csv when main list has fewer than 40 teams", async () => {
+      getSignupsSpy.mockReturnValueOnce(
+        Promise.resolve({ mainList: generateTeams(20), waitList: [] }),
+      );
       await command.run(basicInteraction);
       expect(followupSpy).not.toHaveBeenCalledWith(
         expect.objectContaining({
@@ -319,9 +323,9 @@ describe("Get signups", () => {
       );
     });
 
-    it("should include mmr csv in reply when main list exceeds 40", async () => {
+    it("should include mmr csv in reply when main list has 40 or more teams", async () => {
       getSignupsSpy.mockReturnValueOnce(
-        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
+        Promise.resolve({ mainList: generateTeams(40), waitList: [] }),
       );
       await command.run(basicInteraction);
       expect(followupSpy).toHaveBeenCalledWith(
@@ -334,6 +338,69 @@ describe("Get signups", () => {
       );
     });
 
+    it("should use a separator with column count matching data rows in the priority csv", async () => {
+      await command.run(basicInteraction);
+      const writeFileSyncMock = fs.writeFileSync as jest.Mock;
+      const priorityCsvCall = writeFileSyncMock.mock.calls.find(
+        (call) => !(call[0] as string).includes("mmr"),
+      );
+      expect(priorityCsvCall).toBeDefined();
+      const csvContent = priorityCsvCall![1] as string;
+      const rows = csvContent.split("\n");
+      const dataRow = rows[0];
+      const separatorRow = rows.find((row) => /^,+$/.test(row));
+      expect(separatorRow).toBeDefined();
+      expect(separatorRow!.split(",").length).toBe(dataRow.split(",").length);
+    });
+
+    it("should place unknown mmr main list teams into higher skill lobbies but not include waitlist unknown teams", async () => {
+      // team 0 has known MMR, all other generated teams are UNKNOWN (not in map)
+      const mmrMap = new Map([
+        ["overstat0a", 0.5],
+        ["overstat0b", 0.5],
+        ["overstat0c", 0.5],
+      ]);
+      getMmrMapSpy.mockResolvedValueOnce(mmrMap);
+      const waitlistTeam: ScrimSignup = {
+        teamName: "Waitlist Unknown Team",
+        players: [
+          { id: "wp1", discordId: "wd1", displayName: "WP1" },
+          { id: "wp2", discordId: "wd2", displayName: "WP2" },
+          { id: "wp3", discordId: "wd3", displayName: "WP3" },
+        ],
+        signupId: "ws1",
+        signupPlayer: {
+          id: "wcap",
+          discordId: "wcapdiscord",
+          displayName: "WCap",
+        },
+        date: fakeDate,
+      };
+      getSignupsSpy.mockReturnValueOnce(
+        Promise.resolve({
+          mainList: generateTeams(40),
+          waitList: [waitlistTeam],
+        }),
+      );
+      await command.run(basicInteraction);
+      const writeFileSyncMock = fs.writeFileSync as jest.Mock;
+      const mmrCsvCall = writeFileSyncMock.mock.calls.find((call) =>
+        (call[0] as string).includes("mmr"),
+      );
+      expect(mmrCsvCall).toBeDefined();
+      const csvContent = mmrCsvCall![1] as string;
+      // waitlist team must not appear in the MMR CSV regardless of its MMR status
+      expect(csvContent).not.toContain("Waitlist Unknown Team");
+      const csvRows = csvContent.split("\n");
+      // unknown main list teams float to the top of lobby 1
+      // row 0 is header, row 1 is "--- Lobby 1 ---", row 2 is first team row
+      expect(csvRows[2]).toMatch(/^UNKNOWN,/);
+      // team 0 (the only team with known MMR) sinks to the last position
+      const lastTeamRow = csvRows.at(-1)!;
+      expect(lastTeamRow).toContain(",Team 0,");
+      expect(lastTeamRow).toMatch(/^,/);
+    });
+
     it("should write player mmr values into the mmr csv", async () => {
       const knownMmrMap = new Map([
         ["overstat0a", 0.9],
@@ -342,7 +409,7 @@ describe("Get signups", () => {
       ]);
       getMmrMapSpy.mockResolvedValueOnce(knownMmrMap);
       getSignupsSpy.mockReturnValueOnce(
-        Promise.resolve({ mainList: generateTeams(41), waitList: [] }),
+        Promise.resolve({ mainList: generateTeams(40), waitList: [] }),
       );
       await command.run(basicInteraction);
       const writeFileSyncMock = fs.writeFileSync as jest.Mock;
