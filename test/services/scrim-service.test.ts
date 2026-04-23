@@ -288,8 +288,8 @@ describe("ScrimService", () => {
       expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
       expect(createNewScrimSpy.mock.calls).toEqual([
-        [time, channelId, lobby2OverstatId, tournamentStats],
-        [time, channelId, lobby3OverstatId, tournamentStats],
+        [time, channelId, lobby2OverstatId, tournamentStats, PrioType.regular],
+        [time, channelId, lobby3OverstatId, tournamentStats, PrioType.regular],
       ]);
       expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
       expect(huggingFaceUploadSpy.mock.calls).toEqual([
@@ -344,6 +344,7 @@ describe("ScrimService", () => {
         channelId,
         newLobbyOverstatId,
         tournamentStats,
+        PrioType.regular,
       );
     });
 
