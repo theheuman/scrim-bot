@@ -9,6 +9,7 @@ import {
   InteractionResponse,
   Message,
   MessagePayload,
+  SlashCommandBooleanOption,
   SlashCommandChannelOption,
   SlashCommandIntegerOption,
   SlashCommandNumberOption,
@@ -28,7 +29,8 @@ export type SlashCommandOption =
   | SlashCommandRoleOption
   | SlashCommandUserOption
   | SlashCommandChannelOption
-  | SlashCommandIntegerOption;
+  | SlashCommandIntegerOption
+  | SlashCommandBooleanOption;
 
 export interface StringOptionConfig {
   isRequired?: boolean;
