@@ -41,6 +41,8 @@ export abstract class DB {
   ): Promise<Array<Record<K, DbValue>>>;
 
   abstract customQuery(query: string): Promise<JSONValue>;
+  abstract downloadFileById(fileId: string): Promise<Blob>;
+  abstract downloadFileByName(fileName: string): Promise<Blob>;
   abstract replaceTeammate(
     scrimId: string,
     teamName: string,

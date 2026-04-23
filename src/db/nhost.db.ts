@@ -561,6 +561,32 @@ class NhostDb extends DB {
     }));
   }
 
+  async downloadFileById(fileId: string): Promise<Blob> {
+    const { file, error } = await this.nhostClient.storage.download({ fileId });
+    if (error) {
+      throw error;
+    }
+    return file;
+  }
+
+  async downloadFileByName(fileName: string): Promise<Blob> {
+    const result = await this.nhostClient.graphql.request(`
+      query {
+        files(where: { name: { _eq: "${fileName}" } }, limit: 1) {
+          id
+        }
+      }
+    `);
+    if (result.error || !result.data) {
+      throw new Error(`Failed to look up file "${fileName}"`);
+    }
+    const files = (result.data as { files: { id: string }[] }).files;
+    if (!files.length) {
+      throw new Error(`File not found: "${fileName}"`);
+    }
+    return this.downloadFileById(files[0].id);
+  }
+
   async customQuery(query: string): Promise<JSONValue> {
     const result: {
       data: JSONValue | null;

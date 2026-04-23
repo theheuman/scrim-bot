@@ -46,4 +46,4 @@ export const rosterService = new RosterService(
   signupsService,
 );
 export const leagueService = new LeagueService(nhostDb);
-export const mmrService = new MmrService();
+export const mmrService = new MmrService(nhostDb);

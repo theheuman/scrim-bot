@@ -1,8 +1,10 @@
 import * as fs from "node:fs";
+import { DB } from "../db/db";
 
 const CACHE_FILE = "mmr-cache.json";
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 const API_URL = "https://vesa.apexapm.com/API/stats/all.php";
+const MMR_FILE_NAME = "apm-mmr.json";
 
 interface MmrEntry {
   nucleusHash: string;
@@ -20,6 +22,8 @@ interface MmrCache {
 }
 
 export class MmrService {
+  constructor(private db: DB) {}
+
   async getMmrMap(forceRefresh = false): Promise<Map<string, number>> {
     if (!forceRefresh) {
       const cached = this.readCache();
@@ -45,11 +49,10 @@ export class MmrService {
   }
 
   private async fetchAndCache(): Promise<Map<string, number>> {
-    const response = await fetch(API_URL);
-    if (!response.ok) {
-      throw new Error(`MMR API responded with status ${response.status}`);
-    }
-    const json: MmrApiResponse = await response.json();
+    const json = process.env.FETCH_MMR_FROM_APM
+      ? await this.fetchFromApexapm()
+      : await this.fetchFromNhost();
+
     if (!Array.isArray(json.data)) {
       throw new Error(
         `MMR API returned unexpected shape: status=${json.status}`,
@@ -61,6 +64,19 @@ export class MmrService {
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cache));
     return this.buildMap(json.data);
+  }
+
+  private async fetchFromApexapm(): Promise<MmrApiResponse> {
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      throw new Error(`MMR API responded with status ${response.status}`);
+    }
+    return response.json();
+  }
+
+  private async fetchFromNhost(): Promise<MmrApiResponse> {
+    const blob = await this.db.downloadFileByName(MMR_FILE_NAME);
+    return JSON.parse(await blob.text());
   }
 
   private buildMap(data: MmrEntry[]): Map<string, number> {
