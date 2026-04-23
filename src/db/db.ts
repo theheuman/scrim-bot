@@ -66,16 +66,16 @@ export abstract class DB {
     discordChannelID: string,
     overstatId: string | null = null,
     overstatJson: JSON | null = null,
-    prioType: string | null = null,
+    prioType?: PrioType,
   ): Promise<string> {
     const ids = await this.post(DbTable.scrims, [
-      {
+      this.removeUndefined({
         date_time_field: dateTime,
         discord_channel: discordChannelID,
         overstat_id: overstatId,
         overstat_json: overstatJson,
         prio_type: prioType,
-      },
+      }),
     ]);
     return ids[0];
   }

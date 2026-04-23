@@ -13,7 +13,7 @@ export class ScrimService {
   async createScrim(
     discordChannelID: string,
     dateTime: Date,
-    prioType: PrioType | null = null,
+    prioType?: PrioType,
   ): Promise<string> {
     const scrimId = await this.db.createNewScrim(
       dateTime,

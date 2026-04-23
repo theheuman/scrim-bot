@@ -101,7 +101,7 @@ describe("ScrimService", () => {
         channelId,
         null,
         null,
-        null,
+        undefined,
       );
     });
   });
