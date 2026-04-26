@@ -138,6 +138,21 @@ export abstract class Command extends SlashCommandBuilder {
     });
   }
 
+  addBooleanInput(
+    name: string,
+    description: string,
+    isRequired: boolean = false,
+  ) {
+    this.addBooleanOption((option) =>
+      this.addOption(option, name, description, isRequired),
+    );
+    this.loggableArguments.push({
+      required: isRequired,
+      name,
+      methodName: "getBoolean",
+    });
+  }
+
   addRoleInput(name: string, description: string, isRequired: boolean = false) {
     this.addRoleOption((option) =>
       this.addOption(option, name, description, isRequired),

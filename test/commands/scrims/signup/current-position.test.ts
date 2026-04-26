@@ -7,13 +7,15 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { CurrentPositionCommand } from "../../../../src/commands/scrims/signup/current-position";
-import { ScrimSignupMock } from "../../../mocks/signups.mock";
 import { StaticValueService } from "../../../../src/services/static-values";
 import { StaticValueServiceMock } from "../../../mocks/static-values.mock";
-import { ScrimSignups } from "../../../../src/services/signups";
-import { ScrimSignup } from "../../../../src/models/Scrims";
+import { PrioType, ScrimSignup } from "../../../../src/models/Scrims";
 import { GetSignupsHelper } from "../../../../src/commands/utility/get-signups";
 import { Player } from "../../../../src/models/Player";
+import { SignupService } from "../../../../src/services/signups";
+import { SignupServiceMock } from "../../../mocks/signups.mock";
+import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
+import { ScrimService } from "../../../../src/services/scrim-service";
 
 describe("Get current position", () => {
   let basicInteraction: CustomInteraction;
@@ -26,7 +28,7 @@ describe("Get current position", () => {
   let getSignupsSpy: SpyInstance<
     Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] } | undefined>,
     [
-      signupsService: ScrimSignups,
+      signupsService: SignupService,
       staticValueService: StaticValueService,
       interaction: CustomInteraction,
     ],
@@ -35,8 +37,9 @@ describe("Get current position", () => {
 
   let command: CurrentPositionCommand;
 
-  const mockSignpuService = new ScrimSignupMock();
+  const mockSignpuService = new SignupServiceMock();
   const mockStaticValueService = new StaticValueServiceMock();
+  const mockScrimService = new ScrimServiceMock();
 
   beforeAll(() => {
     member = {
@@ -58,9 +61,17 @@ describe("Get current position", () => {
   beforeEach(() => {
     editReplySpy.mockClear();
     getSignupsSpy.mockClear();
+    jest.spyOn(mockScrimService, "getScrim").mockResolvedValue({
+      id: "scrim-id",
+      dateTime: new Date(),
+      discordChannel: "forum thread id",
+      active: true,
+      prioType: PrioType.regular,
+    });
     command = new CurrentPositionCommand(
-      mockSignpuService as unknown as ScrimSignups,
+      mockSignpuService as unknown as SignupService,
       mockStaticValueService as StaticValueService,
+      mockScrimService as unknown as ScrimService,
     );
   });
 
@@ -112,8 +123,8 @@ describe("Get current position", () => {
     expect(editReplySpy).toHaveBeenCalledWith(
       `__as coach__ at position: 2. Prio: 1. TheHeuman: Scrim pass\n` +
         `__as player__ at position: 3. Prio: 0. \n` +
-        `There is 1 team in this scrim with positive prio\n` +
-        `There is 1 team in this scrim with negative prio`,
+        `There is 1 other team in this scrim with positive prio\n` +
+        `There is 1 other team in this scrim with negative prio`,
     );
   });
 
@@ -137,6 +148,38 @@ describe("Get current position", () => {
         `There are 0 teams in this scrim with positive prio\n` +
         `There are 0 teams in this scrim with negative prio`,
     );
+  });
+
+  it("Should get position without prio info when prio type is off", async () => {
+    jest.spyOn(mockScrimService, "getScrim").mockResolvedValueOnce({
+      id: "scrim-id",
+      dateTime: new Date(),
+      discordChannel: "forum thread id",
+      active: true,
+      prioType: PrioType.off,
+    });
+    const teamWithNegativePrio: ScrimSignup = {
+      players: [],
+      signupPlayer: { discordId: "" } as Player,
+      prio: { amount: -1, reasons: "Player1: Broke rules;" },
+    } as unknown as ScrimSignup;
+    const teamWithPlayer: ScrimSignup = {
+      teamName: "as player",
+      signupPlayer: { discordId: "" } as Player,
+      players: [
+        { discordId: "theheuman-id", displayName: "TheHeuman" } as Player,
+      ],
+      prio: { amount: 1, reasons: "TheHeuman: Scrim pass" },
+    } as unknown as ScrimSignup;
+
+    getSignupsSpy.mockReturnValueOnce(
+      Promise.resolve({
+        mainList: [teamWithPlayer],
+        waitList: [teamWithNegativePrio],
+      }),
+    );
+    await command.run(basicInteraction);
+    expect(editReplySpy).toHaveBeenCalledWith(`__as player__ at position: 1`);
   });
 
   describe("errors", () => {

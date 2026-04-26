@@ -8,9 +8,9 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { ScrimSignupMock } from "../../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../../src/services/signups";
 import { CloseScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/close-scrim";
+import { ScrimService } from "../../../../../src/services/scrim-service";
+import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
 
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -29,7 +29,7 @@ describe("Close scrim", () => {
 
   let command: CloseScrimCommand;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockScrimService = new ScrimServiceMock();
 
   beforeAll(() => {
     member = {
@@ -48,7 +48,7 @@ describe("Close scrim", () => {
       member,
     } as unknown as CustomInteraction;
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
-    signupCloseScrimSpy = jest.spyOn(mockScrimSignups, "closeScrim");
+    signupCloseScrimSpy = jest.spyOn(mockScrimService, "closeScrim");
     signupCloseScrimSpy.mockImplementation(() => {
       return Promise.resolve();
     });
@@ -60,7 +60,7 @@ describe("Close scrim", () => {
     channelDeletedSpy.mockClear();
     command = new CloseScrimCommand(
       new AuthMock() as AuthService,
-      mockScrimSignups as unknown as ScrimSignups,
+      mockScrimService as unknown as ScrimService,
     );
   });
 

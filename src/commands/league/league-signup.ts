@@ -2,16 +2,14 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { OAuth2Client } from "googleapis-common";
-import { sheets } from "@googleapis/sheets";
-import { SheetHelper, SpreadSheetType } from "../../utility/sheet-helper";
+import { User } from "discord.js";
 import {
-  Platform,
+  LeagueService,
   PlayerRank,
-  LeagueSignupPlayer,
+  Platform,
   VesaDivision,
-} from "../../models/league-models";
-import { LeagueCommandHelper } from "./league-command-helper";
+  SheetsPlayer,
+} from "../../services/league";
 
 export class LeagueSignupCommand extends MemberCommand {
   inputNames = {
@@ -22,7 +20,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player1inputNames: {
       user: "player1",
       rank: "player1-rank",
-      lastSeasonDivision: "player1-s12-vesa-division",
+      lastSeasonDivision: "player1-previous-vesa-division",
       overstatLink: "player1-overstat-link",
       platform: "player1-platform",
     },
@@ -30,7 +28,7 @@ export class LeagueSignupCommand extends MemberCommand {
     player2inputNames: {
       user: "player2",
       rank: "player2-rank",
-      lastSeasonDivision: "player2-s12-vesa-division",
+      lastSeasonDivision: "player2-previous-vesa-division",
       overstatLink: "player2-overstat-link",
       platform: "player2-platform",
     },
@@ -38,14 +36,17 @@ export class LeagueSignupCommand extends MemberCommand {
     player3inputNames: {
       user: "player3",
       rank: "player3-rank",
-      lastSeasonDivision: "player3-s12-vesa-division",
+      lastSeasonDivision: "player3-previous-vesa-division",
       overstatLink: "player3-overstat-link",
       platform: "player3-platform",
     },
     comments: "additional-comments",
   };
 
-  constructor(private overstatService: OverstatService) {
+  constructor(
+    private overstatService: OverstatService,
+    private leagueService: LeagueService,
+  ) {
     super("league-signup", "Signup for the league");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
@@ -69,19 +70,19 @@ export class LeagueSignupCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.player1inputNames.rank,
-      "Player 1 last seasons peak rank",
+      "Player 1 last apex seasons peak rank",
       PlayerRank,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player2inputNames.rank,
-      "Player 2 last seasons peak rank",
+      "Player 2 last apex seasons peak rank",
       PlayerRank,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player3inputNames.rank,
-      "Player 3 last seasons peak rank",
+      "Player 3 last apex seasons peak rank",
       PlayerRank,
       true,
     );
@@ -129,19 +130,19 @@ export class LeagueSignupCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.player1inputNames.lastSeasonDivision,
-      "Player 1 VESA season 12 division",
+      "Player 1 most recent VESA season division",
       VesaDivision,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player2inputNames.lastSeasonDivision,
-      "Player 2 VESA season 12 division",
+      "Player 2 most recent VESA season division",
       VesaDivision,
       true,
     );
     this.addChoiceInput(
       this.inputNames.player3inputNames.lastSeasonDivision,
-      "Player 3 VESA season 12 division",
+      "Player 3 most recent VESA season division",
       VesaDivision,
       true,
     );
@@ -173,9 +174,9 @@ export class LeagueSignupCommand extends MemberCommand {
       this.inputNames.comments,
     );
     const signupPlayer = interaction.member;
-    let player1: LeagueSignupPlayer;
-    let player2: LeagueSignupPlayer;
-    let player3: LeagueSignupPlayer;
+    let player1: SheetsPlayer;
+    let player2: SheetsPlayer;
+    let player3: SheetsPlayer;
 
     try {
       player1 = await this.getPlayerInputs(
@@ -220,7 +221,7 @@ export class LeagueSignupCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const signupNumber = await this.postSpreadSheetValue(
+      const signupResult = await this.leagueService.signup(
         teamName,
         teamNoDays ?? "Open schedule",
         compExperience,
@@ -229,7 +230,7 @@ export class LeagueSignupCommand extends MemberCommand {
         player3,
         additionalComments ?? "",
       );
-      if (signupNumber === null) {
+      if (!signupResult) {
         await interaction.followUp(
           "Problem parsing google sheets response, please check sheet to see if your signup went through before resubmitting",
         );
@@ -242,8 +243,20 @@ export class LeagueSignupCommand extends MemberCommand {
           discordId: signupPlayer.id,
         },
       });
+
+      let additionalInfo = "";
+      const currentDate = new Date();
+      if (new Date(signupResult.seasonInfo.startDate) < currentDate) {
+        additionalInfo =
+          "\nThe season is already ongoing, the team will be placed on the waitlist to fill in for teams that drop out.";
+      } else if (
+        new Date(signupResult.seasonInfo.signupPrioEndDate) < currentDate
+      ) {
+        additionalInfo = "\nSignup occurred after the priority window ended.";
+      }
+
       await interaction.followUp(
-        `${signupString}\nSignup #${signupNumber}. Your priority based on returning players will be determined by admins manually`,
+        `${signupString}\nSignup #${signupResult.rowNumber}. Your priority based on returning players will be determined by admins manually${additionalInfo}`,
       );
     } catch (e) {
       await interaction.followUp(`Team not signed up. ${e}`);
@@ -259,12 +272,11 @@ export class LeagueSignupCommand extends MemberCommand {
       platform: string;
     },
     interaction: CustomInteraction,
-  ): Promise<LeagueSignupPlayer> {
+  ): Promise<SheetsPlayer> {
     const user = interaction.options.getUser(playerNumberInputs.user, true);
-    const overstatLink = await LeagueCommandHelper.VALIDATE_OVERSTAT_LINK(
+    const overstatLink = await this.validateOverstatLink(
       user,
       interaction.options.getString(playerNumberInputs.overstatLink, true),
-      this.overstatService,
     );
     return {
       elo: undefined,
@@ -289,67 +301,41 @@ export class LeagueSignupCommand extends MemberCommand {
     };
   }
 
-  async postSpreadSheetValue(
-    teamName: string,
-    teamNoDays: string,
-    teamCompKnowledge: string,
-    player1: LeagueSignupPlayer,
-    player2: LeagueSignupPlayer,
-    player3: LeagueSignupPlayer,
-    additionalComments: string,
-  ): Promise<number | null> {
-    const authClient = await SheetHelper.GET_AUTH_CLIENT();
-
-    const returningPlayersCount = [player1, player2, player3].reduce(
-      (count, player) => {
-        if (player.previous_season_vesa_division !== VesaDivision.None) {
-          return count + 1;
-        } else {
-          return count;
-        }
-      },
-      0,
-    );
-    const values = [
-      [
-        new Date().toISOString(),
-        teamName,
-        teamNoDays,
-        teamCompKnowledge,
-        `${returningPlayersCount} returning players`,
-        ...this.convertPlayerToSheetsFormat(player1),
-        ...this.convertPlayerToSheetsFormat(player2),
-        ...this.convertPlayerToSheetsFormat(player3),
-        additionalComments,
-      ],
-    ];
-
-    const request = SheetHelper.BUILD_REQUEST(
-      values,
-      authClient as OAuth2Client,
-      SpreadSheetType.PROD_SIGNUP_SHEET,
-    );
-
-    const sheetsClient = sheets({ version: "v4" });
-    const response = await sheetsClient.spreadsheets.values.append(request);
-    console.log(response.data);
-    const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
-      response.data.updates,
-    );
-    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
-  }
-
-  private convertPlayerToSheetsFormat(
-    player: LeagueSignupPlayer,
-  ): (string | number)[] {
-    return [
-      player.name,
-      player.discordId,
-      player.overstatLink ?? "No overstat",
-      VesaDivision[player.previous_season_vesa_division],
-      PlayerRank[player.rank],
-      Platform[player.platform],
-      player.elo ?? "No elo on record",
-    ];
+  // throws if provided link is illegal or if provided link does not match link for that user in db, otherwise returns valid link, if "none" provided attempts to fetch from db. Sends undefined if it can't fetch it
+  async validateOverstatLink(
+    user: User,
+    overstatLink: string,
+  ): Promise<string | undefined> {
+    let linkToReturn: string | undefined;
+    if (overstatLink.toLowerCase() === "none") {
+      try {
+        linkToReturn = await this.overstatService.getPlayerOverstat(user);
+      } catch {
+        linkToReturn = undefined;
+        console.log(
+          "No overstat provided and none found in db for " + user.displayName,
+        );
+      }
+    } else {
+      // will throw an error if link is invalid
+      this.overstatService.validateLinkUrl(overstatLink);
+      let dbOverstatLink;
+      try {
+        dbOverstatLink = await this.overstatService.getPlayerOverstat(user);
+      } catch {
+        await this.overstatService.addPlayerOverstatLink(user, overstatLink);
+      }
+      if (
+        dbOverstatLink &&
+        this.overstatService.getPlayerId(overstatLink) !==
+          this.overstatService.getPlayerId(dbOverstatLink)
+      ) {
+        throw new Error(
+          `Overstat provided for ${user.displayName} does not match link previously provided with /link-overstat command`,
+        );
+      }
+      linkToReturn = overstatLink;
+    }
+    return linkToReturn;
   }
 }

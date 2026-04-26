@@ -9,12 +9,14 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
-import { ScrimSignupMock } from "../../../mocks/signups.mock";
-import { ScrimSignups } from "../../../../src/services/signups";
 import { SignupCommand } from "../../../../src/commands/scrims/signup/sign-up";
-import { Scrim, ScrimSignup } from "../../../../src/models/Scrims";
+import { PrioType, Scrim, ScrimSignup } from "../../../../src/models/Scrims";
 import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
+import { SignupServiceMock } from "../../../mocks/signups.mock";
+import { SignupService } from "../../../../src/services/signups";
+import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
+import { ScrimService } from "../../../../src/services/scrim-service";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -47,8 +49,9 @@ describe("Sign up", () => {
     roles: {},
   } as GuildMember;
 
-  const mockScrimSignups = new ScrimSignupMock();
+  const mockScrimSignups = new SignupServiceMock();
   const mockPrioService = new PrioServiceMock();
+  const mockScrimService = new ScrimServiceMock();
 
   const player1 = {
     displayName: "Player 1",
@@ -100,8 +103,9 @@ describe("Sign up", () => {
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
     command = new SignupCommand(
-      mockScrimSignups as unknown as ScrimSignups,
+      mockScrimSignups as unknown as SignupService,
       mockPrioService as PrioService,
+      mockScrimService as ScrimService,
     );
   });
 
@@ -124,7 +128,11 @@ describe("Sign up", () => {
   });
 
   it("Should complete signup but include prio warnings", async () => {
-    jest.spyOn(mockScrimSignups, "getScrim").mockReturnValueOnce({} as Scrim);
+    jest
+      .spyOn(mockScrimService, "getScrim")
+      .mockReturnValueOnce(
+        Promise.resolve({ prioType: PrioType.regular } as Scrim),
+      );
     jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
       Promise.resolve([
         {
@@ -147,6 +155,26 @@ describe("Sign up", () => {
         "This team has prio entries which will be in effect for the scrim.\nTheHeuman: Broke rules;\nTotal prio amount: -1",
       ephemeral: true,
     });
+  });
+
+  it("Should complete signup without prio warning when prio type is off", async () => {
+    jest
+      .spyOn(mockScrimService, "getScrim")
+      .mockReturnValueOnce(
+        Promise.resolve({ prioType: PrioType.off } as Scrim),
+      );
+    const getTeamPrioSpy = jest.spyOn(mockPrioService, "getTeamPrioForScrim");
+    getTeamPrioSpy.mockClear();
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith(
+      `team name\n<@player1id>, <@player2id>, <@player3id>\nSigned up by <@signupPlayerId>.\nscrim signup db id`,
+    );
+    expect(getTeamPrioSpy).not.toHaveBeenCalled();
+    expect(followUpSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("prio entries"),
+      }),
+    );
   });
 
   it("Should complete signup without warnings", async () => {

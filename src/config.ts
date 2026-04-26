@@ -11,6 +11,7 @@ export interface AppConfig {
     };
   };
   nhost: { adminSecret: string; subdomain: string; region: string };
+  huggingFaceToken: string;
 }
 
 export interface ConfigFile {

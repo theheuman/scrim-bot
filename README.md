@@ -81,14 +81,19 @@ The `main` branch is tracked by heroku and automatically deploys.
 
 ### Test commands on a server
 
-Install additional nhost server dependencies to run a local version of the database.
-https://docs.nhost.io/development/cli/getting-started
+We need to install nhost to get a local version of the db up and running (so when you test it doesn't connect to prod db)
 
-Start nhost by going to the nhost/ directory and running `nhost up --apply-seeds`, you can then navigate to the dashboard link the command gives you to see that its running correctly
+Refer to the [official nhost documentation](https://github.com/nhost/nhost/tree/main/cli) before executing the steps below, but it should look something like
+* `sudo curl -L https://raw.githubusercontent.com/nhost/nhost/main/cli/get.sh | bash`
+* make sure to also have docker installed
+
+Start nhost by running the `npm run nhost` command, you can then navigate to the dashboard link the command gives you to see that its running correctly
+
+You'll also need to either create a new discord bot, or ask me (TheHeuman) for my test bot credentials and then input those in the dev section of the config file
 
 Before merge to main, test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info and insert necessary data into nhost (scrim_admin_roles and static_key_values.signup_channel).
 
-Deploy commands to your private server with `npm run deploy-commands`
+Deploy commands to your private server by first building `npm run build` and the deploying the commands `npm run deploy-commands`
 
 The bot can use hot reloads `npm run start:watch` or you can run it normally from the dist folder with `npm run start` (make sure to build first)
 

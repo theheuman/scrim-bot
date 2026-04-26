@@ -56,6 +56,20 @@ describe("Overstat", () => {
     });
   });
 
+  describe("getLobbyName()", () => {
+    it("Should return the lobby name with underscores replaced by spaces", () => {
+      const result = overstatService.getLobbyName(overstatLink);
+      expect(result).toEqual("The Void Scrim Lobby 1 8pm 11 ");
+    });
+
+    it("Should return the lobby name from a VESA scrim link with the date stripped", () => {
+      const result = overstatService.getLobbyName(
+        "https://overstat.gg/tournament/141/19989.VESA_Scrim_Lobby_1_4_18_2026/standings/overall/scoreboard",
+      );
+      expect(result).toEqual("VESA Scrim Lobby 1");
+    });
+  });
+
   it("Should link a players overstat", async () => {
     const insertPlayerSpy = jest.spyOn(dbMock, "insertPlayerIfNotExists");
     insertPlayerSpy.mockReturnValue(Promise.resolve({ id: "db id" } as Player));

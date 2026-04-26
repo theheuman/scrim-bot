@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
-import { Scrim } from "../models/Scrims";
+import { parsePrioType, PrioType, Scrim } from "../models/Scrims";
 
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
@@ -41,6 +41,8 @@ export abstract class DB {
   ): Promise<Array<Record<K, DbValue>>>;
 
   abstract customQuery(query: string): Promise<JSONValue>;
+  abstract downloadFileById(fileId: string): Promise<Blob>;
+  abstract downloadFileByName(fileName: string): Promise<Blob>;
   abstract replaceTeammate(
     scrimId: string,
     teamName: string,
@@ -66,14 +68,16 @@ export abstract class DB {
     discordChannelID: string,
     overstatId: string | null = null,
     overstatJson: JSON | null = null,
+    prioType?: PrioType,
   ): Promise<string> {
     const ids = await this.post(DbTable.scrims, [
-      {
+      this.removeUndefined({
         date_time_field: dateTime,
         discord_channel: discordChannelID,
         overstat_id: overstatId,
         overstat_json: overstatJson,
-      },
+        prio_type: prioType,
+      }),
     ]);
     return ids[0];
   }
@@ -363,7 +367,7 @@ export abstract class DB {
         comparator: "eq",
         value: discordChannelID,
       },
-      ["id", "overstat_id", "date_time_field", "active"],
+      ["id", "overstat_id", "date_time_field", "active", "prio_type"],
     );
     return dbResult.map((entry) => ({
       id: entry.id as string,
@@ -371,23 +375,83 @@ export abstract class DB {
       overstatId: entry.overstat_id as string,
       discordChannel: discordChannelID,
       active: entry.active as boolean,
+      prioType: parsePrioType(entry.prio_type as string),
     }));
   }
 
-  getActiveScrims(): Promise<
-    { discord_channel: string; id: string; date_time_field: string }[]
+  async getActiveScrims(): Promise<
+    {
+      discordChannel: string;
+      id: string;
+      dateTimeField: string;
+      prioType: PrioType;
+    }[]
   > {
-    return this.get(
+    const dbData = (await this.get(
       DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
-      ["discord_channel", "id", "date_time_field"],
-    ) as Promise<
+      ["discord_channel", "id", "date_time_field", "prio_type"],
+    )) as {
+      discord_channel: string;
+      id: string;
+      date_time_field: string;
+      prio_type: string;
+    }[];
+    return dbData.map((dbScrim) => ({
+      discordChannel: dbScrim.discord_channel as string,
+      id: dbScrim.id as string,
+      dateTimeField: dbScrim.date_time_field as string,
+      prioType: parsePrioType(dbData[0].prio_type),
+    }));
+  }
+
+  async getActiveLeagueSeason(date: Date = new Date()): Promise<{
+    id: string;
+    googleSheetId: string;
+    googleSheetName: string;
+    googleSheetRangeStart: string;
+    signupPrioEndDate: string;
+    startDate: string;
+  } | null> {
+    const dbData = await this.get(
+      DbTable.leagueSeasons,
       {
-        discord_channel: string;
-        id: string;
-        date_time_field: string;
-      }[]
-    >;
+        operator: "and",
+        expressions: [
+          {
+            fieldName: "signup_start_date",
+            comparator: "lte",
+            value: date,
+          },
+          {
+            fieldName: "signup_end_date",
+            comparator: "gte",
+            value: date,
+          },
+        ],
+      },
+      [
+        "id",
+        "google_sheet_id",
+        "google_sheet_name",
+        "google_sheet_range_start",
+        "signup_prio_end_date",
+        "start_date",
+      ],
+    );
+
+    if (dbData.length > 0) {
+      return {
+        id: dbData[0].id as string,
+        googleSheetId: dbData[0].google_sheet_id as string,
+        googleSheetName: dbData[0].google_sheet_name as string,
+        googleSheetRangeStart: dbData[0].google_sheet_range_start as string,
+        signupPrioEndDate: dbData[0].signup_prio_end_date as string,
+        startDate: dbData[0].start_date as string,
+      };
+    } else {
+      return null;
+    }
   }
 
   async getScrimSignupsWithPlayers(

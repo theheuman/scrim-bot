@@ -9,25 +9,14 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSubRequestCommand } from "../../../src/commands/league/sub-request";
-import * as GoogleSheets from "@googleapis/sheets";
-
-import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
-import { Readable } from "stream";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import {
   getPlayerOverstatUrl,
   OverstatService,
 } from "../../../src/services/overstat";
-import Resource$Spreadsheets = GoogleSheets.sheets_v4.Resource$Spreadsheets;
-import Sheets = GoogleSheets.sheets_v4.Sheets;
-import Params$Resource$Spreadsheets$Values$Append = GoogleSheets.sheets_v4.Params$Resource$Spreadsheets$Values$Append;
+import { LeagueService } from "../../../src/services/league";
+import { LeagueServiceMock } from "../../mocks/league.mock";
 import { DB } from "../../../src/db/db";
-
-class MockGoogleAuth {
-  getClient() {
-    return undefined;
-  }
-}
 
 describe("Sub request", () => {
   let basicInteraction: CustomInteraction;
@@ -41,15 +30,11 @@ describe("Sub request", () => {
     [message: string],
     string
   >;
-  let googleSheetsRequestSpy: SpyInstance<
-    Promise<GaxiosResponseWithHTTP2<Readable>>,
-    [request: Params$Resource$Spreadsheets$Values$Append],
-    string
-  >;
+  let subRequestSpy: SpyInstance;
   let getPlayerOverstatSpy: SpyInstance<Promise<string>, [user: User], string>;
-  let googleSheetsSpy: SpyInstance;
 
   let command: LeagueSubRequestCommand;
+  let mockLeagueService: LeagueService;
 
   const signupMember = {
     displayName: "Signup User",
@@ -71,8 +56,10 @@ describe("Sub request", () => {
 
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
+    mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
     const staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
       mockOverstatService,
+      mockLeagueService,
     );
     basicInteraction = {
       channelId: "forum thread id",
@@ -126,28 +113,6 @@ describe("Sub request", () => {
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     invisibleReplySpy = jest.spyOn(basicInteraction, "invisibleReply");
 
-    const googleValuesMethods = {
-      append: (
-        request: Params$Resource$Spreadsheets$Values$Append,
-      ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
-        Promise.resolve({
-          data: {
-            updates: {
-              updatedRange: "'Discord Submittals'!A1:Y1",
-            },
-            request: "Request data " + request.key,
-          },
-        } as GaxiosResponseWithHTTP2),
-    };
-    googleSheetsRequestSpy = jest.spyOn(googleValuesMethods, "append");
-    googleSheetsSpy = jest.spyOn(GoogleSheets, "sheets").mockReturnValue({
-      spreadsheets: {
-        values: googleValuesMethods,
-      } as unknown as Resource$Spreadsheets,
-    } as Sheets);
-    jest
-      .spyOn(GoogleSheets.auth, "GoogleAuth")
-      .mockReturnValue(new MockGoogleAuth() as unknown as GoogleAuth);
     jest
       .spyOn(mockOverstatService, "getPlayerId")
       .mockImplementation((overstatLink) => {
@@ -161,75 +126,46 @@ describe("Sub request", () => {
         ? Promise.resolve(overstats.player1)
         : Promise.resolve(overstats.player2),
     );
+    subRequestSpy = jest.spyOn(mockLeagueService, "subRequest");
   });
 
   beforeEach(() => {
     followUpSpy.mockClear();
-    googleSheetsRequestSpy.mockClear();
+    subRequestSpy.mockClear();
     invisibleReplySpy.mockClear();
-    command = new LeagueSubRequestCommand(mockOverstatService);
+    command = new LeagueSubRequestCommand(
+      mockOverstatService,
+      mockLeagueService,
+    );
   });
 
   it("Should make the sub request", async () => {
-    const date = new Date("2025-12-26T18:55:23.264Z");
-    jest.useFakeTimers();
-    jest.setSystemTime(date);
     await command.run(basicInteraction);
-    expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
-      auth: undefined,
-      range: "Sub Requests!A1",
-      requestBody: {
-        values: [
-          [
-            date.toISOString(),
-            "Division4",
-            "Dude Cube",
-            "PlacementDay1",
-            playerOut.displayName,
-            playerOut.id,
-            overstats.player1,
-            playerIn.displayName,
-            playerIn.id,
-            overstats.player2,
-            signupMember.displayName,
-            signupMember.id,
-            "None",
-          ],
-        ],
+    expect(subRequestSpy).toHaveBeenCalledWith(
+      "Division4",
+      "Dude Cube",
+      "PlacementDay1",
+      {
+        name: playerOut.displayName,
+        discordId: playerOut.id,
+        overstatLink: overstats.player1,
       },
-      spreadsheetId: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
-      valueInputOption: "USER_ENTERED",
-    });
+      {
+        name: playerIn.displayName,
+        discordId: playerIn.id,
+        overstatLink: overstats.player2,
+      },
+      signupMember,
+      "None",
+    );
     expect(followUpSpy).toHaveBeenCalledWith(
       `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested week: PlacementDay1\nSheet row #0`,
     );
-    jest.useRealTimers();
   });
 
   it("Should complete signup but warn that response can't be parsed", async () => {
-    const localGoogleValueMethods = {
-      append: (
-        request: Params$Resource$Spreadsheets$Values$Append,
-      ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
-        Promise.resolve({
-          data: {
-            updates: {
-              updatedRange: "weird unparseable string",
-            },
-            request: "Request data " + request.key,
-          },
-        } as GaxiosResponseWithHTTP2),
-    };
-    googleSheetsSpy.mockReturnValueOnce({
-      spreadsheets: {
-        values: localGoogleValueMethods,
-      } as unknown as Resource$Spreadsheets,
-    } as Sheets);
-    const localGoogleRequestSpy = jest.spyOn(localGoogleValueMethods, "append");
-
+    subRequestSpy.mockResolvedValueOnce(null);
     await command.run(basicInteraction);
-    // re initialize request spy to spy on the local append method
-    expect(localGoogleRequestSpy).toHaveBeenCalled();
     expect(followUpSpy).toHaveBeenCalledWith(
       `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting`,
     );
@@ -237,9 +173,7 @@ describe("Sub request", () => {
 
   describe("errors", () => {
     it("should not complete the signup because google did a bad", async () => {
-      googleSheetsRequestSpy.mockImplementationOnce(async () => {
-        throw Error("Sheets Failure");
-      });
+      subRequestSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
       await command.run(basicInteraction);
       expect(followUpSpy).toHaveBeenCalledWith(
         "Sub request not made. Error: Sheets Failure",

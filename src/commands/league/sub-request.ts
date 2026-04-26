@@ -2,15 +2,9 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { OAuth2Client } from "googleapis-common";
-import { sheets } from "@googleapis/sheets";
-import { SheetHelper, SpreadSheetType } from "../../utility/sheet-helper";
-import {
-  VesaDivision,
-  LeagueSubRequestPlayer,
-} from "../../models/league-models";
+import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
-import { GuildMember } from "discord.js";
+import { LeagueService } from "../../services/league";
 
 export class LeagueSubRequestCommand extends MemberCommand {
   inputNames = {
@@ -29,7 +23,10 @@ export class LeagueSubRequestCommand extends MemberCommand {
     additionalComments: "additional-comments",
   };
 
-  constructor(private overstatService: OverstatService) {
+  constructor(
+    private overstatService: OverstatService,
+    private leagueService: LeagueService,
+  ) {
     super("sub-request", "Request a sub");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
@@ -144,7 +141,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const subRequestNumber = await this.postSpreadSheetValue(
+      const subRequestNumber = await this.leagueService.subRequest(
         VesaDivision[teamDivision],
         teamName,
         WeekNumbers[weekNumber],
@@ -172,55 +169,6 @@ export class LeagueSubRequestCommand extends MemberCommand {
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);
     }
-  }
-
-  async postSpreadSheetValue(
-    teamDivision: string,
-    teamName: string,
-    weekNumber: string,
-    player1: LeagueSubRequestPlayer,
-    player2: LeagueSubRequestPlayer,
-    commandUser: GuildMember,
-    additionalComments: string,
-  ): Promise<number | null> {
-    const authClient = await SheetHelper.GET_AUTH_CLIENT();
-
-    const values = [
-      [
-        new Date().toISOString(),
-        teamDivision,
-        teamName,
-        weekNumber,
-        ...this.convertPlayerToSheetsFormat(player1),
-        ...this.convertPlayerToSheetsFormat(player2),
-        commandUser.displayName,
-        commandUser.id,
-        additionalComments,
-      ],
-    ];
-
-    const request = SheetHelper.BUILD_REQUEST(
-      values,
-      authClient as OAuth2Client,
-      SpreadSheetType.PROD_SUB_REQUEST_SHEET,
-    );
-
-    const sheetsClient = sheets({ version: "v4" });
-    const response = await sheetsClient.spreadsheets.values.append(request);
-    const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
-      response.data.updates,
-    );
-    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
-  }
-
-  private convertPlayerToSheetsFormat(
-    player: LeagueSubRequestPlayer,
-  ): (string | number)[] {
-    return [
-      player.name,
-      player.discordId,
-      player.overstatLink ?? "No overstat",
-    ];
   }
 }
 

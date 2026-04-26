@@ -3,6 +3,9 @@ import { PlayerInsert } from "../src/models/Player";
 import { Scrims } from "../src/db/table.interfaces";
 
 let mockRequest: (query: string) => Promise<object> = jest.fn();
+let mockDownload: (params: {
+  fileId: string;
+}) => Promise<{ file: Blob | null; error: Error | null }> = jest.fn();
 
 jest.mock("@nhost/nhost-js", () => {
   return {
@@ -10,6 +13,9 @@ jest.mock("@nhost/nhost-js", () => {
       return {
         graphql: {
           request: (query: string) => mockRequest(query),
+        },
+        storage: {
+          download: (params: { fileId: string }) => mockDownload(params),
         },
       };
     }),
@@ -1172,6 +1178,74 @@ describe("DB connection", () => {
       },
     ]);
     expect.assertions(2);
+  });
+
+  describe("downloadFileById()", () => {
+    it("should call storage.download with the correct fileId and return the blob", async () => {
+      const fileId = "182bfcb2-ccad-436f-8fb4-2d2bb3cbc57c";
+      const blob = new Blob(['{"status":"success","data":[]}']);
+      mockDownload = jest.fn().mockResolvedValue({ file: blob, error: null });
+
+      const result = await nhostDb.downloadFileById(fileId);
+
+      expect(mockDownload).toHaveBeenCalledWith({ fileId });
+      expect(result).toBe(blob);
+      expect.assertions(2);
+    });
+
+    it("should throw when storage.download returns an error", async () => {
+      mockDownload = jest
+        .fn()
+        .mockResolvedValue({ file: null, error: new Error("storage error") });
+
+      await expect(nhostDb.downloadFileById("some-id")).rejects.toThrow(
+        "storage error",
+      );
+    });
+  });
+
+  describe("downloadFileByName()", () => {
+    it("should look up the file id by name then download and return the blob", async () => {
+      const fileId = "182bfcb2-ccad-436f-8fb4-2d2bb3cbc57c";
+      const blob = new Blob(['{"status":"success","data":[]}']);
+      mockRequest = (query) => {
+        const expected = `
+      query {
+        files(where: { name: { _eq: "apm-mmr.json" } }, limit: 1) {
+          id
+        }
+      }
+    `;
+        expect(query.replace(/\s+/g, " ")).toEqual(
+          expected.replace(/\s+/g, " "),
+        );
+        return Promise.resolve({ data: { files: [{ id: fileId }] } });
+      };
+      mockDownload = jest.fn().mockResolvedValue({ file: blob, error: null });
+
+      const result = await nhostDb.downloadFileByName("apm-mmr.json");
+
+      expect(mockDownload).toHaveBeenCalledWith({ fileId });
+      expect(result).toBe(blob);
+      expect.assertions(3);
+    });
+
+    it("should throw when no file matches the name", async () => {
+      mockRequest = () => Promise.resolve({ data: { files: [] } });
+
+      await expect(nhostDb.downloadFileByName("apm-mmr.json")).rejects.toThrow(
+        'File not found: "apm-mmr.json"',
+      );
+    });
+
+    it("should throw when the graphql request fails", async () => {
+      mockRequest = () =>
+        Promise.resolve({ data: null, error: { message: "graphql error" } });
+
+      await expect(nhostDb.downloadFileByName("apm-mmr.json")).rejects.toThrow(
+        'Failed to look up file "apm-mmr.json"',
+      );
+    });
   });
 
   it("Should remove admin roles", async () => {

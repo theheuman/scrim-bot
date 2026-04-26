@@ -1,2 +1,3 @@
-.nhost
+.nhost/*
+!.nhost/project.yaml
 .secrets

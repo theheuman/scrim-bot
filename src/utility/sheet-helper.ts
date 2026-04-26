@@ -1,32 +1,7 @@
-import { GoogleAuth, OAuth2Client } from "googleapis-common";
-import { auth, sheets_v4 } from "@googleapis/sheets";
+import { OAuth2Client } from "googleapis-common";
+import { sheets_v4 } from "@googleapis/sheets";
 import Schema$UpdateValuesResponse = sheets_v4.Schema$UpdateValuesResponse;
 import Params$Resource$Spreadsheets$Values$Append = sheets_v4.Params$Resource$Spreadsheets$Values$Append;
-import { AnyAuthClient } from "google-auth-library";
-
-enum SpreadSheetTypes {
-  TEST_SHEET = "TEST_SHEET",
-  PROD_SIGNUP_SHEET = "PROD_SIGNUP_SHEET",
-  PROD_SUB_REQUEST_SHEET = "PROD_SUB_REQUEST_SHEET",
-}
-
-export const SpreadSheetType: Record<
-  SpreadSheetTypes,
-  { id: string; range: string }
-> = {
-  TEST_SHEET: {
-    id: "1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo",
-    range: "Sheet1!A1",
-  },
-  PROD_SIGNUP_SHEET: {
-    id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
-    range: "Discord Submittals!A1",
-  },
-  PROD_SUB_REQUEST_SHEET: {
-    id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
-    range: "Sub Requests!A1",
-  },
-};
 
 export class SheetHelper {
   static STARTING_CELL_OFFSET = 1;
@@ -60,14 +35,5 @@ export class SheetHelper {
       },
       auth: authClient as OAuth2Client,
     };
-  }
-
-  static GET_AUTH_CLIENT(): Promise<AnyAuthClient> {
-    const googleAuth = new auth.GoogleAuth({
-      keyFile: "service-account-key.json",
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    }) as GoogleAuth;
-
-    return googleAuth.getClient();
   }
 }

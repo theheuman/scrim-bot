@@ -1,11 +1,11 @@
 import { CustomInteraction } from "../interaction";
 import { StaticValueService } from "../../services/static-values";
 import { ScrimSignup } from "../../models/Scrims";
-import { ScrimSignups } from "../../services/signups";
+import { SignupService } from "../../services/signups";
 
 export class GetSignupsHelper {
   static async getSignupsForChannel(
-    signupsService: ScrimSignups,
+    signupsService: SignupService,
     staticValueService: StaticValueService,
     interaction: CustomInteraction,
   ): Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] } | undefined> {

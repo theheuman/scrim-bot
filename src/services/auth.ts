@@ -1,39 +1,47 @@
 import { DB } from "../db/db";
 import { GuildMember } from "discord.js";
-import { CacheService } from "./cache";
 import { DiscordRole } from "../models/Role";
 
 export class AuthService {
-  constructor(
-    private db: DB,
-    private cache: CacheService,
-  ) {}
+  adminRolesMap: Map<string, DiscordRole>;
+  constructor(private db: DB) {
+    this.adminRolesMap = new Map();
+    this.getAdminRoleMap().then((map) => {
+      this.adminRolesMap = map;
+    });
+  }
 
   async memberIsAdmin(member: GuildMember): Promise<boolean> {
     const memberRoleIds = member.roles.cache.map((role) => role.id);
-    const adminRoleSet = await this.getAdminRoleSet();
+    const adminRoleSet = await this.getAdminRoleMap();
     return this.hasAdminRole(memberRoleIds, adminRoleSet);
   }
 
   async addAdminRoles(roles: DiscordRole[]): Promise<string[]> {
     const dbIds = await this.db.addAdminRoles(roles);
-    this.cache.addAdminRoles(roles);
+    this.updateAdminRoleMap();
     return dbIds;
   }
 
   async removeAdminRoles(roleIds: string[]): Promise<string[]> {
     const dbIds = await this.db.removeAdminRoles(roleIds);
-    this.cache.removeAdminRoles(roleIds);
+    this.updateAdminRoleMap();
     return dbIds;
   }
 
-  private async getAdminRoleSet(): Promise<Map<string, DiscordRole>> {
-    let adminRoleSet = this.cache.getAdminRolesMap();
-    if (!adminRoleSet) {
-      const adminRolesArray = await this.db.getAdminRoles();
-      adminRoleSet = this.cache.setAdminRolesMap(adminRolesArray);
+  private async getAdminRoleMap(): Promise<Map<string, DiscordRole>> {
+    const adminRolesArray = await this.db.getAdminRoles();
+    const map: Map<string, DiscordRole> = new Map();
+    for (const role of adminRolesArray) {
+      map.set(role.discordRoleId, role);
     }
-    return adminRoleSet;
+    return map;
+  }
+
+  private async updateAdminRoleMap(): Promise<Map<string, DiscordRole>> {
+    const map = await this.getAdminRoleMap();
+    this.adminRolesMap = map;
+    return map;
   }
 
   private hasAdminRole(

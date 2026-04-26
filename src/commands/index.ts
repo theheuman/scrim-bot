@@ -15,12 +15,16 @@ import { SignupCommand } from "./scrims/signup/sign-up";
 import { SubPlayerCommand } from "./scrims/signup/sub-player";
 import {
   authService,
+  discordService,
   overstatService,
   prioService,
   rosterService,
   signupsService,
+  scrimService,
   staticValueService,
   banService,
+  leagueService,
+  mmrService,
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
@@ -52,21 +56,31 @@ export const scrimCommands: Command[] = [
   new ScrimBanCommand(authService, banService),
   new ExpungeBanCommand(authService, banService),
 
-  new CreateScrimCommand(authService, signupsService, staticValueService),
-  new GetSignupsCommand(authService, signupsService, staticValueService),
-  new ComputeScrimCommand(authService, signupsService),
-  new CloseScrimCommand(authService, signupsService),
+  new CreateScrimCommand(authService, scrimService, staticValueService),
+  new GetSignupsCommand(
+    authService,
+    signupsService,
+    staticValueService,
+    mmrService,
+  ),
+  new ComputeScrimCommand(
+    authService,
+    scrimService,
+    discordService,
+    overstatService,
+  ),
+  new CloseScrimCommand(authService, scrimService),
 
   new ChangeTeamNameCommand(rosterService),
   new DropoutCommand(rosterService),
-  new SignupCommand(signupsService, prioService),
+  new SignupCommand(signupsService, prioService, scrimService),
   new SubPlayerCommand(rosterService),
-  new CurrentPositionCommand(signupsService, staticValueService),
+  new CurrentPositionCommand(signupsService, staticValueService, scrimService),
 ];
 
 export const leagueCommands: Command[] = [
-  new LeagueSignupCommand(overstatService),
-  new LeagueSubRequestCommand(overstatService),
+  new LeagueSignupCommand(overstatService, leagueService),
+  new LeagueSubRequestCommand(overstatService, leagueService),
   new RoleAssignmentCommand(authService),
 ];
 

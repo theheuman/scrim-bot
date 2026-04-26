@@ -24,6 +24,7 @@ warn_if_missing "GOOGLE_KEY_FILE" "default_key_file"
 warn_if_missing "GOOGLE_KEY_EMAIL" "default_key_email"
 warn_if_missing "GOOGLE_CLIENT_ID" "default_client_id"
 warn_if_missing "GOOGLE_KEY_CERT_URL" "default_key_cert_url"
+warn_if_missing "HUGGING_FACE_TOKEN" "default_hugging_face_token"
 
 cat > $config_file_location <<EOF
 {
@@ -41,7 +42,8 @@ cat > $config_file_location <<EOF
       "adminSecret": "nhost-admin-secret",
       "subdomain": "local",
       "region": "local"
-    }
+    },
+    "huggingFaceToken": "${HUGGING_FACE_TOKEN}"
   },
   "prod": {
     "lobbySize": ${LOBBY_SIZE},
@@ -57,7 +59,8 @@ cat > $config_file_location <<EOF
       "adminSecret": "${NHOST_SECRET}",
       "subdomain": "${NHOST_SUBDOMAIN}",
       "region": "${NHOST_REGION}"
-    }
+    },
+    "huggingFaceToken": "${HUGGING_FACE_TOKEN}"
   }
 }
 EOF
