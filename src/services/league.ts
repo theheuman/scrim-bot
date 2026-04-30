@@ -11,6 +11,11 @@ const SUB_REQUEST_SHEET = {
   range: "Sub Requests!A1",
 };
 
+const ROSTER_CHANGE_SHEET = {
+  id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
+  range: "Roster Changes!A1",
+};
+
 export enum PlayerRank {
   Bronze,
   Silver,
@@ -161,6 +166,43 @@ export class LeagueService {
       values,
       authClient as OAuth2Client,
       SUB_REQUEST_SHEET,
+    );
+
+    const sheetsClient = sheets({ version: "v4" });
+    const response = await sheetsClient.spreadsheets.values.append(request);
+    const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
+      response.data.updates,
+    );
+    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
+  }
+
+  async rosterChange(
+    teamDivision: string,
+    teamName: string,
+    playerOut: LeagueSubRequestPlayer,
+    playerIn: LeagueSubRequestPlayer,
+    commandUser: GuildMember,
+    additionalComments: string,
+  ): Promise<number | null> {
+    const authClient = await this.getAuthClient();
+
+    const values = [
+      [
+        new Date().toISOString(),
+        teamDivision,
+        teamName,
+        ...this.convertSubRequestPlayer(playerOut),
+        ...this.convertSubRequestPlayer(playerIn),
+        commandUser.displayName,
+        commandUser.id,
+        additionalComments,
+      ],
+    ];
+
+    const request = SheetHelper.BUILD_REQUEST(
+      values,
+      authClient as OAuth2Client,
+      ROSTER_CHANGE_SHEET,
     );
 
     const sheetsClient = sheets({ version: "v4" });

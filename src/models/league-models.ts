@@ -18,7 +18,7 @@ export enum VesaDivision {
   Division5,
   Division6,
   Division7,
-  // Division8,
+  Division8,
   // Division9,
   // Division10,
 }

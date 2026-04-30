@@ -36,4 +36,16 @@ export class LeagueServiceMock {
     console.debug("Mock league service subRequest called", teamName);
     return Promise.resolve(0);
   }
+
+  async rosterChange(
+    teamDivision: string,
+    teamName: string,
+    playerOut: LeagueSubRequestPlayer,
+    playerIn: LeagueSubRequestPlayer,
+    commandUser: GuildMember,
+    additionalComments: string,
+  ): Promise<number | null> {
+    console.debug("Mock league service rosterChange called", teamName);
+    return Promise.resolve(0);
+  }
 }
