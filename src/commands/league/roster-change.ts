@@ -13,6 +13,7 @@ export class RosterChangeCommand extends MemberCommand {
 
     playerOutInputNames: {
       user: "player-out",
+      overstatLink: "player-out-overstat-link",
     },
 
     playerInInputNames: {
@@ -60,6 +61,11 @@ export class RosterChangeCommand extends MemberCommand {
     );
 
     this.addStringInput(
+      this.inputNames.playerOutInputNames.overstatLink,
+      `Overstat link of the player being removed. Only needed if not already linked`,
+    );
+
+    this.addStringInput(
       this.inputNames.additionalComments,
       `Any additional details or comments?`,
     );
@@ -84,16 +90,28 @@ export class RosterChangeCommand extends MemberCommand {
       this.inputNames.playerInInputNames.user,
       true,
     );
-    let playerOutOverstat: string;
+    let playerOutOverstat: string | undefined;
     let playerInOverstat: string | undefined;
 
+    const playerOutOverstatInput = interaction.options.getString(
+      this.inputNames.playerOutInputNames.overstatLink,
+    );
     try {
-      playerOutOverstat =
-        await this.overstatService.getPlayerOverstat(playerOut);
+      playerOutOverstat = await LeagueCommandHelper.VALIDATE_OVERSTAT_LINK(
+        playerOut,
+        playerOutOverstatInput ?? "none",
+        this.overstatService,
+      );
     } catch (e) {
       await interaction.invisibleReply(
-        `Could not find overstat of the player being removed in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket.\n` +
+        `Roster change not made. The overstat link provided for the player being removed is not valid.\n` +
           e,
+      );
+      return;
+    }
+    if (playerOutOverstat === undefined && playerOutOverstatInput === null) {
+      await interaction.invisibleReply(
+        `Roster change not made. No overstat link found for player being removed from the roster. Please retry the command with the player-out-overstat-link filled in or write "None" if they do not have one.`,
       );
       return;
     }
@@ -109,7 +127,7 @@ export class RosterChangeCommand extends MemberCommand {
       );
     } catch (e) {
       await interaction.invisibleReply(
-        `Roster change not valid. Overstat link provided for player being added is not valid.\n` +
+        `Roster change not made. Overstat link provided for player being added is not valid.\n` +
           e,
       );
       return;

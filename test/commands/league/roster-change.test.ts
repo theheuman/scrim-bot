@@ -35,6 +35,7 @@ describe("Roster change", () => {
 
   let command: RosterChangeCommand;
   let mockLeagueService: LeagueService;
+  let staticCommandUsedJustForInputNames: RosterChangeCommand;
 
   const requestingMember = {
     displayName: "Requesting User",
@@ -57,7 +58,7 @@ describe("Roster change", () => {
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
     mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
-    const staticCommandUsedJustForInputNames = new RosterChangeCommand(
+    staticCommandUsedJustForInputNames = new RosterChangeCommand(
       mockOverstatService,
       mockLeagueService,
     );
@@ -129,6 +130,7 @@ describe("Roster change", () => {
     followUpSpy.mockClear();
     rosterChangeSpy.mockClear();
     invisibleReplySpy.mockClear();
+    getPlayerOverstatSpy.mockClear();
     command = new RosterChangeCommand(mockOverstatService, mockLeagueService);
   });
 
@@ -163,6 +165,65 @@ describe("Roster change", () => {
     );
   });
 
+  describe("player-out overstat provided directly", () => {
+    let interactionWithPlayerOutOverstat: CustomInteraction;
+
+    beforeAll(() => {
+      interactionWithPlayerOutOverstat = {
+        ...basicInteraction,
+        options: {
+          ...(basicInteraction.options as object),
+          getString: (key: string) => {
+            if (
+              key ===
+              staticCommandUsedJustForInputNames.inputNames.playerOutInputNames
+                .overstatLink
+            ) {
+              return overstats.player1;
+            }
+            return (
+              basicInteraction.options as unknown as {
+                getString: (key: string) => string | null;
+              }
+            ).getString(key);
+          },
+        },
+      } as unknown as CustomInteraction;
+    });
+
+    it("Should make the roster change with player-out overstat provided directly", async () => {
+      await command.run(interactionWithPlayerOutOverstat);
+      expect(rosterChangeSpy).toHaveBeenCalledWith(
+        "Division4",
+        "Dude Cube",
+        {
+          name: playerOut.displayName,
+          discordId: playerOut.id,
+          overstatLink: overstats.player1,
+        },
+        {
+          name: playerIn.displayName,
+          discordId: playerIn.id,
+          overstatLink: overstats.player2,
+        },
+        requestingMember,
+        "None",
+      );
+    });
+
+    it("Should not complete because player-out overstat link is invalid", async () => {
+      jest
+        .spyOn(mockOverstatService, "validateLinkUrl")
+        .mockImplementationOnce(() => {
+          throw Error("Not a link to a player overview.");
+        });
+      await command.run(interactionWithPlayerOutOverstat);
+      expect(invisibleReplySpy).toHaveBeenCalledWith(
+        `Roster change not made. The overstat link provided for the player being removed is not valid.\nError: Not a link to a player overview.`,
+      );
+    });
+  });
+
   describe("errors", () => {
     it("should not complete because google did a bad", async () => {
       rosterChangeSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
@@ -172,7 +233,7 @@ describe("Roster change", () => {
       );
     });
 
-    it("should not complete because the overstat is not valid", async () => {
+    it("should not complete because the player-in overstat is not valid", async () => {
       jest
         .spyOn(mockOverstatService, "validateLinkUrl")
         .mockImplementationOnce(() => {
@@ -180,17 +241,17 @@ describe("Roster change", () => {
         });
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Roster change not valid. Overstat link provided for player being added is not valid.\nError: Not a link to a player overview.`,
+        `Roster change not made. Overstat link provided for player being added is not valid.\nError: Not a link to a player overview.`,
       );
     });
 
-    it("should not complete because the player being removed doesn't have an overstat", async () => {
-      getPlayerOverstatSpy.mockImplementationOnce(() => {
-        throw Error("Rejected get player overstat promise");
-      });
+    it("should not complete because the player being removed has no overstat in the db", async () => {
+      getPlayerOverstatSpy.mockRejectedValueOnce(
+        new Error("Rejected get player overstat promise"),
+      );
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Could not find overstat of the player being removed in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket.\nError: Rejected get player overstat promise`,
+        `Roster change not made. No overstat link found for player being removed from the roster. Please retry the command with the player-out-overstat-link filled in or write "None" if they do not have one.`,
       );
     });
   });

@@ -35,6 +35,7 @@ describe("Sub request", () => {
 
   let command: LeagueSubRequestCommand;
   let mockLeagueService: LeagueService;
+  let staticCommandUsedJustForInputNames: LeagueSubRequestCommand;
 
   const signupMember = {
     displayName: "Signup User",
@@ -57,7 +58,7 @@ describe("Sub request", () => {
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
     mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
-    const staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
+    staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
       mockOverstatService,
       mockLeagueService,
     );
@@ -133,6 +134,7 @@ describe("Sub request", () => {
     followUpSpy.mockClear();
     subRequestSpy.mockClear();
     invisibleReplySpy.mockClear();
+    getPlayerOverstatSpy.mockClear();
     command = new LeagueSubRequestCommand(
       mockOverstatService,
       mockLeagueService,
@@ -171,6 +173,66 @@ describe("Sub request", () => {
     );
   });
 
+  describe("player-out overstat provided directly", () => {
+    let interactionWithPlayerOutOverstat: CustomInteraction;
+
+    beforeAll(() => {
+      interactionWithPlayerOutOverstat = {
+        ...basicInteraction,
+        options: {
+          ...(basicInteraction.options as object),
+          getString: (key: string) => {
+            if (
+              key ===
+              staticCommandUsedJustForInputNames.inputNames.playerOutInputNames
+                .overstatLink
+            ) {
+              return overstats.player1;
+            }
+            return (
+              basicInteraction.options as unknown as {
+                getString: (key: string) => string | null;
+              }
+            ).getString(key);
+          },
+        },
+      } as unknown as CustomInteraction;
+    });
+
+    it("Should make the sub request with player-out overstat provided directly", async () => {
+      await command.run(interactionWithPlayerOutOverstat);
+      expect(subRequestSpy).toHaveBeenCalledWith(
+        "Division4",
+        "Dude Cube",
+        "PlacementDay1",
+        {
+          name: playerOut.displayName,
+          discordId: playerOut.id,
+          overstatLink: overstats.player1,
+        },
+        {
+          name: playerIn.displayName,
+          discordId: playerIn.id,
+          overstatLink: overstats.player2,
+        },
+        signupMember,
+        "None",
+      );
+    });
+
+    it("Should not complete because player-out overstat link is invalid", async () => {
+      jest
+        .spyOn(mockOverstatService, "validateLinkUrl")
+        .mockImplementationOnce(() => {
+          throw Error("Not a link to a player overview.");
+        });
+      await command.run(interactionWithPlayerOutOverstat);
+      expect(invisibleReplySpy).toHaveBeenCalledWith(
+        `Sub request not made. The overstat link provided for the player subbing out is not valid.\nError: Not a link to a player overview.`,
+      );
+    });
+  });
+
   describe("errors", () => {
     it("should not complete the signup because google did a bad", async () => {
       subRequestSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
@@ -180,7 +242,7 @@ describe("Sub request", () => {
       );
     });
 
-    it("should not complete the signup because the overstat is not valid", async () => {
+    it("should not complete the signup because the player-in overstat is not valid", async () => {
       jest
         .spyOn(mockOverstatService, "validateLinkUrl")
         .mockImplementationOnce(() => {
@@ -188,17 +250,17 @@ describe("Sub request", () => {
         });
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Sub request not valid. Overstat link provided for player subbing in is not valid.\nError: Not a link to a player overview.`,
+        `Sub request not made. Overstat link provided for player subbing in is not valid.\nError: Not a link to a player overview.`,
       );
     });
 
-    it("should not complete the signup because the player being subbed out doesn't have an overstat", async () => {
-      getPlayerOverstatSpy.mockImplementationOnce(() => {
-        throw Error("Rejected get player overstat promise");
-      });
+    it("should not complete because the player being subbed out has no overstat in the db", async () => {
+      getPlayerOverstatSpy.mockRejectedValueOnce(
+        new Error("Rejected get player overstat promise"),
+      );
       await command.run(basicInteraction);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
-        `Could not find overstat of the player being subbed out in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket.\nError: Rejected get player overstat promise`,
+        `Sub request not made. No overstat link found for the player being subbed out. Please retry the command with the player-out-overstat-link filled in or write "None" if they do not have one.`,
       );
     });
   });

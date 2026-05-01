@@ -14,6 +14,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     playerOutInputNames: {
       user: "player-out",
+      overstatLink: "player-out-overstat-link",
     },
 
     playerInInputNames: {
@@ -68,6 +69,11 @@ export class LeagueSubRequestCommand extends MemberCommand {
     );
 
     this.addStringInput(
+      this.inputNames.playerOutInputNames.overstatLink,
+      `Overstat link of the player subbing out. Only needed if not already linked`,
+    );
+
+    this.addStringInput(
       this.inputNames.additionalComments,
       `Anything additional details about this sub, or comments? (how many games, subbed previously? etc.)`,
     );
@@ -97,16 +103,28 @@ export class LeagueSubRequestCommand extends MemberCommand {
       this.inputNames.playerInInputNames.user,
       true,
     );
-    let playerOutOverstat: string;
+    let playerOutOverstat: string | undefined;
     let playerInOverstat: string | undefined;
 
+    const playerOutOverstatInput = interaction.options.getString(
+      this.inputNames.playerOutInputNames.overstatLink,
+    );
     try {
-      playerOutOverstat =
-        await this.overstatService.getPlayerOverstat(playerOut);
+      playerOutOverstat = await LeagueCommandHelper.VALIDATE_OVERSTAT_LINK(
+        playerOut,
+        playerOutOverstatInput ?? "none",
+        this.overstatService,
+      );
     } catch (e) {
       await interaction.invisibleReply(
-        `Could not find overstat of the player being subbed out in the db. Please have them link it with the /link-overstat command.\nThis may have happened if you had an admin edit your signup players in a ticket.\n` +
+        `Sub request not made. The overstat link provided for the player subbing out is not valid.\n` +
           e,
+      );
+      return;
+    }
+    if (playerOutOverstat === undefined && playerOutOverstatInput === null) {
+      await interaction.invisibleReply(
+        `Sub request not made. No overstat link found for the player being subbed out. Please retry the command with the player-out-overstat-link filled in or write "None" if they do not have one.`,
       );
       return;
     }
@@ -122,7 +140,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
       );
     } catch (e) {
       await interaction.invisibleReply(
-        `Sub request not valid. Overstat link provided for player subbing in is not valid.\n` +
+        `Sub request not made. Overstat link provided for player subbing in is not valid.\n` +
           e,
       );
       return;
