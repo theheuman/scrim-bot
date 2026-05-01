@@ -36,7 +36,7 @@ export interface LeaguePlayer {
   overstatLink?: string;
 }
 
-export interface LeagueSignupPlayer extends LeaguePlayer {
+export interface SheetsPlayer extends LeaguePlayer {
   elo: number | undefined;
   rank: PlayerRank;
   previous_season_vesa_division: VesaDivision;

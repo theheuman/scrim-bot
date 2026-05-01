@@ -1,6 +1,6 @@
 import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
-import { isGuildMember } from "../../utility/utility";
+import { isGuildMember, omitKey } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
 import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
@@ -43,7 +43,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     this.addChoiceInput(
       this.inputNames.weekNumber,
-      `Which week `,
+      `Which week`,
       WeekNumbers,
       true,
     );
@@ -184,15 +184,6 @@ enum WeekNumbers {
   Week5,
   Week6,
   MatchPoint,
-}
-
-function omitKey<T extends object, K extends keyof T>(
-  obj: T,
-  key: K,
-): Omit<T, K> {
-  const { [key]: _, ...rest } = obj;
-  console.debug(_);
-  return rest;
 }
 
 const VesaSubRequestDivision = omitKey(VesaDivision, "None");

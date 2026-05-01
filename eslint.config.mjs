@@ -10,5 +10,10 @@ export default tseslint.config(
       "src/events/interactionCreate.ts",
       "src/deploy-commands.ts"
     ]
+  },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+    }
   }
 );

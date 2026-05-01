@@ -1,6 +1,6 @@
 import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
-import { isGuildMember } from "../../utility/utility";
+import { isGuildMember, omitKey } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
 import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
@@ -156,15 +156,6 @@ export class RosterChangeCommand extends MemberCommand {
       await interaction.followUp(`Roster change not made. ${e}`);
     }
   }
-}
-
-function omitKey<T extends object, K extends keyof T>(
-  obj: T,
-  key: K,
-): Omit<T, K> {
-  const { [key]: _, ...rest } = obj;
-  console.debug(_);
-  return rest;
 }
 
 const VesaRosterChangeDivision = omitKey(VesaDivision, "None");

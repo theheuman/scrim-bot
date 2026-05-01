@@ -35,6 +35,14 @@ export function replaceScrimVariables(
     .replace(/\\n/g, "\n");
 }
 
+export function omitKey<T extends object, K extends keyof T>(
+  obj: T,
+  key: K,
+): Omit<T, K> {
+  const { [key]: _, ...rest } = obj;
+  return rest;
+}
+
 export function isJson(objectToCheck: unknown): objectToCheck is JSON {
   return (
     typeof objectToCheck === "object" &&

@@ -20,14 +20,6 @@ export interface GoogleSheetConfig {
   rangeStart: string;
 }
 
-function toGoogleSheetConfig(raw: Record<string, DbValue>): GoogleSheetConfig {
-  return {
-    spreadsheetId: raw.sheet_id as string,
-    tabName: raw.tab_name as string,
-    rangeStart: raw.range_start as string,
-  };
-}
-
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
     tableName: DbTable,
@@ -465,8 +457,16 @@ export abstract class DB {
           tabName: row.signup_sheet.tab_name as string,
           rangeStart: row.signup_sheet.range_start as string,
         },
-        subSheet: toGoogleSheetConfig(row.sub_sheet),
-        rosterChangeSheet: toGoogleSheetConfig(row.roster_change_sheet),
+        subSheet: {
+          spreadsheetId: row.sub_sheet.sheet_id as string,
+          tabName: row.sub_sheet.tab_name as string,
+          rangeStart: row.sub_sheet.range_start as string,
+        },
+        rosterChangeSheet: {
+          spreadsheetId: row.roster_change_sheet.sheet_id as string,
+          tabName: row.roster_change_sheet.tab_name as string,
+          rangeStart: row.roster_change_sheet.range_start as string,
+        },
       };
     } else {
       return null;

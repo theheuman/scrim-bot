@@ -2,8 +2,13 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { LeagueService, SheetsPlayer } from "../../services/league";
-import { PlayerRank, Platform, VesaDivision } from "../../models/league-models";
+import { LeagueService } from "../../services/league";
+import {
+  PlayerRank,
+  Platform,
+  SheetsPlayer,
+  VesaDivision,
+} from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
 
 export class LeagueSignupCommand extends MemberCommand {

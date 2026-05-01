@@ -1,4 +1,4 @@
-import { Snowflake, GuildMember } from "discord.js";
+import { GuildMember } from "discord.js";
 import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
 import { auth, sheets } from "@googleapis/sheets";
@@ -7,19 +7,12 @@ import { DB, GoogleSheetConfig } from "../db/db";
 import {
   LeagueSubRequestPlayer,
   PlayerRank,
+  SheetsPlayer,
   VesaDivision,
   Platform,
 } from "../models/league-models";
 
-export interface SheetsPlayer {
-  name: string;
-  discordId: Snowflake;
-  elo: number | undefined;
-  rank: PlayerRank;
-  previous_season_vesa_division: VesaDivision;
-  platform: Platform;
-  overstatLink: string | undefined;
-}
+export { SheetsPlayer };
 
 export interface SignupResult {
   rowNumber: number;
@@ -41,11 +34,11 @@ export class LeagueService {
     player3: SheetsPlayer,
     additionalComments: string,
   ): Promise<SignupResult | null> {
-    const authClient = await this.getAuthClient();
     const activeSeason = await this.db.getActiveLeagueSeason();
     if (!activeSeason) {
       throw new Error("No season found with active signups.");
     }
+    const authClient = await this.getAuthClient();
 
     const returningPlayersCount = [player1, player2, player3].reduce(
       (count, player) => {
@@ -79,7 +72,6 @@ export class LeagueService {
     );
 
     const response = await sheetsClient.spreadsheets.values.append(request);
-    console.log(response.data);
     const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
       response.data.updates,
     );
@@ -106,11 +98,11 @@ export class LeagueService {
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<number | null> {
-    const authClient = await this.getAuthClient();
     const activeSeason = await this.db.getActiveLeagueSeason();
     if (!activeSeason) {
       throw new Error("No season found with active signups.");
     }
+    const authClient = await this.getAuthClient();
 
     const values = [
       [
@@ -148,11 +140,11 @@ export class LeagueService {
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<number | null> {
-    const authClient = await this.getAuthClient();
     const activeSeason = await this.db.getActiveLeagueSeason();
     if (!activeSeason) {
       throw new Error("No season found with active signups.");
     }
+    const authClient = await this.getAuthClient();
 
     const values = [
       [
