@@ -1,10 +1,9 @@
+import { LeagueService, SheetsPlayer } from "../../src/services/league";
 import {
-  LeagueService,
-  SheetsPlayer,
   PlayerRank,
   Platform,
   VesaDivision,
-} from "../../src/services/league";
+} from "../../src/models/league-models";
 import * as GoogleSheets from "@googleapis/sheets";
 import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
 import { Readable } from "stream";
@@ -92,9 +91,21 @@ describe("League Service", () => {
     dbGetActiveLeagueSeasonSpy.mockReturnValue(
       Promise.resolve({
         id: "1",
-        googleSheetId: "google_sheet_id",
-        googleSheetName: "tab_name",
-        googleSheetRangeStart: "A1",
+        signupSheet: {
+          spreadsheetId: "google_sheet_id",
+          tabName: "tab_name",
+          rangeStart: "A1",
+        },
+        subSheet: {
+          spreadsheetId: "sub_sheet_id",
+          tabName: "sub_tab_name",
+          rangeStart: "A1",
+        },
+        rosterChangeSheet: {
+          spreadsheetId: "roster_sheet_id",
+          tabName: "roster_tab_name",
+          rangeStart: "A1",
+        },
         signupPrioEndDate: "2025-12-25T00:00:00Z",
         startDate: "2026-01-01T00:00:00Z",
       }),

@@ -3,50 +3,13 @@ import { GoogleAuth, OAuth2Client } from "googleapis-common";
 import { AnyAuthClient } from "google-auth-library";
 import { auth, sheets } from "@googleapis/sheets";
 import { SheetHelper } from "../utility/sheet-helper";
-import { DB } from "../db/db";
-import { LeagueSubRequestPlayer } from "../models/league-models";
-
-const SUB_REQUEST_SHEET = {
-  id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
-  range: "Sub Requests!A1",
-};
-
-const ROSTER_CHANGE_SHEET = {
-  id: "1pp8ynvVj9Z1yuuNhy8C2QvyflYhWhAQC3BQD_OJXkn4",
-  range: "Roster Changes!A1",
-};
-
-export enum PlayerRank {
-  Bronze,
-  Silver,
-  Gold,
-  Plat,
-  LowDiamond,
-  HighDiamond,
-  Masters,
-  Pred,
-}
-
-export enum VesaDivision {
-  None,
-  Division1,
-  Division2,
-  Division3,
-  Division4,
-  Division5,
-  Division6,
-  Division7,
-  // Division8,
-  // Division9,
-  // Division10,
-}
-
-export enum Platform {
-  pc,
-  playstation,
-  xbox,
-  switch,
-}
+import { DB, GoogleSheetConfig } from "../db/db";
+import {
+  LeagueSubRequestPlayer,
+  PlayerRank,
+  VesaDivision,
+  Platform,
+} from "../models/league-models";
 
 export interface SheetsPlayer {
   name: string;
@@ -79,6 +42,10 @@ export class LeagueService {
     additionalComments: string,
   ): Promise<SignupResult | null> {
     const authClient = await this.getAuthClient();
+    const activeSeason = await this.db.getActiveLeagueSeason();
+    if (!activeSeason) {
+      throw new Error("No season found with active signups.");
+    }
 
     const returningPlayersCount = [player1, player2, player3].reduce(
       (count, player) => {
@@ -105,17 +72,10 @@ export class LeagueService {
     ];
 
     const sheetsClient = sheets({ version: "v4" });
-    const activeSeason = await this.db.getActiveLeagueSeason();
-    if (!activeSeason) {
-      throw new Error("No season found with active signups.");
-    }
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      {
-        id: activeSeason.googleSheetId,
-        range: `${activeSeason.googleSheetName}!${activeSeason.googleSheetRangeStart}`,
-      },
+      this.toSheetRange(activeSeason.signupSheet),
     );
 
     const response = await sheetsClient.spreadsheets.values.append(request);
@@ -147,6 +107,10 @@ export class LeagueService {
     additionalComments: string,
   ): Promise<number | null> {
     const authClient = await this.getAuthClient();
+    const activeSeason = await this.db.getActiveLeagueSeason();
+    if (!activeSeason) {
+      throw new Error("No season found with active signups.");
+    }
 
     const values = [
       [
@@ -165,7 +129,7 @@ export class LeagueService {
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      SUB_REQUEST_SHEET,
+      this.toSheetRange(activeSeason.subSheet),
     );
 
     const sheetsClient = sheets({ version: "v4" });
@@ -185,6 +149,10 @@ export class LeagueService {
     additionalComments: string,
   ): Promise<number | null> {
     const authClient = await this.getAuthClient();
+    const activeSeason = await this.db.getActiveLeagueSeason();
+    if (!activeSeason) {
+      throw new Error("No season found with active signups.");
+    }
 
     const values = [
       [
@@ -202,7 +170,7 @@ export class LeagueService {
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      ROSTER_CHANGE_SHEET,
+      this.toSheetRange(activeSeason.rosterChangeSheet),
     );
 
     const sheetsClient = sheets({ version: "v4" });
@@ -211,6 +179,16 @@ export class LeagueService {
       response.data.updates,
     );
     return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
+  }
+
+  private toSheetRange(sheet: GoogleSheetConfig): {
+    id: string;
+    range: string;
+  } {
+    return {
+      id: sheet.spreadsheetId,
+      range: `${sheet.tabName}!${sheet.rangeStart}`,
+    };
   }
 
   private convertSheetsPlayer(player: SheetsPlayer): (string | number)[] {

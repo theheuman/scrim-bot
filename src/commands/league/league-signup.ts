@@ -3,13 +3,8 @@ import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
 import { User } from "discord.js";
-import {
-  LeagueService,
-  PlayerRank,
-  Platform,
-  VesaDivision,
-  SheetsPlayer,
-} from "../../services/league";
+import { LeagueService, SheetsPlayer } from "../../services/league";
+import { PlayerRank, Platform, VesaDivision } from "../../models/league-models";
 
 export class LeagueSignupCommand extends MemberCommand {
   inputNames = {
