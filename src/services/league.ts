@@ -5,7 +5,7 @@ import { auth, sheets } from "@googleapis/sheets";
 import { SheetHelper } from "../utility/sheet-helper";
 import { DB, GoogleSheetConfig } from "../db/db";
 import {
-  LeagueSubRequestPlayer,
+  LeaguePlayer,
   PlayerRank,
   SheetsPlayer,
   VesaDivision,
@@ -93,8 +93,8 @@ export class LeagueService {
     teamDivision: string,
     teamName: string,
     weekNumber: string,
-    playerOut: LeagueSubRequestPlayer,
-    playerIn: LeagueSubRequestPlayer,
+    playerOut: LeaguePlayer,
+    playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<number | null> {
@@ -135,8 +135,8 @@ export class LeagueService {
   async rosterChange(
     teamDivision: string,
     teamName: string,
-    playerOut: LeagueSubRequestPlayer,
-    playerIn: LeagueSubRequestPlayer,
+    playerOut: LeaguePlayer,
+    playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<number | null> {
@@ -195,9 +195,7 @@ export class LeagueService {
     ];
   }
 
-  private convertSubRequestPlayer(
-    player: LeagueSubRequestPlayer,
-  ): (string | number)[] {
+  private convertSubRequestPlayer(player: LeaguePlayer): (string | number)[] {
     return [
       player.name,
       player.discordId,

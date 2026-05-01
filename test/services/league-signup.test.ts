@@ -1,6 +1,6 @@
 import { LeagueService, SheetsPlayer } from "../../src/services/league";
 import {
-  LeagueSubRequestPlayer,
+  LeaguePlayer,
   PlayerRank,
   Platform,
   VesaDivision,
@@ -245,13 +245,13 @@ describe("League Service", () => {
   });
 
   describe("subRequest", () => {
-    const playerOut: LeagueSubRequestPlayer = {
+    const playerOut: LeaguePlayer = {
       name: "Player Out",
       discordId: "playeroutid",
       overstatLink: "https://overstat.gg/out",
     };
 
-    const playerIn: LeagueSubRequestPlayer = {
+    const playerIn: LeaguePlayer = {
       name: "Player In",
       discordId: "playerinid",
       overstatLink: undefined,
@@ -375,13 +375,13 @@ describe("League Service", () => {
   });
 
   describe("rosterChange", () => {
-    const playerOut: LeagueSubRequestPlayer = {
+    const playerOut: LeaguePlayer = {
       name: "Player Out",
       discordId: "playeroutid",
       overstatLink: "https://overstat.gg/out",
     };
 
-    const playerIn: LeagueSubRequestPlayer = {
+    const playerIn: LeaguePlayer = {
       name: "Player In",
       discordId: "playerinid",
       overstatLink: undefined,

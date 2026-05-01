@@ -42,5 +42,3 @@ export interface SheetsPlayer extends LeaguePlayer {
   previous_season_vesa_division: VesaDivision;
   platform: Platform;
 }
-
-export type LeagueSubRequestPlayer = LeaguePlayer;

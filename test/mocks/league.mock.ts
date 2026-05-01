@@ -1,5 +1,5 @@
 import { SheetsPlayer, SignupResult } from "../../src/services/league";
-import { LeagueSubRequestPlayer } from "../../src/models/league-models";
+import { LeaguePlayer } from "../../src/models/league-models";
 import { GuildMember } from "discord.js";
 
 export class LeagueServiceMock {
@@ -28,8 +28,8 @@ export class LeagueServiceMock {
     teamDivision: string,
     teamName: string,
     weekNumber: string,
-    playerOut: LeagueSubRequestPlayer,
-    playerIn: LeagueSubRequestPlayer,
+    playerOut: LeaguePlayer,
+    playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<number | null> {
@@ -40,8 +40,8 @@ export class LeagueServiceMock {
   async rosterChange(
     teamDivision: string,
     teamName: string,
-    playerOut: LeagueSubRequestPlayer,
-    playerIn: LeagueSubRequestPlayer,
+    playerOut: LeaguePlayer,
+    playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<number | null> {

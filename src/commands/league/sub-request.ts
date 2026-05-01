@@ -75,7 +75,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     this.addStringInput(
       this.inputNames.additionalComments,
-      `Anything additional details about this sub, or comments? (how many games, subbed previously? etc.)`,
+      `Any additional details about this sub, or comments? (how many games, subbed previously? etc.)`,
     );
   }
 
@@ -151,7 +151,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     if (!isGuildMember(requestedByMember)) {
       await interaction.invisibleReply(
-        "Sub request not made. Signup initiated by member that cannot be found. Contact admin",
+        "Sub request not made. Request initiated by member that cannot be found. Contact admin",
       );
       return;
     }
