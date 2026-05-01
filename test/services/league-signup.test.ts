@@ -1,9 +1,11 @@
 import { LeagueService, SheetsPlayer } from "../../src/services/league";
 import {
+  LeagueSubRequestPlayer,
   PlayerRank,
   Platform,
   VesaDivision,
 } from "../../src/models/league-models";
+import { GuildMember } from "discord.js";
 import * as GoogleSheets from "@googleapis/sheets";
 import { GaxiosResponseWithHTTP2, GoogleAuth } from "googleapis-common";
 import { Readable } from "stream";
@@ -240,5 +242,260 @@ describe("League Service", () => {
       "Additional comments provided by the user",
     );
     expect(result).toBeNull();
+  });
+
+  describe("subRequest", () => {
+    const playerOut: LeagueSubRequestPlayer = {
+      name: "Player Out",
+      discordId: "playeroutid",
+      overstatLink: "https://overstat.gg/out",
+    };
+
+    const playerIn: LeagueSubRequestPlayer = {
+      name: "Player In",
+      discordId: "playerinid",
+      overstatLink: undefined,
+    };
+
+    const commandUser = {
+      displayName: "Commander",
+      id: "commanderid",
+    } as GuildMember;
+
+    it("Should correctly parse and post spreadsheet value", async () => {
+      const date = new Date("2025-12-26T18:55:23.264Z");
+      jest.useFakeTimers();
+      jest.setSystemTime(date);
+
+      const result = await leagueService.subRequest(
+        "Division4",
+        "Dude Cube",
+        "Week1",
+        playerOut,
+        playerIn,
+        commandUser,
+        "Some comments",
+      );
+
+      expect(result).toBe(0);
+      expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
+        auth: undefined,
+        range: "sub_tab_name!A1",
+        requestBody: {
+          values: [
+            [
+              date.toISOString(),
+              "Division4",
+              "Dude Cube",
+              "Week1",
+              playerOut.name,
+              playerOut.discordId,
+              playerOut.overstatLink,
+              playerIn.name,
+              playerIn.discordId,
+              "No overstat",
+              commandUser.displayName,
+              commandUser.id,
+              "Some comments",
+            ],
+          ],
+        },
+        spreadsheetId: "sub_sheet_id",
+        valueInputOption: "USER_ENTERED",
+      });
+
+      jest.useRealTimers();
+    });
+
+    it("Should throw error if google did a bad", async () => {
+      googleSheetsRequestSpy.mockImplementationOnce(async () => {
+        throw Error("Sheets Failure");
+      });
+
+      await expect(
+        leagueService.subRequest(
+          "Division4",
+          "Dude Cube",
+          "Week1",
+          playerOut,
+          playerIn,
+          commandUser,
+          "Some comments",
+        ),
+      ).rejects.toThrow("Sheets Failure");
+    });
+
+    it("Should throw error if no active league season", async () => {
+      dbGetActiveLeagueSeasonSpy.mockReturnValueOnce(Promise.resolve(null));
+
+      await expect(
+        leagueService.subRequest(
+          "Division4",
+          "Dude Cube",
+          "Week1",
+          playerOut,
+          playerIn,
+          commandUser,
+          "Some comments",
+        ),
+      ).rejects.toThrow("No season found with active signups.");
+    });
+
+    it("Should return null if response can't be parsed", async () => {
+      const localGoogleValueMethods = {
+        append: (
+          request: Params$Resource$Spreadsheets$Values$Append,
+        ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
+          Promise.resolve({
+            data: {
+              updates: {
+                updatedRange: "weird unparseable string",
+              },
+              request: "Request data " + request.key,
+            },
+          } as GaxiosResponseWithHTTP2),
+      };
+      googleSheetsSpy.mockReturnValueOnce({
+        spreadsheets: {
+          values: localGoogleValueMethods,
+        } as unknown as Resource$Spreadsheets,
+      } as Sheets);
+
+      const result = await leagueService.subRequest(
+        "Division4",
+        "Dude Cube",
+        "Week1",
+        playerOut,
+        playerIn,
+        commandUser,
+        "Some comments",
+      );
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("rosterChange", () => {
+    const playerOut: LeagueSubRequestPlayer = {
+      name: "Player Out",
+      discordId: "playeroutid",
+      overstatLink: "https://overstat.gg/out",
+    };
+
+    const playerIn: LeagueSubRequestPlayer = {
+      name: "Player In",
+      discordId: "playerinid",
+      overstatLink: undefined,
+    };
+
+    const commandUser = {
+      displayName: "Commander",
+      id: "commanderid",
+    } as GuildMember;
+
+    it("Should correctly parse and post spreadsheet value", async () => {
+      const date = new Date("2025-12-26T18:55:23.264Z");
+      jest.useFakeTimers();
+      jest.setSystemTime(date);
+
+      const result = await leagueService.rosterChange(
+        "Division4",
+        "Dude Cube",
+        playerOut,
+        playerIn,
+        commandUser,
+        "Some comments",
+      );
+
+      expect(result).toBe(0);
+      expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
+        auth: undefined,
+        range: "roster_tab_name!A1",
+        requestBody: {
+          values: [
+            [
+              date.toISOString(),
+              "Division4",
+              "Dude Cube",
+              playerOut.name,
+              playerOut.discordId,
+              playerOut.overstatLink,
+              playerIn.name,
+              playerIn.discordId,
+              "No overstat",
+              commandUser.displayName,
+              commandUser.id,
+              "Some comments",
+            ],
+          ],
+        },
+        spreadsheetId: "roster_sheet_id",
+        valueInputOption: "USER_ENTERED",
+      });
+
+      jest.useRealTimers();
+    });
+
+    it("Should throw error if google did a bad", async () => {
+      googleSheetsRequestSpy.mockImplementationOnce(async () => {
+        throw Error("Sheets Failure");
+      });
+
+      await expect(
+        leagueService.rosterChange(
+          "Division4",
+          "Dude Cube",
+          playerOut,
+          playerIn,
+          commandUser,
+          "Some comments",
+        ),
+      ).rejects.toThrow("Sheets Failure");
+    });
+
+    it("Should throw error if no active league season", async () => {
+      dbGetActiveLeagueSeasonSpy.mockReturnValueOnce(Promise.resolve(null));
+
+      await expect(
+        leagueService.rosterChange(
+          "Division4",
+          "Dude Cube",
+          playerOut,
+          playerIn,
+          commandUser,
+          "Some comments",
+        ),
+      ).rejects.toThrow("No season found with active signups.");
+    });
+
+    it("Should return null if response can't be parsed", async () => {
+      const localGoogleValueMethods = {
+        append: (
+          request: Params$Resource$Spreadsheets$Values$Append,
+        ): Promise<GaxiosResponseWithHTTP2<Readable>> =>
+          Promise.resolve({
+            data: {
+              updates: {
+                updatedRange: "weird unparseable string",
+              },
+              request: "Request data " + request.key,
+            },
+          } as GaxiosResponseWithHTTP2),
+      };
+      googleSheetsSpy.mockReturnValueOnce({
+        spreadsheets: {
+          values: localGoogleValueMethods,
+        } as unknown as Resource$Spreadsheets,
+      } as Sheets);
+
+      const result = await leagueService.rosterChange(
+        "Division4",
+        "Dude Cube",
+        playerOut,
+        playerIn,
+        commandUser,
+        "Some comments",
+      );
+      expect(result).toBeNull();
+    });
   });
 });
