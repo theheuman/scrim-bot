@@ -5,6 +5,7 @@ import { OverstatService } from "../../services/overstat";
 import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
 import { LeagueService } from "../../services/league";
+import { StaticValueService } from "../../services/static-values";
 
 export class LeagueSubRequestCommand extends MemberCommand {
   inputNames = {
@@ -27,6 +28,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
   constructor(
     private overstatService: OverstatService,
     private leagueService: LeagueService,
+    private staticValueService: StaticValueService,
   ) {
     super("sub-request", "Request a sub");
     this.addStringInput(this.inputNames.teamName, "Team name", {
@@ -159,7 +161,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const subRequestNumber = await this.leagueService.subRequest(
+      const subResult = await this.leagueService.subRequest(
         VesaDivision[teamDivision],
         teamName,
         WeekNumbers[weekNumber],
@@ -176,13 +178,16 @@ export class LeagueSubRequestCommand extends MemberCommand {
         requestedByMember,
         additionalComments,
       );
-      if (subRequestNumber === null) {
+      if (subResult.rowNumber === null) {
         await interaction.followUp(
-          "Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting",
+          `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting\n${subResult.sheetUrl}`,
         );
         return;
       }
-      const discordReplyMessage = `Sub requested for __${teamName}__\nSubbing out <@${playerOut.id}>\nSubbing in <@${playerIn.id}>\nRequested week: ${WeekNumbers[weekNumber]}\nSheet row #${subRequestNumber}`;
+      const subApprovalRoleId =
+        await this.staticValueService.getSubApprovalRoleId();
+      const roleMention = subApprovalRoleId ? `\n<@&${subApprovalRoleId}>` : "";
+      const discordReplyMessage = `Sub requested for __${teamName}__\nSubbing out <@${playerOut.id}>\nSubbing in <@${playerIn.id}>\nRequested week: ${WeekNumbers[weekNumber]}\nSheet row #${subResult.rowNumber}\n${subResult.sheetUrl}\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);

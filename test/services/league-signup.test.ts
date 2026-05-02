@@ -277,7 +277,11 @@ describe("League Service", () => {
         "Some comments",
       );
 
-      expect(result).toBe(0);
+      expect(result).toEqual({
+        rowNumber: 1,
+        sheetUrl: "<https://docs.google.com/spreadsheets/d/sub_sheet_id>",
+        tabName: "sub_tab_name",
+      });
       expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
         auth: undefined,
         range: "sub_tab_name!A1",
@@ -370,7 +374,11 @@ describe("League Service", () => {
         commandUser,
         "Some comments",
       );
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        rowNumber: null,
+        sheetUrl: "<https://docs.google.com/spreadsheets/d/sub_sheet_id>",
+        tabName: "sub_tab_name",
+      });
     });
   });
 
@@ -406,7 +414,11 @@ describe("League Service", () => {
         "Some comments",
       );
 
-      expect(result).toBe(0);
+      expect(result).toEqual({
+        rowNumber: 1,
+        sheetUrl: "<https://docs.google.com/spreadsheets/d/roster_sheet_id>",
+        tabName: "roster_tab_name",
+      });
       expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
         auth: undefined,
         range: "roster_tab_name!A1",
@@ -495,7 +507,11 @@ describe("League Service", () => {
         commandUser,
         "Some comments",
       );
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        rowNumber: null,
+        sheetUrl: "<https://docs.google.com/spreadsheets/d/roster_sheet_id>",
+        tabName: "roster_tab_name",
+      });
     });
   });
 });

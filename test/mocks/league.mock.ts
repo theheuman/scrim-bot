@@ -32,9 +32,13 @@ export class LeagueServiceMock {
     playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
-  ): Promise<number | null> {
+  ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
     console.debug("Mock league service subRequest called", teamName);
-    return Promise.resolve(0);
+    return Promise.resolve({
+      rowNumber: 0,
+      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>",
+      tabName: "mock_sub_tab_name",
+    });
   }
 
   async rosterChange(
@@ -44,8 +48,12 @@ export class LeagueServiceMock {
     playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
-  ): Promise<number | null> {
+  ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
     console.debug("Mock league service rosterChange called", teamName);
-    return Promise.resolve(0);
+    return Promise.resolve({
+      rowNumber: 0,
+      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>",
+      tabName: "mock_roster_tab_name",
+    });
   }
 }

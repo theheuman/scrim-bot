@@ -5,6 +5,7 @@ import { OverstatService } from "../../services/overstat";
 import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
 import { LeagueService } from "../../services/league";
+import { StaticValueService } from "../../services/static-values";
 
 export class RosterChangeCommand extends MemberCommand {
   inputNames = {
@@ -26,6 +27,7 @@ export class RosterChangeCommand extends MemberCommand {
   constructor(
     private overstatService: OverstatService,
     private leagueService: LeagueService,
+    private staticValueService: StaticValueService,
   ) {
     super("roster-change", "Request a roster change");
     this.addStringInput(this.inputNames.teamName, "Team name", {
@@ -146,7 +148,7 @@ export class RosterChangeCommand extends MemberCommand {
     await interaction.deferReply();
 
     try {
-      const rosterChangeNumber = await this.leagueService.rosterChange(
+      const rosterResult = await this.leagueService.rosterChange(
         VesaDivision[teamDivision],
         teamName,
         {
@@ -162,13 +164,16 @@ export class RosterChangeCommand extends MemberCommand {
         requestedByMember,
         additionalComments,
       );
-      if (rosterChangeNumber === null) {
+      if (rosterResult.rowNumber === null) {
         await interaction.followUp(
-          "Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting",
+          `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting\n${rosterResult.sheetUrl}`,
         );
         return;
       }
-      const discordReplyMessage = `Roster change requested for __${teamName}__\nRemoving <@${playerOut.id}>\nAdding <@${playerIn.id}>\nSheet row #${rosterChangeNumber}`;
+      const subApprovalRoleId =
+        await this.staticValueService.getSubApprovalRoleId();
+      const roleMention = subApprovalRoleId ? `\n<@&${subApprovalRoleId}>` : "";
+      const discordReplyMessage = `Roster change requested for __${teamName}__\nRemoving <@${playerOut.id}>\nAdding <@${playerIn.id}>\nSheet row #${rosterResult.rowNumber}\n${rosterResult.sheetUrl}\nNavigate to the "${rosterResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Roster change not made. ${e}`);

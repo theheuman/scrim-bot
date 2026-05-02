@@ -97,7 +97,7 @@ export class LeagueService {
     playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
-  ): Promise<number | null> {
+  ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
     const activeSeason = await this.db.getActiveLeagueSeason();
     if (!activeSeason) {
       throw new Error("No season found with active signups.");
@@ -129,7 +129,11 @@ export class LeagueService {
     const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
       response.data.updates,
     );
-    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
+    return {
+      rowNumber: rowNumber ?? null,
+      sheetUrl: `<https://docs.google.com/spreadsheets/d/${activeSeason.subSheet.spreadsheetId}>`,
+      tabName: activeSeason.subSheet.tabName,
+    };
   }
 
   async rosterChange(
@@ -139,7 +143,7 @@ export class LeagueService {
     playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
-  ): Promise<number | null> {
+  ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
     const activeSeason = await this.db.getActiveLeagueSeason();
     if (!activeSeason) {
       throw new Error("No season found with active signups.");
@@ -170,7 +174,11 @@ export class LeagueService {
     const rowNumber = SheetHelper.GET_ROW_NUMBER_FROM_UPDATE_RESPONSE(
       response.data.updates,
     );
-    return rowNumber ? rowNumber - SheetHelper.STARTING_CELL_OFFSET : null;
+    return {
+      rowNumber: rowNumber ?? null,
+      sheetUrl: `<https://docs.google.com/spreadsheets/d/${activeSeason.rosterChangeSheet.spreadsheetId}>`,
+      tabName: activeSeason.rosterChangeSheet.tabName,
+    };
   }
 
   private toSheetRange(sheet: GoogleSheetConfig): {

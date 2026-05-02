@@ -81,8 +81,12 @@ export const scrimCommands: Command[] = [
 
 export const leagueCommands: Command[] = [
   new LeagueSignupCommand(overstatService, leagueService),
-  new LeagueSubRequestCommand(overstatService, leagueService),
-  new RosterChangeCommand(overstatService, leagueService),
+  new LeagueSubRequestCommand(
+    overstatService,
+    leagueService,
+    staticValueService,
+  ),
+  new RosterChangeCommand(overstatService, leagueService, staticValueService),
   new RoleAssignmentCommand(authService),
 ];
 

@@ -17,6 +17,8 @@ import {
 import { LeagueService } from "../../../src/services/league";
 import { LeagueServiceMock } from "../../mocks/league.mock";
 import { DB } from "../../../src/db/db";
+import { StaticValueService } from "../../../src/services/static-values";
+import { StaticValueServiceMock } from "../../mocks/static-values.mock";
 
 describe("Sub request", () => {
   let basicInteraction: CustomInteraction;
@@ -35,6 +37,7 @@ describe("Sub request", () => {
 
   let command: LeagueSubRequestCommand;
   let mockLeagueService: LeagueService;
+  let mockStaticValueService: StaticValueService;
   let staticCommandUsedJustForInputNames: LeagueSubRequestCommand;
 
   const signupMember = {
@@ -58,9 +61,12 @@ describe("Sub request", () => {
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
     mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
+    mockStaticValueService =
+      new StaticValueServiceMock() as unknown as StaticValueService;
     staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
       mockOverstatService,
       mockLeagueService,
+      mockStaticValueService,
     );
     basicInteraction = {
       channelId: "forum thread id",
@@ -138,6 +144,7 @@ describe("Sub request", () => {
     command = new LeagueSubRequestCommand(
       mockOverstatService,
       mockLeagueService,
+      mockStaticValueService,
     );
   });
 
@@ -161,15 +168,19 @@ describe("Sub request", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested week: PlacementDay1\nSheet row #0`,
+      `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested week: PlacementDay1\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 
   it("Should complete signup but warn that response can't be parsed", async () => {
-    subRequestSpy.mockResolvedValueOnce(null);
+    subRequestSpy.mockResolvedValueOnce({
+      rowNumber: null,
+      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>",
+      tabName: "mock_sub_tab_name",
+    });
     await command.run(basicInteraction);
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting`,
+      `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting\n<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>`,
     );
   });
 

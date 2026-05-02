@@ -17,6 +17,8 @@ import {
 import { LeagueService } from "../../../src/services/league";
 import { LeagueServiceMock } from "../../mocks/league.mock";
 import { DB } from "../../../src/db/db";
+import { StaticValueService } from "../../../src/services/static-values";
+import { StaticValueServiceMock } from "../../mocks/static-values.mock";
 
 describe("Roster change", () => {
   let basicInteraction: CustomInteraction;
@@ -35,6 +37,7 @@ describe("Roster change", () => {
 
   let command: RosterChangeCommand;
   let mockLeagueService: LeagueService;
+  let mockStaticValueService: StaticValueService;
   let staticCommandUsedJustForInputNames: RosterChangeCommand;
 
   const requestingMember = {
@@ -58,9 +61,12 @@ describe("Roster change", () => {
   beforeAll(() => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
     mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
+    mockStaticValueService =
+      new StaticValueServiceMock() as unknown as StaticValueService;
     staticCommandUsedJustForInputNames = new RosterChangeCommand(
       mockOverstatService,
       mockLeagueService,
+      mockStaticValueService,
     );
     basicInteraction = {
       channelId: "forum thread id",
@@ -131,7 +137,11 @@ describe("Roster change", () => {
     rosterChangeSpy.mockClear();
     invisibleReplySpy.mockClear();
     getPlayerOverstatSpy.mockClear();
-    command = new RosterChangeCommand(mockOverstatService, mockLeagueService);
+    command = new RosterChangeCommand(
+      mockOverstatService,
+      mockLeagueService,
+      mockStaticValueService,
+    );
   });
 
   it("Should make the roster change request", async () => {
@@ -153,15 +163,19 @@ describe("Roster change", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Roster change requested for __Dude Cube__\nRemoving <@player1id>\nAdding <@player2id>\nSheet row #0`,
+      `Roster change requested for __Dude Cube__\nRemoving <@player1id>\nAdding <@player2id>\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>\nNavigate to the "mock_roster_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 
   it("Should complete request but warn that response can't be parsed", async () => {
-    rosterChangeSpy.mockResolvedValueOnce(null);
+    rosterChangeSpy.mockResolvedValueOnce({
+      rowNumber: null,
+      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>",
+      tabName: "mock_roster_tab_name",
+    });
     await command.run(basicInteraction);
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting`,
+      `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting\n<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>`,
     );
   });
 
