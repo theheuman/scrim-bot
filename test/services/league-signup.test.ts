@@ -100,7 +100,7 @@ describe("League Service", () => {
         },
         subSheet: {
           spreadsheetId: "sub_sheet_id",
-          tabName: "sub_tab_name",
+          tabName: "DIV 4 Log",
           rangeStart: "A1",
         },
         rosterChangeSheet: {
@@ -280,11 +280,11 @@ describe("League Service", () => {
       expect(result).toEqual({
         rowNumber: 1,
         sheetUrl: "<https://docs.google.com/spreadsheets/d/sub_sheet_id>",
-        tabName: "sub_tab_name",
+        tabName: "DIV 4 Log",
       });
       expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
         auth: undefined,
-        range: "sub_tab_name!A1",
+        range: "DIV 4 Log!A1",
         requestBody: {
           values: [
             [
@@ -377,7 +377,7 @@ describe("League Service", () => {
       expect(result).toEqual({
         rowNumber: null,
         sheetUrl: "<https://docs.google.com/spreadsheets/d/sub_sheet_id>",
-        tabName: "sub_tab_name",
+        tabName: "DIV 4 Log",
       });
     });
   });

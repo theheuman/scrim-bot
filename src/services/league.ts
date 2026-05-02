@@ -132,7 +132,7 @@ export class LeagueService {
     return {
       rowNumber: rowNumber ?? null,
       sheetUrl: `<https://docs.google.com/spreadsheets/d/${activeSeason.subSheet.spreadsheetId}>`,
-      tabName: activeSeason.subSheet.tabName,
+      tabName: `DIV ${teamDivision.replace("Division", "")} Log`,
     };
   }
 
