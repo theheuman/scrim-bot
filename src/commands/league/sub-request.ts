@@ -201,7 +201,13 @@ export class LeagueSubRequestCommand extends MemberCommand {
       const subApprovalRoleId =
         await this.staticValueService.getSubApprovalRoleId();
       const roleMention = subApprovalRoleId ? `\n<@&${subApprovalRoleId}>` : "";
-      const discordReplyMessage = `Sub requested for __${teamName}__\nSubbing out <@${playerOut.id}>\nSubbing in <@${playerIn.id}>\nRequested week: ${WeekNumbers[weekNumber]}\nSheet row #${subResult.rowNumber}\n${subResult.sheetUrl}\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
+      const playerOutOverstatText = playerOutOverstat
+        ? ` [Overstat](<${playerOutOverstat}>)`
+        : "";
+      const playerInOverstatText = playerInOverstat
+        ? ` [Overstat](<${playerInOverstat}>)`
+        : "";
+      const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\nSheet row #${subResult.rowNumber}\n${subResult.sheetUrl}\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);

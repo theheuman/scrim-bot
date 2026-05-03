@@ -119,10 +119,14 @@ export class LeagueService {
       ],
     ];
 
+    const tabName = `DIV ${teamDivision.replace("Division", "")} Log`;
     const request = SheetHelper.BUILD_REQUEST(
       values,
       authClient as OAuth2Client,
-      this.toSheetRange(activeSeason.subSheet),
+      {
+        id: activeSeason.subSheet.spreadsheetId,
+        range: `${tabName}!${activeSeason.subSheet.rangeStart}`,
+      },
     );
 
     const sheetsClient = sheets({ version: "v4" });
@@ -133,7 +137,7 @@ export class LeagueService {
     return {
       rowNumber: rowNumber ?? null,
       sheetUrl: `<https://docs.google.com/spreadsheets/d/${activeSeason.subSheet.spreadsheetId}>`,
-      tabName: `DIV ${teamDivision.replace("Division", "")} Log`,
+      tabName,
     };
   }
 

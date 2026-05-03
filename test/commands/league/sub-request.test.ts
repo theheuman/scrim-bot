@@ -175,7 +175,7 @@ describe("Sub request", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Sub requested for __Dude Cube__\nSubbing out <@player1id>\nSubbing in <@player2id>\nRequested week: PlacementDay1\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
+      `Sub requested for __Dude Cube__ (Division4)\nSubbing out <@player1id> [Overstat](<${overstats.player1}>)\nSubbing in <@player2id> [Overstat](<${overstats.player2}>)\nRequested week: PlacementDay1\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 

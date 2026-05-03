@@ -163,7 +163,7 @@ describe("Roster change", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Roster change requested for __Dude Cube__\nRemoving <@player1id>\nAdding <@player2id>\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>\nNavigate to the "mock_roster_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
+      `Roster change requested for __Dude Cube__ (Division4)\nRemoving <@player1id> [Overstat](<${overstats.player1}>)\nAdding <@player2id> [Overstat](<${overstats.player2}>)\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>\nNavigate to the "mock_roster_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 
