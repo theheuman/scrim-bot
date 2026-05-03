@@ -95,6 +95,7 @@ export class LeagueService {
     weekNumber: string,
     playerOut: LeaguePlayer,
     playerIn: LeaguePlayer,
+    playerInDivision: string,
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
@@ -112,9 +113,9 @@ export class LeagueService {
         weekNumber,
         ...this.convertSubRequestPlayer(playerOut),
         ...this.convertSubRequestPlayer(playerIn),
-        commandUser.displayName,
-        commandUser.id,
+        playerInDivision,
         additionalComments,
+        `${commandUser.displayName} (${commandUser.id})`,
       ],
     ];
 
@@ -157,9 +158,8 @@ export class LeagueService {
         teamName,
         ...this.convertSubRequestPlayer(playerOut),
         ...this.convertSubRequestPlayer(playerIn),
-        commandUser.displayName,
-        commandUser.id,
         additionalComments,
+        `${commandUser.displayName} (${commandUser.id})`,
       ],
     ];
 
@@ -205,8 +205,7 @@ export class LeagueService {
 
   private convertSubRequestPlayer(player: LeaguePlayer): (string | number)[] {
     return [
-      player.name,
-      player.discordId,
+      `${player.name} (${player.discordId})`,
       player.overstatLink ?? "No overstat",
     ];
   }

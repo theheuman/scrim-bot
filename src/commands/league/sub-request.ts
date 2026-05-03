@@ -21,6 +21,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
     playerInInputNames: {
       user: "player-in",
       overstatLink: "player-in-overstat-link",
+      division: "player-in-division",
     },
     additionalComments: "additional-comments",
   };
@@ -70,6 +71,13 @@ export class LeagueSubRequestCommand extends MemberCommand {
       },
     );
 
+    this.addChoiceInput(
+      this.inputNames.playerInInputNames.division,
+      "Sub's current VESA league division",
+      VesaDivision,
+      true,
+    );
+
     this.addStringInput(
       this.inputNames.playerOutInputNames.overstatLink,
       `Overstat link of the player subbing out. Only needed if not already linked`,
@@ -94,6 +102,11 @@ export class LeagueSubRequestCommand extends MemberCommand {
     const weekNumber = interaction.options.getChoice(
       this.inputNames.weekNumber,
       WeekNumbers,
+      true,
+    );
+    const playerInDivision = interaction.options.getChoice(
+      this.inputNames.playerInInputNames.division,
+      VesaDivision,
       true,
     );
     const requestedByMember = interaction.member;
@@ -175,6 +188,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
           discordId: playerIn.id,
           overstatLink: playerInOverstat,
         },
+        VesaDivision[playerInDivision],
         requestedByMember,
         additionalComments,
       );

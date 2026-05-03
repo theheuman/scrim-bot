@@ -30,6 +30,7 @@ export class LeagueServiceMock {
     weekNumber: string,
     playerOut: LeaguePlayer,
     playerIn: LeaguePlayer,
+    playerInDivision: string,
     commandUser: GuildMember,
     additionalComments: string,
   ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {

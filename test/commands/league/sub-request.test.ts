@@ -110,6 +110,12 @@ describe("Sub request", () => {
             key === staticCommandUsedJustForInputNames.inputNames.weekNumber
           ) {
             return 0;
+          } else if (
+            key ===
+            staticCommandUsedJustForInputNames.inputNames.playerInInputNames
+              .division
+          ) {
+            return 0;
           } else {
             return null;
           }
@@ -164,6 +170,7 @@ describe("Sub request", () => {
         discordId: playerIn.id,
         overstatLink: overstats.player2,
       },
+      "None",
       signupMember,
       "None",
     );
@@ -226,6 +233,7 @@ describe("Sub request", () => {
           discordId: playerIn.id,
           overstatLink: overstats.player2,
         },
+        "None",
         signupMember,
         "None",
       );
