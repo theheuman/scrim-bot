@@ -100,7 +100,7 @@ describe("League Service", () => {
         },
         subSheet: {
           spreadsheetId: "sub_sheet_id",
-          tabName: "DIV 4 Log",
+          tabName: "DIV 1 Log",
           rangeStart: "A1",
         },
         rosterChangeSheet: {

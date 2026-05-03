@@ -119,6 +119,7 @@ export class LeagueService {
       ],
     ];
 
+    // tab name is derived from the division rather than subSheet.tabName, which is a single static value
     const tabName = `DIV ${teamDivision.replace("Division", "")} Log`;
     const request = SheetHelper.BUILD_REQUEST(
       values,
