@@ -174,6 +174,7 @@ describe("League Service", () => {
       },
       spreadsheetId: "google_sheet_id",
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
     });
 
     jest.useRealTimers();
@@ -305,6 +306,7 @@ describe("League Service", () => {
         },
         spreadsheetId: "sub_sheet_id",
         valueInputOption: "USER_ENTERED",
+        insertDataOption: "INSERT_ROWS",
       });
 
       jest.useRealTimers();
@@ -441,6 +443,7 @@ describe("League Service", () => {
         },
         spreadsheetId: "roster_sheet_id",
         valueInputOption: "USER_ENTERED",
+        insertDataOption: "INSERT_ROWS",
       });
 
       jest.useRealTimers();

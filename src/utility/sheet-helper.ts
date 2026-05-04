@@ -30,6 +30,7 @@ export class SheetHelper {
       spreadsheetId: spreadsheetType.id,
       range: spreadsheetType.range,
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
       requestBody: {
         values: values,
       },
