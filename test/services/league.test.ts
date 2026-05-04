@@ -281,7 +281,7 @@ describe("League Service", () => {
 
       expect(result).toEqual({
         rowNumber: 1,
-        sheetUrl: "<https://docs.google.com/spreadsheets/d/sub_sheet_id>",
+        sheetUrl: "https://docs.google.com/spreadsheets/d/sub_sheet_id",
         tabName: "DIV 4 Log",
       });
       expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
@@ -380,7 +380,7 @@ describe("League Service", () => {
       );
       expect(result).toEqual({
         rowNumber: null,
-        sheetUrl: "<https://docs.google.com/spreadsheets/d/sub_sheet_id>",
+        sheetUrl: "https://docs.google.com/spreadsheets/d/sub_sheet_id",
         tabName: "DIV 4 Log",
       });
     });
@@ -420,7 +420,7 @@ describe("League Service", () => {
 
       expect(result).toEqual({
         rowNumber: 1,
-        sheetUrl: "<https://docs.google.com/spreadsheets/d/roster_sheet_id>",
+        sheetUrl: "https://docs.google.com/spreadsheets/d/roster_sheet_id",
         tabName: "roster_tab_name",
       });
       expect(googleSheetsRequestSpy).toHaveBeenCalledWith({
@@ -511,7 +511,7 @@ describe("League Service", () => {
       );
       expect(result).toEqual({
         rowNumber: null,
-        sheetUrl: "<https://docs.google.com/spreadsheets/d/roster_sheet_id>",
+        sheetUrl: "https://docs.google.com/spreadsheets/d/roster_sheet_id",
         tabName: "roster_tab_name",
       });
     });

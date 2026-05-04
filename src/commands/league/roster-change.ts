@@ -166,7 +166,7 @@ export class RosterChangeCommand extends MemberCommand {
       );
       if (rosterResult.rowNumber === null) {
         await interaction.followUp(
-          `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting\n${rosterResult.sheetUrl}`,
+          `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting\n<${rosterResult.sheetUrl}>`,
         );
         return;
       }
@@ -179,7 +179,7 @@ export class RosterChangeCommand extends MemberCommand {
       const playerInOverstatText = playerInOverstat
         ? ` [Overstat](<${playerInOverstat}>)`
         : "";
-      const discordReplyMessage = `Roster change requested for __${teamName}__ (${VesaDivision[teamDivision]})\nRemoving <@${playerOut.id}>${playerOutOverstatText}\nAdding <@${playerIn.id}>${playerInOverstatText}\nSheet row #${rosterResult.rowNumber}\n${rosterResult.sheetUrl}\nNavigate to the "${rosterResult.tabName}" tab at the bottom of the sheet${roleMention}`;
+      const discordReplyMessage = `Roster change requested for __${teamName}__ (${VesaDivision[teamDivision]})\nRemoving <@${playerOut.id}>${playerOutOverstatText}\nAdding <@${playerIn.id}>${playerInOverstatText}\n[Sheet row #${rosterResult.rowNumber}](<${rosterResult.sheetUrl}>)\nNavigate to the "${rosterResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Roster change not made. ${e}`);

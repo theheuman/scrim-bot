@@ -175,14 +175,14 @@ describe("Sub request", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Sub requested for __Dude Cube__ (Division4)\nSubbing out <@player1id> [Overstat](<${overstats.player1}>)\nSubbing in <@player2id> [Overstat](<${overstats.player2}>)\nRequested week: PlacementDay1\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
+      `Sub requested for __Dude Cube__ (Division4)\nSubbing out <@player1id> [Overstat](<${overstats.player1}>)\nSubbing in <@player2id> [Overstat](<${overstats.player2}>)\nRequested week: PlacementDay1\n[Sheet row #0](<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>)\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 
   it("Should complete signup but warn that response can't be parsed", async () => {
     subRequestSpy.mockResolvedValueOnce({
       rowNumber: null,
-      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>",
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_sub_sheet_id",
       tabName: "mock_sub_tab_name",
     });
     await command.run(basicInteraction);

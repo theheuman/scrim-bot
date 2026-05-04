@@ -194,7 +194,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
       );
       if (subResult.rowNumber === null) {
         await interaction.followUp(
-          `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting\n${subResult.sheetUrl}`,
+          `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting\n<${subResult.sheetUrl}>`,
         );
         return;
       }
@@ -207,7 +207,7 @@ export class LeagueSubRequestCommand extends MemberCommand {
       const playerInOverstatText = playerInOverstat
         ? ` [Overstat](<${playerInOverstat}>)`
         : "";
-      const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\nSheet row #${subResult.rowNumber}\n${subResult.sheetUrl}\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
+      const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);

@@ -137,7 +137,7 @@ export class LeagueService {
     );
     return {
       rowNumber: rowNumber ?? null,
-      sheetUrl: `<https://docs.google.com/spreadsheets/d/${activeSeason.subSheet.spreadsheetId}>`,
+      sheetUrl: `https://docs.google.com/spreadsheets/d/${activeSeason.subSheet.spreadsheetId}`,
       tabName,
     };
   }
@@ -181,7 +181,7 @@ export class LeagueService {
     );
     return {
       rowNumber: rowNumber ?? null,
-      sheetUrl: `<https://docs.google.com/spreadsheets/d/${activeSeason.rosterChangeSheet.spreadsheetId}>`,
+      sheetUrl: `https://docs.google.com/spreadsheets/d/${activeSeason.rosterChangeSheet.spreadsheetId}`,
       tabName: activeSeason.rosterChangeSheet.tabName,
     };
   }

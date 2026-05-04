@@ -37,7 +37,7 @@ export class LeagueServiceMock {
     console.debug("Mock league service subRequest called", teamName);
     return Promise.resolve({
       rowNumber: 0,
-      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>",
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_sub_sheet_id",
       tabName: "mock_sub_tab_name",
     });
   }
@@ -53,7 +53,7 @@ export class LeagueServiceMock {
     console.debug("Mock league service rosterChange called", teamName);
     return Promise.resolve({
       rowNumber: 0,
-      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>",
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_roster_sheet_id",
       tabName: "mock_roster_tab_name",
     });
   }

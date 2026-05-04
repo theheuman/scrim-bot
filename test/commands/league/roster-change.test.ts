@@ -163,14 +163,14 @@ describe("Roster change", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Roster change requested for __Dude Cube__ (Division4)\nRemoving <@player1id> [Overstat](<${overstats.player1}>)\nAdding <@player2id> [Overstat](<${overstats.player2}>)\nSheet row #0\n<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>\nNavigate to the "mock_roster_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
+      `Roster change requested for __Dude Cube__ (Division4)\nRemoving <@player1id> [Overstat](<${overstats.player1}>)\nAdding <@player2id> [Overstat](<${overstats.player2}>)\n[Sheet row #0](<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>)\nNavigate to the "mock_roster_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 
   it("Should complete request but warn that response can't be parsed", async () => {
     rosterChangeSpy.mockResolvedValueOnce({
       rowNumber: null,
-      sheetUrl: "<https://docs.google.com/spreadsheets/d/mock_roster_sheet_id>",
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_roster_sheet_id",
       tabName: "mock_roster_tab_name",
     });
     await command.run(basicInteraction);
