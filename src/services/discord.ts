@@ -13,7 +13,9 @@ export class DiscordService {
   ) {}
 
   async updateSignupPostDescription(scrim: Scrim, signupCount: number) {
-    const instructionText = await this.staticValueService.getInstructionText();
+    const instructionText = await this.staticValueService.getInstructionText(
+      scrim.scrimType,
+    );
     if (!instructionText) {
       throw Error("Instruction text not found");
     }

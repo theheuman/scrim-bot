@@ -2,7 +2,7 @@ import { Player } from "./Player";
 
 export enum ScrimType {
   regular = "regular",
-  tournament = "off",
+  tournament = "tournament",
   league = "league",
 }
 

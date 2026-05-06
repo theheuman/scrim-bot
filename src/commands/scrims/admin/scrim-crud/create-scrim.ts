@@ -45,8 +45,9 @@ export class CreateScrimCommand extends AdminCommand {
     );
     this.addChoiceInput(
       this.inputNames.scrimType,
-      "Scrim type (default: regular)",
+      "Scrim type",
       ScrimType,
+      true,
     );
   }
 
@@ -61,9 +62,11 @@ export class CreateScrimCommand extends AdminCommand {
       [ChannelType.GuildForum],
     );
     const scrimName = interaction.options.getString(this.inputNames.name) ?? "";
-    const scrimType =
-      interaction.options.getChoice(this.inputNames.scrimType, ScrimType) ??
-      ScrimType.regular;
+    const scrimType = interaction.options.getChoice(
+      this.inputNames.scrimType,
+      ScrimType,
+      true,
+    );
 
     // just to triple check
     if (!isForumChannel(channel)) {
@@ -83,6 +86,7 @@ export class CreateScrimCommand extends AdminCommand {
         channel,
         scrimDate,
         scrimName,
+        scrimType,
       );
     } catch (error) {
       await interaction.editReply("Scrim post could not be created. " + error);
@@ -111,7 +115,7 @@ export class CreateScrimCommand extends AdminCommand {
 
     await interaction.deleteReply();
     await interaction.followUp(
-      `Scrim created. Channel: <#${createdThread.id}>`,
+      `Scrim created. Channel: <#${createdThread.id}>\nScrim type: ${ScrimType[scrimType]}`,
     );
   }
 
@@ -119,8 +123,9 @@ export class CreateScrimCommand extends AdminCommand {
     forumChannel: ForumChannel,
     scrimDate: Date,
     scrimName: string,
+    scrimType: ScrimType,
   ): Promise<ForumThreadChannel> {
-    const introMessage = await this.getIntroMessage(scrimDate);
+    const introMessage = await this.getIntroMessage(scrimDate, scrimType);
 
     const postName = `${formatInTimeZone(scrimDate, "America/New_York", "M/d haaa")} ${scrimName}`;
 
@@ -132,8 +137,12 @@ export class CreateScrimCommand extends AdminCommand {
     });
   }
 
-  private async getIntroMessage(scrimDate: Date): Promise<string> {
-    const instructionText = await this.staticValueService.getInstructionText();
+  private async getIntroMessage(
+    scrimDate: Date,
+    scrimType: ScrimType,
+  ): Promise<string> {
+    const instructionText =
+      await this.staticValueService.getInstructionText(scrimType);
     if (!instructionText) {
       throw Error("Can't get instruction text from db");
     }
