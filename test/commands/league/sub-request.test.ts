@@ -109,7 +109,7 @@ describe("Sub request", () => {
           } else if (
             key === staticCommandUsedJustForInputNames.inputNames.weekNumber
           ) {
-            return 0;
+            return 4; // Week1
           } else if (
             key ===
             staticCommandUsedJustForInputNames.inputNames.playerInInputNames
@@ -159,7 +159,7 @@ describe("Sub request", () => {
     expect(subRequestSpy).toHaveBeenCalledWith(
       "Division4",
       "Dude Cube",
-      "PlacementDay1",
+      "Week1",
       {
         name: playerOut.displayName,
         discordId: playerOut.id,
@@ -175,7 +175,7 @@ describe("Sub request", () => {
       "None",
     );
     expect(followUpSpy).toHaveBeenCalledWith(
-      `Sub requested for __Dude Cube__ (Division4)\nSubbing out <@player1id> [Overstat](<${overstats.player1}>)\nSubbing in <@player2id> [Overstat](<${overstats.player2}>)\nRequested week: PlacementDay1\n[Sheet row #0](<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>)\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
+      `Sub requested for __Dude Cube__ (Division4)\nSubbing out <@player1id> [Overstat](<${overstats.player1}>)\nSubbing in <@player2id> [Overstat](<${overstats.player2}>)\nRequested week: Week1\n[Sheet row #0](<https://docs.google.com/spreadsheets/d/mock_sub_sheet_id>)\nNavigate to the "mock_sub_tab_name" tab at the bottom of the sheet\n<@&sub-approval-role-id>`,
     );
   });
 
@@ -222,7 +222,7 @@ describe("Sub request", () => {
       expect(subRequestSpy).toHaveBeenCalledWith(
         "Division4",
         "Dude Cube",
-        "PlacementDay1",
+        "Week1",
         {
           name: playerOut.displayName,
           discordId: playerOut.id,
@@ -248,6 +248,50 @@ describe("Sub request", () => {
       await command.run(interactionWithPlayerOutOverstat);
       expect(invisibleReplySpy).toHaveBeenCalledWith(
         `Sub request not made. The overstat link provided for the player subbing out is not valid.\nError: Not a link to a player overview.`,
+      );
+    });
+  });
+
+  describe("placement day", () => {
+    let placementInteraction: CustomInteraction;
+    let placementFollowUpSpy: SpyInstance<
+      Promise<Message<boolean>>,
+      [reply: string | InteractionReplyOptions | MessagePayload],
+      string
+    >;
+
+    beforeAll(() => {
+      placementInteraction = {
+        ...basicInteraction,
+        followUp: jest.fn(),
+        options: {
+          ...(basicInteraction.options as object),
+          getChoice: (key: string) => {
+            if (
+              key === staticCommandUsedJustForInputNames.inputNames.weekNumber
+            ) {
+              return 0; // PlacementDay1
+            }
+            return (
+              basicInteraction.options as unknown as {
+                getChoice: (key: string) => number | null;
+              }
+            ).getChoice(key);
+          },
+        },
+      } as unknown as CustomInteraction;
+      placementFollowUpSpy = jest.spyOn(placementInteraction, "followUp");
+    });
+
+    beforeEach(() => {
+      placementFollowUpSpy.mockClear();
+    });
+
+    it("Should respond without sheet link for placement day", async () => {
+      await command.run(placementInteraction);
+      expect(subRequestSpy).not.toHaveBeenCalled();
+      expect(placementFollowUpSpy).toHaveBeenCalledWith(
+        `Sub requested for __Dude Cube__ (Division4)\nSubbing out <@player1id> [Overstat](<${overstats.player1}>)\nSubbing in <@player2id> [Overstat](<${overstats.player2}>)\nRequested week: PlacementDay1\n<@&sub-approval-role-id>`,
       );
     });
   });

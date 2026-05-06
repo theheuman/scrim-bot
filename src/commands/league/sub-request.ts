@@ -173,6 +173,22 @@ export class LeagueSubRequestCommand extends MemberCommand {
 
     await interaction.deferReply();
 
+    const subApprovalRoleId =
+      await this.staticValueService.getSubApprovalRoleId();
+    const roleMention = subApprovalRoleId ? `\n<@&${subApprovalRoleId}>` : "";
+    const playerOutOverstatText = playerOutOverstat
+      ? ` [Overstat](<${playerOutOverstat}>)`
+      : "";
+    const playerInOverstatText = playerInOverstat
+      ? ` [Overstat](<${playerInOverstat}>)`
+      : "";
+
+    if (weekNumber <= WeekNumbers.PlacementDay4) {
+      const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}${roleMention}`;
+      await interaction.followUp(discordReplyMessage);
+      return;
+    }
+
     try {
       const subResult = await this.leagueService.subRequest(
         VesaDivision[teamDivision],
@@ -198,15 +214,6 @@ export class LeagueSubRequestCommand extends MemberCommand {
         );
         return;
       }
-      const subApprovalRoleId =
-        await this.staticValueService.getSubApprovalRoleId();
-      const roleMention = subApprovalRoleId ? `\n<@&${subApprovalRoleId}>` : "";
-      const playerOutOverstatText = playerOutOverstat
-        ? ` [Overstat](<${playerOutOverstat}>)`
-        : "";
-      const playerInOverstatText = playerInOverstat
-        ? ` [Overstat](<${playerInOverstat}>)`
-        : "";
       const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
