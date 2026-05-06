@@ -1,4 +1,4 @@
-import { PrioType, Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { ScrimType, Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { User } from "discord.js";
 
 export class ScrimServiceMock {
@@ -7,13 +7,13 @@ export class ScrimServiceMock {
   async createScrim(
     discordChannelID: string,
     dateTime: Date,
-    prioType: PrioType | null = null,
+    scrimType: ScrimType | null = null,
   ): Promise<string> {
     console.log(
       "Creating scrim in signup mock",
       discordChannelID,
       dateTime,
-      prioType,
+      scrimType,
     );
     return "";
   }

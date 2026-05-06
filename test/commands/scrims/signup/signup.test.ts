@@ -10,7 +10,7 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { SignupCommand } from "../../../../src/commands/scrims/signup/sign-up";
-import { PrioType, Scrim, ScrimSignup } from "../../../../src/models/Scrims";
+import { ScrimType, Scrim, ScrimSignup } from "../../../../src/models/Scrims";
 import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
 import { SignupServiceMock } from "../../../mocks/signups.mock";
@@ -131,7 +131,7 @@ describe("Sign up", () => {
     jest
       .spyOn(mockScrimService, "getScrim")
       .mockReturnValueOnce(
-        Promise.resolve({ prioType: PrioType.regular } as Scrim),
+        Promise.resolve({ scrimType: ScrimType.regular } as Scrim),
       );
     jest.spyOn(mockPrioService, "getTeamPrioForScrim").mockReturnValueOnce(
       Promise.resolve([
@@ -161,7 +161,7 @@ describe("Sign up", () => {
     jest
       .spyOn(mockScrimService, "getScrim")
       .mockReturnValueOnce(
-        Promise.resolve({ prioType: PrioType.off } as Scrim),
+        Promise.resolve({ scrimType: ScrimType.tournament } as Scrim),
       );
     const getTeamPrioSpy = jest.spyOn(mockPrioService, "getTeamPrioForScrim");
     getTeamPrioSpy.mockClear();

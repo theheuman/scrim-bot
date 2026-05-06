@@ -15,7 +15,7 @@ import { StaticValueService } from "../../../../../src/services/static-values";
 import { ChannelType } from "discord-api-types/v10";
 import { ScrimService } from "../../../../../src/services/scrim-service";
 import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
-import { PrioType } from "../../../../../src/models/Scrims";
+import { ScrimType } from "../../../../../src/models/Scrims";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -32,7 +32,7 @@ describe("Create scrim", () => {
   >;
   let signupsCreateScrimSpy: SpyInstance<
     Promise<string>,
-    [channelId: string, scrimDate: Date, prioType?: PrioType | null],
+    [channelId: string, scrimDate: Date, scrimType?: ScrimType | null],
     string
   >;
   const channelCreatedSpy = jest.fn();
@@ -120,7 +120,7 @@ describe("Create scrim", () => {
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "forum thread id",
       fakeScrimDate,
-      PrioType.regular,
+      ScrimType.regular,
     );
   });
 
@@ -129,7 +129,7 @@ describe("Create scrim", () => {
       ...basicInteraction,
       options: {
         ...basicInteraction.options,
-        getChoice: () => PrioType.league,
+        getChoice: () => ScrimType.league,
       },
     } as unknown as CustomInteraction;
     jest.spyOn(leagueInteraction, "followUp");
@@ -137,7 +137,7 @@ describe("Create scrim", () => {
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "forum thread id",
       fakeScrimDate,
-      PrioType.league,
+      ScrimType.league,
     );
   });
 

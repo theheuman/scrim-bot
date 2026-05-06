@@ -2,7 +2,7 @@ import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { SignupService } from "../../../services/signups";
 import { isGuildMember } from "../../../utility/utility";
-import { PrioType, ScrimSignup } from "../../../models/Scrims";
+import { ScrimType, ScrimSignup } from "../../../models/Scrims";
 import { Player } from "../../../models/Player";
 import { PrioService } from "../../../services/prio";
 import { ScrimService } from "../../../services/scrim-service";
@@ -90,7 +90,7 @@ export class SignupCommand extends MemberCommand {
       );
       return;
     }
-    if (scrim.prioType !== PrioType.regular) {
+    if (scrim.scrimType !== ScrimType.regular) {
       return;
     }
     const scrimSignupsWithPrio = await this.prioService.getTeamPrioForScrim(

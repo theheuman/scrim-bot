@@ -1,7 +1,7 @@
 import { DbMock } from "../mocks/db.mock";
 import { GuildMember, User } from "discord.js";
 import { OverstatService } from "../../src/services/overstat";
-import { PrioType, Scrim } from "../../src/models/Scrims";
+import { ScrimType, Scrim } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import SpyInstance = jest.SpyInstance;
 import { PrioServiceMock } from "../mocks/prio.mock";
@@ -115,7 +115,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             id: "123",
             dateTimeField: "2020-01-01",
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -202,7 +202,7 @@ describe("ScrimService", () => {
             id: scrimId,
             discordChannel: channelId,
             dateTime: time,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -235,7 +235,7 @@ describe("ScrimService", () => {
             id: scrimId,
             discordChannel: channelId,
             dateTime: time,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -288,8 +288,8 @@ describe("ScrimService", () => {
       expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
       expect(createNewScrimSpy.mock.calls).toEqual([
-        [time, channelId, lobby2OverstatId, tournamentStats, PrioType.regular],
-        [time, channelId, lobby3OverstatId, tournamentStats, PrioType.regular],
+        [time, channelId, lobby2OverstatId, tournamentStats, ScrimType.regular],
+        [time, channelId, lobby3OverstatId, tournamentStats, ScrimType.regular],
       ]);
       expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
       expect(huggingFaceUploadSpy.mock.calls).toEqual([
@@ -308,7 +308,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             dateTime: time,
             overstatId,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -344,7 +344,7 @@ describe("ScrimService", () => {
         channelId,
         newLobbyOverstatId,
         tournamentStats,
-        PrioType.regular,
+        ScrimType.regular,
       );
     });
 
@@ -357,7 +357,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             dateTime: time,
             overstatId,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );

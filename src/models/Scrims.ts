@@ -1,15 +1,15 @@
 import { Player } from "./Player";
 
-export enum PrioType {
+export enum ScrimType {
   regular = "regular",
-  off = "off",
+  tournament = "off",
   league = "league",
 }
 
-export function parsePrioType(value: string): PrioType {
-  return Object.values(PrioType).includes(value as PrioType)
-    ? (value as PrioType)
-    : PrioType.regular;
+export function parseScrimType(value: string): ScrimType {
+  return Object.values(ScrimType).includes(value as ScrimType)
+    ? (value as ScrimType)
+    : ScrimType.regular;
 }
 
 export interface Scrim {
@@ -18,7 +18,7 @@ export interface Scrim {
   discordChannel: string;
   active: boolean;
   overstatId?: string;
-  prioType: PrioType;
+  scrimType: ScrimType;
 }
 
 export interface ScrimSignup {

@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
-import { parsePrioType, PrioType, Scrim } from "../models/Scrims";
+import { parseScrimType, ScrimType, Scrim } from "../models/Scrims";
 
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
@@ -68,7 +68,7 @@ export abstract class DB {
     discordChannelID: string,
     overstatId: string | null = null,
     overstatJson: JSON | null = null,
-    prioType?: PrioType,
+    scrimType?: ScrimType,
   ): Promise<string> {
     const ids = await this.post(DbTable.scrims, [
       this.removeUndefined({
@@ -76,7 +76,7 @@ export abstract class DB {
         discord_channel: discordChannelID,
         overstat_id: overstatId,
         overstat_json: overstatJson,
-        prio_type: prioType,
+        scrim_type: scrimType,
       }),
     ]);
     return ids[0];
@@ -367,7 +367,7 @@ export abstract class DB {
         comparator: "eq",
         value: discordChannelID,
       },
-      ["id", "overstat_id", "date_time_field", "active", "prio_type"],
+      ["id", "overstat_id", "date_time_field", "active", "scrim_type"],
     );
     return dbResult.map((entry) => ({
       id: entry.id as string,
@@ -375,7 +375,7 @@ export abstract class DB {
       overstatId: entry.overstat_id as string,
       discordChannel: discordChannelID,
       active: entry.active as boolean,
-      prioType: parsePrioType(entry.prio_type as string),
+      scrimType: parseScrimType(entry.scrim_type as string),
     }));
   }
 
@@ -384,24 +384,24 @@ export abstract class DB {
       discordChannel: string;
       id: string;
       dateTimeField: string;
-      prioType: PrioType;
+      scrimType: ScrimType;
     }[]
   > {
     const dbData = (await this.get(
       DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
-      ["discord_channel", "id", "date_time_field", "prio_type"],
+      ["discord_channel", "id", "date_time_field", "scrim_type"],
     )) as {
       discord_channel: string;
       id: string;
       date_time_field: string;
-      prio_type: string;
+      scrim_type: string;
     }[];
     return dbData.map((dbScrim) => ({
       discordChannel: dbScrim.discord_channel as string,
       id: dbScrim.id as string,
       dateTimeField: dbScrim.date_time_field as string,
-      prioType: parsePrioType(dbData[0].prio_type),
+      scrimType: parseScrimType(dbScrim.scrim_type),
     }));
   }
 

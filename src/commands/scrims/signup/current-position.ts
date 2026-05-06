@@ -2,7 +2,7 @@ import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { SignupService } from "../../../services/signups";
 import { StaticValueService } from "../../../services/static-values";
-import { PrioType, ScrimSignup } from "../../../models/Scrims";
+import { ScrimType, ScrimSignup } from "../../../models/Scrims";
 import { GetSignupsHelper } from "../../utility/get-signups";
 import { ScrimService } from "../../../services/scrim-service";
 
@@ -40,7 +40,7 @@ export class CurrentPositionCommand extends MemberCommand {
       );
     }
     const prioActive =
-      (scrim?.prioType ?? PrioType.regular) === PrioType.regular;
+      (scrim?.scrimType ?? ScrimType.regular) === ScrimType.regular;
 
     const { mainList, waitList } = channelSignups;
     const list: ScrimSignup[] = [...mainList, ...waitList];
