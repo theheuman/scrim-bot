@@ -19,6 +19,28 @@ Fill out the required fields: team name, player 1, player 2, player 3, comp expe
 
 Optionally: days unable to play, additional comments
 
+## /sub-request
+Request a substitute player for a specific week
+
+![sub request command](/usage/assets/league/sub-request.png)
+
+![sub request success](/usage/assets/league/sub-request-success.png)
+
+Fill out the required fields: team-name, team-division, week-number, player-out, player-in, player-in-overstat-link, player-in-division
+
+Optionally: player-out-overstat-link (only needed if not already linked), additional-comments
+
+## /roster-change
+Request a permanent roster change
+
+![roster change command](/usage/assets/league/roster-change.png)
+
+![roster change success](/usage/assets/league/roster-change-success.png)
+
+Fill out the required fields: team-name, team-division, player-out, player-in, player-in-overstat-link
+
+Optionally: player-out-overstat-link (only needed if not already linked), additional-comments
+
 ## /link-overstat
 Links an overstat overview url to your discord account so we can gauge your skill level
 

@@ -1,0 +1,25 @@
+table:
+  name: google_sheets
+  schema: public
+array_relationships:
+  - name: league_seasons_by_roster_change_sheet
+    using:
+      foreign_key_constraint_on:
+        column: roster_change_sheet_id
+        table:
+          name: league_seasons
+          schema: public
+  - name: league_seasons_by_signup_sheet
+    using:
+      foreign_key_constraint_on:
+        column: signup_sheet_id
+        table:
+          name: league_seasons
+          schema: public
+  - name: league_seasons_by_sub_sheet
+    using:
+      foreign_key_constraint_on:
+        column: sub_sheet_id
+        table:
+          name: league_seasons
+          schema: public
