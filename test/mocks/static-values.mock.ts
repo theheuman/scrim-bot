@@ -8,6 +8,10 @@ export class StaticValueServiceMock {
     return "3568173514";
   }
 
+  async getSubApprovalRoleId(): Promise<string | undefined> {
+    return "sub-approval-role-id";
+  }
+
   async getScrimScoresChannelId(): Promise<string | undefined> {
     return "scores-channel-id";
   }

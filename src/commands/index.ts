@@ -33,6 +33,8 @@ import { ScrimBanCommand } from "./scrims/admin/bans/scrim-ban";
 import { ExpungeBanCommand } from "./scrims/admin/bans/expunge-ban";
 import { LeagueSignupCommand } from "./league/league-signup";
 import { GetUserCommand } from "./overstat/get-user";
+import { LeagueSubRequestCommand } from "./league/sub-request";
+import { RosterChangeCommand } from "./league/roster-change";
 import { RoleAssignmentCommand } from "./league/admin/role-assign";
 
 export const commonCommands: Command[] = [
@@ -79,6 +81,12 @@ export const scrimCommands: Command[] = [
 
 export const leagueCommands: Command[] = [
   new LeagueSignupCommand(overstatService, leagueService),
+  new LeagueSubRequestCommand(
+    overstatService,
+    leagueService,
+    staticValueService,
+  ),
+  new RosterChangeCommand(overstatService, leagueService, staticValueService),
   new RoleAssignmentCommand(authService),
 ];
 

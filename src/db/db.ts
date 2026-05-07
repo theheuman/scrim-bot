@@ -14,6 +14,12 @@ import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
 import { parseScrimType, ScrimType, Scrim } from "../models/Scrims";
 
+export interface GoogleSheetConfig {
+  spreadsheetId: string;
+  tabName: string;
+  rangeStart: string;
+}
+
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
     tableName: DbTable,
@@ -407,9 +413,9 @@ export abstract class DB {
 
   async getActiveLeagueSeason(date: Date = new Date()): Promise<{
     id: string;
-    googleSheetId: string;
-    googleSheetName: string;
-    googleSheetRangeStart: string;
+    signupSheet: GoogleSheetConfig;
+    subSheet: GoogleSheetConfig;
+    rosterChangeSheet: GoogleSheetConfig;
     signupPrioEndDate: string;
     startDate: string;
   } | null> {
@@ -432,22 +438,35 @@ export abstract class DB {
       },
       [
         "id",
-        "google_sheet_id",
-        "google_sheet_name",
-        "google_sheet_range_start",
         "signup_prio_end_date",
         "start_date",
+        { signup_sheet: ["sheet_id", "tab_name", "range_start"] },
+        { sub_sheet: ["sheet_id", "tab_name", "range_start"] },
+        { roster_change_sheet: ["sheet_id", "tab_name", "range_start"] },
       ],
     );
 
     if (dbData.length > 0) {
+      const row = dbData[0];
       return {
-        id: dbData[0].id as string,
-        googleSheetId: dbData[0].google_sheet_id as string,
-        googleSheetName: dbData[0].google_sheet_name as string,
-        googleSheetRangeStart: dbData[0].google_sheet_range_start as string,
-        signupPrioEndDate: dbData[0].signup_prio_end_date as string,
-        startDate: dbData[0].start_date as string,
+        id: row.id as string,
+        signupPrioEndDate: row.signup_prio_end_date as string,
+        startDate: row.start_date as string,
+        signupSheet: {
+          spreadsheetId: row.signup_sheet.sheet_id as string,
+          tabName: row.signup_sheet.tab_name as string,
+          rangeStart: row.signup_sheet.range_start as string,
+        },
+        subSheet: {
+          spreadsheetId: row.sub_sheet.sheet_id as string,
+          tabName: row.sub_sheet.tab_name as string,
+          rangeStart: row.sub_sheet.range_start as string,
+        },
+        rosterChangeSheet: {
+          spreadsheetId: row.roster_change_sheet.sheet_id as string,
+          tabName: row.roster_change_sheet.tab_name as string,
+          rangeStart: row.roster_change_sheet.range_start as string,
+        },
       };
     } else {
       return null;

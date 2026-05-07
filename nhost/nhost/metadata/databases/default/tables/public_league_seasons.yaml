@@ -1,3 +1,13 @@
 table:
   name: league_seasons
   schema: public
+object_relationships:
+  - name: roster_change_sheet
+    using:
+      foreign_key_constraint_on: roster_change_sheet_id
+  - name: signup_sheet
+    using:
+      foreign_key_constraint_on: signup_sheet_id
+  - name: sub_sheet
+    using:
+      foreign_key_constraint_on: sub_sheet_id

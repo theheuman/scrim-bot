@@ -11,6 +11,7 @@ const instructionTextKeys: Record<ScrimType, string> = {
 export class StaticValueService {
   private instructionTextCache: Partial<Record<ScrimType, string>> = {};
   private scrimPassRoleId: string | undefined;
+  private subApprovalRoleId: string | undefined;
 
   constructor(private db: DB) {}
 
@@ -31,6 +32,16 @@ export class StaticValueService {
     }
     this.scrimPassRoleId = await this.fetchStaticValue("scrim_pass_role_id");
     return this.scrimPassRoleId;
+  }
+
+  async getSubApprovalRoleId(): Promise<string | undefined> {
+    if (this.subApprovalRoleId) {
+      return this.subApprovalRoleId;
+    }
+    this.subApprovalRoleId = await this.fetchStaticValue(
+      "sub_approval_role_id",
+    );
+    return this.subApprovalRoleId;
   }
 
   async getScrimScoresChannelId(): Promise<string | undefined> {

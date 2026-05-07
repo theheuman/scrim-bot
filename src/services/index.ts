@@ -10,7 +10,7 @@ import { DiscordService } from "./discord";
 import { client } from "../Client";
 import { BanService } from "./ban";
 import { HuggingFaceService } from "./hugging-face";
-import { LeagueService } from "./league-signup";
+import { LeagueService } from "./league";
 import { MmrService } from "./mmr";
 
 // This file creates all the singleton services

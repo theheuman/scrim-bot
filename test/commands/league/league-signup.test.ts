@@ -9,7 +9,7 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
-import { LeagueService } from "../../../src/services/league-signup";
+import { LeagueService } from "../../../src/services/league";
 import { LeagueServiceMock } from "../../mocks/league.mock";
 import {
   getPlayerOverstatUrl,
