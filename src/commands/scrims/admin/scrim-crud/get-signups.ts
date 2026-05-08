@@ -175,12 +175,6 @@ export class GetSignupsCommand extends AdminCommand {
       this.resolveTeamMmr(team, mmrMap),
     );
     teamsWithMmr.sort((a, b) => {
-      const prioResult =
-        (b.team.prio?.amount ?? 0) - (a.team.prio?.amount ?? 0);
-      if (prioResult !== 0) {
-        return prioResult;
-      }
-      // missing MMR teams float to top within their priority tier
       if (a.missingMmr !== b.missingMmr) {
         return a.missingMmr ? -1 : 1;
       }
