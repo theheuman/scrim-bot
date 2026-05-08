@@ -186,6 +186,51 @@ export class LeagueService {
     };
   }
 
+  async getRosterDiscordIds(): Promise<Map<string, string>> {
+    const activeSeason = await this.db.getActiveLeagueSeason();
+    if (!activeSeason?.rosterSheet) {
+      return new Map();
+    }
+
+    const { spreadsheetId } = activeSeason.rosterSheet;
+    const authClient = await this.getAuthClient();
+    const sheetsClient = sheets({ version: "v4" });
+
+    const metadata = await sheetsClient.spreadsheets.get({
+      spreadsheetId,
+      auth: authClient as OAuth2Client,
+      fields: "sheets.properties.title",
+    });
+
+    const divTabs = (metadata.data.sheets ?? [])
+      .map((s) => s.properties?.title)
+      .filter((title): title is string => !!title && /^DIV \d+$/.test(title));
+
+    const rosterMap = new Map<string, string>();
+
+    for (const tab of divTabs) {
+      const response = await sheetsClient.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${tab}!A2:J`,
+        auth: authClient as OAuth2Client,
+      });
+
+      for (const row of response.data.values ?? []) {
+        const teamName = row[0];
+        if (!teamName) continue;
+        // cols 3, 6, 9 are P1 ID, P2 ID, P3 ID
+        const p1Id = row[3];
+        const p2Id = row[6];
+        const p3Id = row[9];
+        if (p1Id) rosterMap.set(p1Id, teamName);
+        if (p2Id) rosterMap.set(p2Id, teamName);
+        if (p3Id) rosterMap.set(p3Id, teamName);
+      }
+    }
+
+    return rosterMap;
+  }
+
   private toSheetRange(sheet: GoogleSheetConfig): {
     id: string;
     range: string;

@@ -28,6 +28,7 @@ export const scrimService = new ScrimService(
   overstatService,
   huggingFaceService,
 );
+export const leagueService = new LeagueService(nhostDb);
 export const signupsService = new SignupService(
   nhostDb,
   prioService,
@@ -35,6 +36,7 @@ export const signupsService = new SignupService(
   discordService,
   banService,
   scrimService,
+  leagueService,
 );
 export const rosterService = new RosterService(
   nhostDb,
@@ -45,5 +47,4 @@ export const rosterService = new RosterService(
   scrimService,
   signupsService,
 );
-export const leagueService = new LeagueService(nhostDb);
 export const mmrService = new MmrService(nhostDb);

@@ -108,6 +108,11 @@ describe("League Service", () => {
           tabName: "roster_tab_name",
           rangeStart: "A1",
         },
+        rosterSheet: {
+          spreadsheetId: "league_roster_sheet_id",
+          tabName: "unused",
+          rangeStart: "A2",
+        },
         signupPrioEndDate: "2025-12-25T00:00:00Z",
         startDate: "2026-01-01T00:00:00Z",
       }),
@@ -514,6 +519,147 @@ describe("League Service", () => {
         sheetUrl: "https://docs.google.com/spreadsheets/d/roster_sheet_id",
         tabName: "roster_tab_name",
       });
+    });
+  });
+
+  describe("getRosterDiscordIds", () => {
+    it("Should return roster map built from all DIV tabs", async () => {
+      const mockGetSpreadsheet = jest.fn().mockResolvedValue({
+        data: {
+          sheets: [
+            { properties: { title: "DIV 1" } },
+            { properties: { title: "DIV 2" } },
+            { properties: { title: "Not a div" } },
+          ],
+        },
+      });
+      const mockGetValues = jest
+        .fn()
+        .mockResolvedValueOnce({
+          data: {
+            values: [
+              [
+                "Team Alpha",
+                "captainDiscord",
+                "P1Name",
+                "alpha1",
+                "os1",
+                "P2Name",
+                "alpha2",
+                "os2",
+                "P3Name",
+                "alpha3",
+                "os3",
+              ],
+              [
+                "Team Beta",
+                "captainDiscord2",
+                "P4Name",
+                "beta1",
+                "os4",
+                "P5Name",
+                "beta2",
+                "os5",
+                "P6Name",
+                "beta3",
+                "os6",
+              ],
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            values: [
+              [
+                "Team Gamma",
+                "captainDiscord3",
+                "P7Name",
+                "gamma1",
+                "os7",
+                "P8Name",
+                "gamma2",
+                "os8",
+                "P9Name",
+                "gamma3",
+                "os9",
+              ],
+            ],
+          },
+        });
+      googleSheetsSpy.mockReturnValueOnce({
+        spreadsheets: {
+          get: mockGetSpreadsheet,
+          values: {
+            append: googleSheetsRequestSpy,
+            get: mockGetValues,
+          },
+        } as unknown as Resource$Spreadsheets,
+      } as Sheets);
+
+      const result = await leagueService.getRosterDiscordIds();
+
+      expect(result.get("alpha1")).toBe("Team Alpha");
+      expect(result.get("alpha2")).toBe("Team Alpha");
+      expect(result.get("alpha3")).toBe("Team Alpha");
+      expect(result.get("beta1")).toBe("Team Beta");
+      expect(result.get("beta2")).toBe("Team Beta");
+      expect(result.get("beta3")).toBe("Team Beta");
+      expect(result.get("gamma1")).toBe("Team Gamma");
+      expect(result.get("gamma2")).toBe("Team Gamma");
+      expect(result.get("gamma3")).toBe("Team Gamma");
+      expect(result.size).toBe(9);
+      expect(mockGetSpreadsheet).toHaveBeenCalledWith({
+        spreadsheetId: "league_roster_sheet_id",
+        auth: undefined,
+        fields: "sheets.properties.title",
+      });
+      expect(mockGetValues).toHaveBeenCalledWith({
+        spreadsheetId: "league_roster_sheet_id",
+        range: "DIV 1!A2:J",
+        auth: undefined,
+      });
+      expect(mockGetValues).toHaveBeenCalledWith({
+        spreadsheetId: "league_roster_sheet_id",
+        range: "DIV 2!A2:J",
+        auth: undefined,
+      });
+    });
+
+    it("Should return empty map when no roster sheet configured", async () => {
+      dbGetActiveLeagueSeasonSpy.mockReturnValueOnce(
+        Promise.resolve({
+          id: "1",
+          signupSheet: {
+            spreadsheetId: "google_sheet_id",
+            tabName: "tab_name",
+            rangeStart: "A1",
+          },
+          subSheet: {
+            spreadsheetId: "sub_sheet_id",
+            tabName: "DIV 1 Log",
+            rangeStart: "A1",
+          },
+          rosterChangeSheet: {
+            spreadsheetId: "roster_sheet_id",
+            tabName: "roster_tab_name",
+            rangeStart: "A1",
+          },
+          rosterSheet: null,
+          signupPrioEndDate: "2025-12-25T00:00:00Z",
+          startDate: "2026-01-01T00:00:00Z",
+        }),
+      );
+
+      const result = await leagueService.getRosterDiscordIds();
+      expect(result.size).toBe(0);
+      expect(googleSheetsSpy).not.toHaveBeenCalled();
+    });
+
+    it("Should return empty map when no active season", async () => {
+      dbGetActiveLeagueSeasonSpy.mockReturnValueOnce(Promise.resolve(null));
+
+      const result = await leagueService.getRosterDiscordIds();
+      expect(result.size).toBe(0);
     });
   });
 });

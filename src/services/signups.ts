@@ -9,6 +9,36 @@ import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
+import { LeagueService } from "./league";
+
+function getLeagueTier(
+  players: Player[],
+  rosterMap: Map<string, string>,
+): number {
+  const teamCounts = new Map<string, number>();
+  for (const player of players) {
+    const teamName = rosterMap.get(player.discordId);
+    if (teamName) {
+      teamCounts.set(teamName, (teamCounts.get(teamName) ?? 0) + 1);
+    }
+  }
+
+  const maxSameTeam =
+    teamCounts.size > 0 ? Math.max(...teamCounts.values()) : 0;
+
+  if (maxSameTeam === 3) return 1;
+  if (maxSameTeam === 2) {
+    const dominantTeam = [...teamCounts.entries()].find(
+      ([, count]) => count === 2,
+    )![0];
+    const thirdPlayerInLeague = players.some((p) => {
+      const team = rosterMap.get(p.discordId);
+      return team !== undefined && team !== dominantTeam;
+    });
+    return thirdPlayerInLeague ? 2 : 3;
+  }
+  return 4;
+}
 
 export class SignupService {
   constructor(
@@ -18,6 +48,7 @@ export class SignupService {
     private discordService: DiscordService,
     private banService: BanService,
     private scrimService: ScrimService,
+    private leagueService: LeagueService,
   ) {}
 
   async addTeam(
@@ -130,22 +161,33 @@ export class SignupService {
     return this.sortTeams(teams, scrim.prioType);
   }
 
-  private sortTeams(
+  private async sortTeams(
     teams: ScrimSignup[],
     prioType: PrioType,
-  ): {
+  ): Promise<{
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
-  } {
+  }> {
     const lobbySize = appConfig.lobbySize;
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
+    let rosterMap: Map<string, string> | undefined;
+    if (prioType === PrioType.league) {
+      rosterMap = await this.leagueService.getRosterDiscordIds();
+    }
     const sortedTeams = [...teams].sort((teamA, teamB) => {
       if (prioType === PrioType.regular) {
         const lowPrioResult =
           (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
         if (lowPrioResult !== 0) {
           return lowPrioResult;
+        }
+      } else if (prioType === PrioType.league && rosterMap) {
+        const tierResult =
+          getLeagueTier(teamA.players, rosterMap) -
+          getLeagueTier(teamB.players, rosterMap);
+        if (tierResult !== 0) {
+          return tierResult;
         }
       }
       // lower date is better, so subtract b from a
