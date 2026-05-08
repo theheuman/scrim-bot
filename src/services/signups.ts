@@ -263,8 +263,8 @@ export class SignupService {
   }
 
   private async updateScrimSignupCount(scrim: Scrim) {
-    const { mainList, waitList } = await this.getSignups(scrim.discordChannel);
-    const count = mainList.length + waitList.length;
+    const signups = await this.getRawSignups(scrim);
+    const count = signups.length;
     try {
       await this.discordService.updateSignupPostDescription(scrim, count);
     } catch (e) {
