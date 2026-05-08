@@ -11,6 +11,21 @@ import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
 import { LeagueService } from "./league";
 
+function getLeagueTierReason(tier: number): string {
+  switch (tier) {
+    case 5:
+      return "3/3 players from same league team";
+    case 4:
+      return "2/3 players from same league team, 1 from different league team";
+    case 3:
+      return "2/3 players from same league team, 1 not in league";
+    case 2:
+      return "all 3 players from different league teams";
+    default:
+      return "fewer than 2 players from same league team";
+  }
+}
+
 function getLeagueTier(
   players: Player[],
   rosterMap: Map<string, string>,
@@ -26,7 +41,7 @@ function getLeagueTier(
   const maxSameTeam =
     teamCounts.size > 0 ? Math.max(...teamCounts.values()) : 0;
 
-  if (maxSameTeam === 3) return 1;
+  if (maxSameTeam === 3) return 5;
   if (maxSameTeam === 2) {
     const dominantTeam = [...teamCounts.entries()].find(
       ([, count]) => count === 2,
@@ -35,10 +50,10 @@ function getLeagueTier(
       const team = rosterMap.get(p.discordId);
       return team !== undefined && team !== dominantTeam;
     });
-    return thirdPlayerInLeague ? 2 : 3;
+    return thirdPlayerInLeague ? 4 : 3;
   }
-  if (teamCounts.size === 3) return 4;
-  return 5;
+  if (teamCounts.size === 3) return 2;
+  return 1;
 }
 
 export class SignupService {
@@ -172,9 +187,12 @@ export class SignupService {
     const lobbySize = appConfig.lobbySize;
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
-    let rosterMap: Map<string, string> | undefined;
     if (scrimType === ScrimType.league) {
-      rosterMap = await this.leagueService.getRosterDiscordIds();
+      const rosterMap = await this.leagueService.getRosterDiscordIds();
+      for (const team of teams) {
+        const tier = getLeagueTier(team.players, rosterMap);
+        team.prio = { amount: tier, reasons: getLeagueTierReason(tier) };
+      }
     }
     const sortedTeams = [...teams].sort((teamA, teamB) => {
       if (scrimType === ScrimType.regular) {
@@ -183,10 +201,9 @@ export class SignupService {
         if (lowPrioResult !== 0) {
           return lowPrioResult;
         }
-      } else if (scrimType === ScrimType.league && rosterMap) {
+      } else if (scrimType === ScrimType.league) {
         const tierResult =
-          getLeagueTier(teamA.players, rosterMap) -
-          getLeagueTier(teamB.players, rosterMap);
+          (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
         if (tierResult !== 0) {
           return tierResult;
         }

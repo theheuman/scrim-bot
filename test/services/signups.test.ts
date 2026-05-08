@@ -706,6 +706,23 @@ describe("Signups", () => {
           "Tier4",
           "Tier5",
         ]);
+        expect(allTeams.map((t) => t.prio)).toEqual([
+          { amount: 5, reasons: "3/3 players from same league team" },
+          {
+            amount: 4,
+            reasons:
+              "2/3 players from same league team, 1 from different league team",
+          },
+          {
+            amount: 3,
+            reasons: "2/3 players from same league team, 1 not in league",
+          },
+          { amount: 2, reasons: "all 3 players from different league teams" },
+          {
+            amount: 1,
+            reasons: "fewer than 2 players from same league team",
+          },
+        ]);
       });
 
       it("Should use signup date as tiebreaker within the same tier", async () => {
