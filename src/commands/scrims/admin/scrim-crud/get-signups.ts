@@ -142,7 +142,8 @@ export class GetSignupsCommand extends AdminCommand {
       const playerColumns = team.players.map((p) =>
         this.getPlayerCsvFields(p, mmrMap),
       );
-      return [teamNameColumn, ...playerColumns].join(",");
+      const prioColumn = `"${team.prio?.amount ?? 0}: ${team.prio?.reasons ?? ""}"`;
+      return [teamNameColumn, ...playerColumns, prioColumn].join(",");
     };
     const mainListString = mainList.map(teamCsvStringConverter).join("\n");
     const sampleTeam = mainList[0] ?? waitList[0];
@@ -167,7 +168,8 @@ export class GetSignupsCommand extends AdminCommand {
       "missing_mmr_flag,team_name,team_mmr,team_discord_pings," +
       "player1_name,player1_overstat_url,player1_mmr," +
       "player2_name,player2_overstat_url,player2_mmr," +
-      "player3_name,player3_overstat_url,player3_mmr";
+      "player3_name,player3_overstat_url,player3_mmr," +
+      "prio";
 
     const teamsWithMmr = mainList.map((team) =>
       this.resolveTeamMmr(team, mmrMap),
@@ -207,8 +209,11 @@ export class GetSignupsCommand extends AdminCommand {
           playerMmrs[i] !== undefined ? playerMmrs[i]!.toFixed(3) : "n/a";
         return `${p.displayName},${overstatUrl},${mmr}`;
       });
+      const prioCol = `"${team.prio?.amount ?? 0}: ${team.prio?.reasons ?? ""}"`;
       rows.push(
-        [flag, team.teamName, mmrDisplay, pings, ...playerCols].join(","),
+        [flag, team.teamName, mmrDisplay, pings, ...playerCols, prioCol].join(
+          ",",
+        ),
       );
     });
 
