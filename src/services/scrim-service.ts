@@ -1,7 +1,7 @@
 import { DB } from "../db/db";
 import { OverstatService } from "./overstat";
 import { HuggingFaceService } from "./hugging-face";
-import { PrioType, Scrim } from "../models/Scrims";
+import { ScrimType, Scrim } from "../models/Scrims";
 
 export class ScrimService {
   constructor(
@@ -13,14 +13,14 @@ export class ScrimService {
   async createScrim(
     discordChannelID: string,
     dateTime: Date,
-    prioType?: PrioType,
+    scrimType?: ScrimType,
   ): Promise<string> {
     const scrimId = await this.db.createNewScrim(
       dateTime,
       discordChannelID,
       null,
       null,
-      prioType,
+      scrimType,
     );
     return scrimId;
   }
@@ -36,7 +36,7 @@ export class ScrimService {
         dateTime: new Date(dbScrim.dateTimeField),
         discordChannel: dbScrim.discordChannel,
         id: dbScrim.id,
-        prioType: dbScrim.prioType,
+        scrimType: dbScrim.scrimType,
       };
       return mappedScrim;
     } else {
@@ -72,7 +72,7 @@ export class ScrimService {
     await this.computeNewScrims(newOverstatIds, {
       scrimDateTime: scrims[0].dateTime,
       discordChannelID,
-      prioType: scrims[0].prioType,
+      scrimType: scrims[0].scrimType,
     });
 
     return { links: overstatLinks, dateTime: scrims[0].dateTime };
@@ -117,7 +117,7 @@ export class ScrimService {
     scrimInfo: {
       discordChannelID: string;
       scrimDateTime: Date;
-      prioType: PrioType;
+      scrimType: ScrimType;
     },
   ) {
     const errors: string[] = [];
@@ -128,7 +128,7 @@ export class ScrimService {
         scrimInfo.discordChannelID,
         overstatId,
         stats,
-        scrimInfo.prioType,
+        scrimInfo.scrimType,
       );
       try {
         await this.huggingFaceService.uploadOverstatJson(

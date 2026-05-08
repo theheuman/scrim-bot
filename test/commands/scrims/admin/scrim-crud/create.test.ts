@@ -15,7 +15,7 @@ import { StaticValueService } from "../../../../../src/services/static-values";
 import { ChannelType } from "discord-api-types/v10";
 import { ScrimService } from "../../../../../src/services/scrim-service";
 import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
-import { PrioType } from "../../../../../src/models/Scrims";
+import { ScrimType } from "../../../../../src/models/Scrims";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -32,7 +32,7 @@ describe("Create scrim", () => {
   >;
   let signupsCreateScrimSpy: SpyInstance<
     Promise<string>,
-    [channelId: string, scrimDate: Date, prioType?: PrioType | null],
+    [channelId: string, scrimDate: Date, scrimType?: ScrimType | null],
     string
   >;
   const channelCreatedSpy = jest.fn();
@@ -76,7 +76,7 @@ describe("Create scrim", () => {
           return fakeScrimDate;
         },
         getChannel: () => forumChannel,
-        getChoice: () => null,
+        getChoice: () => ScrimType.regular,
       },
       reply: jest.fn(),
       editReply: jest.fn(),
@@ -108,10 +108,10 @@ describe("Create scrim", () => {
     );
   });
 
-  it("Should create scrim with default prio type when none selected", async () => {
+  it("Should create scrim with regular scrim type", async () => {
     await command.run(basicInteraction);
     expect(followUpSpy).toHaveBeenCalledWith(
-      "Scrim created. Channel: <#forum thread id>",
+      "Scrim created. Channel: <#forum thread id>\nScrim type: regular",
     );
     expect(channelCreatedSpy).toHaveBeenCalledWith(
       "11/15 8pm open-edwe",
@@ -120,24 +120,27 @@ describe("Create scrim", () => {
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "forum thread id",
       fakeScrimDate,
-      PrioType.regular,
+      ScrimType.regular,
     );
   });
 
-  it("Should create scrim with league prio type", async () => {
+  it("Should create scrim with league scrim type", async () => {
     const leagueInteraction = {
       ...basicInteraction,
       options: {
         ...basicInteraction.options,
-        getChoice: () => PrioType.league,
+        getChoice: () => ScrimType.league,
       },
     } as unknown as CustomInteraction;
-    jest.spyOn(leagueInteraction, "followUp");
+    const leagueFollowUpSpy = jest.spyOn(leagueInteraction, "followUp");
     await command.run(leagueInteraction);
     expect(signupsCreateScrimSpy).toHaveBeenCalledWith(
       "forum thread id",
       fakeScrimDate,
-      PrioType.league,
+      ScrimType.league,
+    );
+    expect(leagueFollowUpSpy).toHaveBeenCalledWith(
+      "Scrim created. Channel: <#forum thread id>\nScrim type: league",
     );
   });
 

@@ -2,7 +2,7 @@ import { GuildMember, User } from "discord.js";
 import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { PrioType, Scrim, ScrimSignup } from "../models/Scrims";
+import { ScrimType, Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
 import { AuthService } from "./auth";
@@ -127,12 +127,12 @@ export class SignupService {
       teams,
       discordIdsWithScrimPass ?? [],
     );
-    return this.sortTeams(teams, scrim.prioType);
+    return this.sortTeams(teams, scrim.scrimType);
   }
 
   private sortTeams(
     teams: ScrimSignup[],
-    prioType: PrioType,
+    scrimType: ScrimType,
   ): {
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
@@ -141,7 +141,7 @@ export class SignupService {
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
     const sortedTeams = [...teams].sort((teamA, teamB) => {
-      if (prioType === PrioType.regular) {
+      if (scrimType === ScrimType.regular) {
         const lowPrioResult =
           (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
         if (lowPrioResult !== 0) {
