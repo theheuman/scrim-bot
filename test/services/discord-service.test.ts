@@ -175,15 +175,33 @@ describe("Discord service", () => {
   });
 
   describe("errors", () => {
-    it("Should instruction text not found error", async () => {
+    it("Should use fallback message when instruction text not found", async () => {
+      const fixedDate = new Date("2026-05-08T22:00:00Z");
+      const fixedScrim = {
+        dateTime: fixedDate,
+        discordChannel: "channel",
+      } as Scrim;
       jest
         .spyOn(staticValueMock, "getInstructionText")
         .mockReturnValueOnce(Promise.resolve(undefined));
-      const causeException = async () => {
-        await discordService.updateSignupPostDescription(scrim, 0);
-      };
-      await expect(causeException).rejects.toThrow(
-        "Instruction text not found",
+
+      await discordService.updateSignupPostDescription(fixedScrim, 5);
+
+      const scrimTimestamp = Math.floor(fixedDate.valueOf() / 1000);
+      const draftTimestamp = scrimTimestamp - 30 * 60;
+      const lobbyPostTimestamp = scrimTimestamp - 2 * 60 * 60;
+      const lowPrioTimestamp = scrimTimestamp - 90 * 60;
+
+      expect(messageEditSpy).toHaveBeenCalledWith(
+        [
+          `Scrim Date: <t:${scrimTimestamp}:f>`,
+          `Scrim Time: <t:${scrimTimestamp}:t>`,
+          `Draft Time: <t:${draftTimestamp}:t>`,
+          `Lobby Post Time: <t:${lobbyPostTimestamp}:t>`,
+          `Low Prio Time: <t:${lowPrioTimestamp}:t>`,
+          `Roster Lock Time: <t:${lobbyPostTimestamp}:t>`,
+          `Signup Count: 5`,
+        ].join("\n"),
       );
     });
 

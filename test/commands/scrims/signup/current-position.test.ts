@@ -9,7 +9,7 @@ import { CustomInteraction } from "../../../../src/commands/interaction";
 import { CurrentPositionCommand } from "../../../../src/commands/scrims/signup/current-position";
 import { StaticValueService } from "../../../../src/services/static-values";
 import { StaticValueServiceMock } from "../../../mocks/static-values.mock";
-import { PrioType, ScrimSignup } from "../../../../src/models/Scrims";
+import { ScrimType, ScrimSignup } from "../../../../src/models/Scrims";
 import { GetSignupsHelper } from "../../../../src/commands/utility/get-signups";
 import { Player } from "../../../../src/models/Player";
 import { SignupService } from "../../../../src/services/signups";
@@ -66,7 +66,7 @@ describe("Get current position", () => {
       dateTime: new Date(),
       discordChannel: "forum thread id",
       active: true,
-      prioType: PrioType.regular,
+      scrimType: ScrimType.regular,
     });
     command = new CurrentPositionCommand(
       mockSignpuService as unknown as SignupService,
@@ -156,7 +156,7 @@ describe("Get current position", () => {
       dateTime: new Date(),
       discordChannel: "forum thread id",
       active: true,
-      prioType: PrioType.off,
+      scrimType: ScrimType.tournament,
     });
     const teamWithNegativePrio: ScrimSignup = {
       players: [],

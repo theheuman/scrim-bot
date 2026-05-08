@@ -8,7 +8,7 @@ import {
   MessagePayload,
   User,
 } from "discord.js";
-import { PrioType, Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { ScrimType, Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
@@ -98,7 +98,7 @@ describe("Signups", () => {
         dateTime: new Date("2026-01-01T20:00:00"),
         discordChannel: correctDiscordChannelId,
         active: false,
-        prioType: PrioType.regular,
+        scrimType: ScrimType.regular,
       }),
     );
   });
@@ -552,7 +552,7 @@ describe("Signups", () => {
           dateTime: new Date("2026-01-01T20:00:00"),
           discordChannel: correctDiscordChannelId,
           active: false,
-          prioType: PrioType.off,
+          scrimType: ScrimType.tournament,
         }),
       );
 
@@ -610,7 +610,7 @@ describe("Signups", () => {
         dateTime: new Date("2026-01-01T20:00:00"),
         discordChannel: correctDiscordChannelId,
         active: false,
-        prioType: PrioType.league,
+        scrimType: ScrimType.league,
       };
 
       beforeEach(() => {
