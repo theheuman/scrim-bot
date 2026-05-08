@@ -2,59 +2,13 @@ import { GuildMember, User } from "discord.js";
 import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { ScrimType, Scrim, ScrimSignup } from "../models/Scrims";
+import { Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
-import { LeagueService } from "./league";
-
-function getLeagueTierReason(tier: number): string {
-  switch (tier) {
-    case 5:
-      return "3/3 players from same league team";
-    case 4:
-      return "2/3 players from same league team, 1 from different league team";
-    case 3:
-      return "2/3 players from same league team, 1 not in league";
-    case 2:
-      return "all 3 players from different league teams";
-    default:
-      return "fewer than 2 players from same league team";
-  }
-}
-
-function getLeagueTier(
-  players: Player[],
-  rosterMap: Map<string, string>,
-): number {
-  const teamCounts = new Map<string, number>();
-  for (const player of players) {
-    const teamName = rosterMap.get(player.discordId);
-    if (teamName) {
-      teamCounts.set(teamName, (teamCounts.get(teamName) ?? 0) + 1);
-    }
-  }
-
-  const maxSameTeam =
-    teamCounts.size > 0 ? Math.max(...teamCounts.values()) : 0;
-
-  if (maxSameTeam === 3) return 5;
-  if (maxSameTeam === 2) {
-    const dominantTeam = [...teamCounts.entries()].find(
-      ([, count]) => count === 2,
-    )![0];
-    const thirdPlayerInLeague = players.some((p) => {
-      const team = rosterMap.get(p.discordId);
-      return team !== undefined && team !== dominantTeam;
-    });
-    return thirdPlayerInLeague ? 4 : 3;
-  }
-  if (teamCounts.size === 3) return 2;
-  return 1;
-}
 
 export class SignupService {
   constructor(
@@ -64,7 +18,6 @@ export class SignupService {
     private discordService: DiscordService,
     private banService: BanService,
     private scrimService: ScrimService,
-    private leagueService: LeagueService,
   ) {}
 
   async addTeam(
@@ -167,47 +120,26 @@ export class SignupService {
       throw Error("No scrim found for that channel");
     }
     const teams = await this.getRawSignups(scrim);
-    // this adds prio to the teams
     await this.prioService.getTeamPrioForScrim(
       scrim,
       teams,
       discordIdsWithScrimPass ?? [],
     );
-    return this.sortTeams(teams, scrim.scrimType);
+    return this.sortTeams(teams);
   }
 
-  private async sortTeams(
-    teams: ScrimSignup[],
-    scrimType: ScrimType,
-  ): Promise<{
+  private sortTeams(teams: ScrimSignup[]): {
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
-  }> {
+  } {
     const lobbySize = appConfig.lobbySize;
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
-    if (scrimType === ScrimType.league) {
-      const rosterMap = await this.leagueService.getRosterDiscordIds();
-      for (const team of teams) {
-        const tier = getLeagueTier(team.players, rosterMap);
-        team.prio = { amount: tier, reasons: getLeagueTierReason(tier) };
-      }
-    }
     const sortedTeams = [...teams].sort((teamA, teamB) => {
-      if (scrimType === ScrimType.regular) {
-        const lowPrioResult =
-          (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
-        if (lowPrioResult !== 0) {
-          return lowPrioResult;
-        }
-      } else if (scrimType === ScrimType.league) {
-        const tierResult =
-          (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
-        if (tierResult !== 0) {
-          return tierResult;
-        }
+      const prioResult = (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
+      if (prioResult !== 0) {
+        return prioResult;
       }
-      // lower date is better, so subtract b from a
       return teamA.date.valueOf() - teamB.date.valueOf();
     });
     return {

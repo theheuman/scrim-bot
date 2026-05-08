@@ -1,10 +1,60 @@
 import { DB } from "../db/db";
 import { User } from "discord.js";
-import { ScrimSignup } from "../models/Scrims";
+import { Scrim, ScrimSignup, ScrimType } from "../models/Scrims";
 import { ExpungedPlayerPrio, PlayerMap, PlayerPrio } from "../models/Prio";
+import { Player } from "../models/Player";
+import { LeagueService } from "./league";
+
+function getLeagueTierInfo(
+  players: Player[],
+  rosterMap: Map<string, string>,
+): { tier: number; reason: string } {
+  const teamCounts = new Map<string, number>();
+  for (const player of players) {
+    const teamName = rosterMap.get(player.discordId);
+    if (teamName) {
+      teamCounts.set(teamName, (teamCounts.get(teamName) ?? 0) + 1);
+    }
+  }
+
+  const maxSameTeam =
+    teamCounts.size > 0 ? Math.max(...teamCounts.values()) : 0;
+
+  if (maxSameTeam === 3) {
+    const teamName = [...teamCounts.keys()][0];
+    return { tier: 5, reason: `3/3 players from ${teamName}` };
+  }
+  if (maxSameTeam === 2) {
+    const dominantTeam = [...teamCounts.entries()].find(
+      ([, count]) => count === 2,
+    )![0];
+    const otherTeam = [...teamCounts.keys()].find((t) => t !== dominantTeam);
+    if (otherTeam) {
+      return {
+        tier: 4,
+        reason: `2/3 players from ${dominantTeam}, 1 from ${otherTeam}`,
+      };
+    }
+    return {
+      tier: 3,
+      reason: `2/3 players from ${dominantTeam}, 1 not in league`,
+    };
+  }
+  if (teamCounts.size === 3) {
+    const teams = [...teamCounts.keys()].join(", ");
+    return {
+      tier: 2,
+      reason: `all 3 players from different league teams: ${teams}`,
+    };
+  }
+  return { tier: 1, reason: "fewer than 2 players from same league team" };
+}
 
 export class PrioService {
-  constructor(private db: DB) {}
+  constructor(
+    private db: DB,
+    private leagueService: LeagueService,
+  ) {}
 
   async setPlayerPrio(
     prioUsers: User[],
@@ -23,10 +73,21 @@ export class PrioService {
 
   // changes teams in place and returns the teams, does NOT sort
   async getTeamPrioForScrim(
-    scrim: { dateTime: Date },
+    scrim: Scrim,
     teams: ScrimSignup[],
     discordIdsWithScrimPass: string[],
   ): Promise<ScrimSignup[]> {
+    if (scrim.scrimType === ScrimType.tournament) {
+      return teams;
+    }
+    if (scrim.scrimType === ScrimType.league) {
+      const rosterMap = await this.leagueService.getRosterDiscordIds();
+      for (const team of teams) {
+        const { tier, reason } = getLeagueTierInfo(team.players, rosterMap);
+        team.prio = { amount: tier, reasons: reason };
+      }
+      return teams;
+    }
     const playersWithPrio = await this.db.getPrio(scrim.dateTime);
     const playerMap = this.generatePlayerMap(
       playersWithPrio,

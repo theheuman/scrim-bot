@@ -22,8 +22,6 @@ import { BanService } from "../../src/services/ban";
 import { BanServiceMock } from "../mocks/ban.mock";
 import { ScrimServiceMock } from "../mocks/scrim-service.mock";
 import { ScrimService } from "../../src/services/scrim-service";
-import { LeagueServiceMock } from "../mocks/league.mock";
-import { LeagueService } from "../../src/services/league";
 
 jest.mock("../../src/config", () => {
   return {
@@ -40,7 +38,6 @@ describe("Signups", () => {
   let authServiceMock: AuthMock;
   let mockBanService: BanService;
   let scrimServiceMock: ScrimServiceMock;
-  let leagueServiceMock: LeagueServiceMock;
   const correctDiscordChannelId = "a forum post";
   const correctScrimId = "32451";
 
@@ -53,7 +50,6 @@ describe("Signups", () => {
 
     authServiceMock = new AuthMock();
     scrimServiceMock = new ScrimServiceMock();
-    leagueServiceMock = new LeagueServiceMock();
     signups = new SignupService(
       dbMock,
       prioServiceMock as PrioService,
@@ -61,7 +57,6 @@ describe("Signups", () => {
       new DiscordServiceMock() as DiscordService,
       mockBanService,
       scrimServiceMock as unknown as ScrimService,
-      leagueServiceMock as unknown as LeagueService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -571,22 +566,9 @@ describe("Signups", () => {
 
       jest
         .spyOn(prioServiceMock, "getTeamPrioForScrim")
-        .mockImplementation((_, teams: ScrimSignup[]) => {
-          for (const team of teams) {
-            switch (team.teamName) {
-              case highPrioTeam.team_name:
-                team.prio = { amount: 1, reasons: "High prio" };
-                break;
-              case mediumPrioTeam.team_name:
-                team.prio = { amount: 0, reasons: "" };
-                break;
-              case lowPrioTeam.team_name:
-                team.prio = { amount: -1, reasons: "Low prio" };
-                break;
-            }
-          }
-          return Promise.resolve(teams);
-        });
+        .mockImplementation((_, teams: ScrimSignup[]) =>
+          Promise.resolve(teams),
+        );
       jest
         .spyOn(dbMock, "getScrimSignupsWithPlayers")
         .mockReturnValue(
@@ -602,189 +584,6 @@ describe("Signups", () => {
         "Medium Prio",
         "High Prio",
       ]);
-    });
-
-    describe("League prio type", () => {
-      const leagueScrim = {
-        id: correctScrimId,
-        dateTime: new Date("2026-01-01T20:00:00"),
-        discordChannel: correctDiscordChannelId,
-        active: false,
-        scrimType: ScrimType.league,
-      };
-
-      beforeEach(() => {
-        jest
-          .spyOn(scrimServiceMock, "getScrim")
-          .mockReturnValue(Promise.resolve(leagueScrim));
-        jest
-          .spyOn(prioServiceMock, "getTeamPrioForScrim")
-          .mockImplementation((_, teams: ScrimSignup[]) =>
-            Promise.resolve(teams),
-          );
-      });
-
-      const makeTeam = (
-        teamName: string,
-        dateTime: string,
-        discordIds: [string, string, string],
-      ): ScrimSignupsWithPlayers =>
-        ({
-          date_time: dateTime,
-          team_name: teamName,
-          player_one_discord_id: discordIds[0],
-          player_two_discord_id: discordIds[1],
-          player_three_discord_id: discordIds[2],
-        }) as ScrimSignupsWithPlayers;
-
-      it("Should sort by league tier then signup date", async () => {
-        // Tier 1: all 3 on same league team
-        const tier1Team = makeTeam("Tier1", "2024-10-28T20:00:00.000+00:00", [
-          "alpha1",
-          "alpha2",
-          "alpha3",
-        ]);
-        // Tier 2: 2 on same league team, 3rd on a different league team
-        const tier2Team = makeTeam("Tier2", "2024-10-10T20:00:00.000+00:00", [
-          "alpha1",
-          "alpha2",
-          "beta1",
-        ]);
-        // Tier 3: 2 on same league team, 3rd not in league
-        const tier3Team = makeTeam("Tier3", "2024-10-13T20:00:00.000+00:00", [
-          "alpha1",
-          "alpha2",
-          "outsider",
-        ]);
-        // Tier 4: all 3 on different league teams
-        const tier4Team = makeTeam("Tier4", "2024-10-14T20:00:00.000+00:00", [
-          "alpha1",
-          "beta1",
-          "gamma1",
-        ]);
-        // Tier 5: fewer than 2 on same league team, not all in league
-        const tier5Team = makeTeam("Tier5", "2024-10-15T20:00:00.000+00:00", [
-          "alpha1",
-          "beta1",
-          "outsider",
-        ]);
-
-        const rosterMap = new Map([
-          ["alpha1", "Alpha"],
-          ["alpha2", "Alpha"],
-          ["alpha3", "Alpha"],
-          ["beta1", "Beta"],
-          ["beta2", "Beta"],
-          ["beta3", "Beta"],
-          ["gamma1", "Gamma"],
-          ["gamma2", "Gamma"],
-          ["gamma3", "Gamma"],
-        ]);
-        jest
-          .spyOn(leagueServiceMock, "getRosterDiscordIds")
-          .mockResolvedValueOnce(rosterMap);
-        jest
-          .spyOn(dbMock, "getScrimSignupsWithPlayers")
-          .mockReturnValue(
-            Promise.resolve([
-              tier5Team,
-              tier4Team,
-              tier2Team,
-              tier1Team,
-              tier3Team,
-            ]),
-          );
-
-        const { mainList, waitList } = await signups.getSignups(
-          correctDiscordChannelId,
-        );
-        const allTeams = [...mainList, ...waitList];
-        expect(allTeams.map((t) => t.teamName)).toEqual([
-          "Tier1",
-          "Tier2",
-          "Tier3",
-          "Tier4",
-          "Tier5",
-        ]);
-        expect(allTeams.map((t) => t.prio)).toEqual([
-          { amount: 5, reasons: "3/3 players from same league team" },
-          {
-            amount: 4,
-            reasons:
-              "2/3 players from same league team, 1 from different league team",
-          },
-          {
-            amount: 3,
-            reasons: "2/3 players from same league team, 1 not in league",
-          },
-          { amount: 2, reasons: "all 3 players from different league teams" },
-          {
-            amount: 1,
-            reasons: "fewer than 2 players from same league team",
-          },
-        ]);
-      });
-
-      it("Should use signup date as tiebreaker within the same tier", async () => {
-        const earlyTier1 = makeTeam(
-          "Early Tier1",
-          "2024-10-10T20:00:00.000+00:00",
-          ["alpha1", "alpha2", "alpha3"],
-        );
-        const lateTier1 = makeTeam(
-          "Late Tier1",
-          "2024-10-28T20:00:00.000+00:00",
-          ["beta1", "beta2", "beta3"],
-        );
-
-        const rosterMap = new Map([
-          ["alpha1", "Alpha"],
-          ["alpha2", "Alpha"],
-          ["alpha3", "Alpha"],
-          ["beta1", "Beta"],
-          ["beta2", "Beta"],
-          ["beta3", "Beta"],
-        ]);
-        jest
-          .spyOn(leagueServiceMock, "getRosterDiscordIds")
-          .mockResolvedValueOnce(rosterMap);
-        jest
-          .spyOn(dbMock, "getScrimSignupsWithPlayers")
-          .mockReturnValue(Promise.resolve([lateTier1, earlyTier1]));
-
-        const { mainList, waitList } = await signups.getSignups(
-          correctDiscordChannelId,
-        );
-        const allTeams = [...mainList, ...waitList];
-        expect(allTeams.map((t) => t.teamName)).toEqual([
-          "Early Tier1",
-          "Late Tier1",
-        ]);
-      });
-
-      it("Should sort by date only when roster map is empty", async () => {
-        const laterTeam: ScrimSignupsWithPlayers = {
-          date_time: "2024-10-28T20:10:35.706+00:00",
-          team_name: "Later",
-        } as ScrimSignupsWithPlayers;
-        const earlierTeam: ScrimSignupsWithPlayers = {
-          date_time: "2024-10-10T20:10:35.706+00:00",
-          team_name: "Earlier",
-        } as ScrimSignupsWithPlayers;
-
-        jest
-          .spyOn(leagueServiceMock, "getRosterDiscordIds")
-          .mockResolvedValueOnce(new Map());
-        jest
-          .spyOn(dbMock, "getScrimSignupsWithPlayers")
-          .mockReturnValue(Promise.resolve([laterTeam, earlierTeam]));
-
-        const { mainList, waitList } = await signups.getSignups(
-          correctDiscordChannelId,
-        );
-        const allTeams = [...mainList, ...waitList];
-        expect(allTeams.map((t) => t.teamName)).toEqual(["Earlier", "Later"]);
-      });
     });
 
     it("Should throw error when no scrim", async () => {

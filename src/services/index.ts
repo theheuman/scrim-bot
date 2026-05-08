@@ -21,7 +21,6 @@ export const staticValueService = new StaticValueService(nhostDb);
 export const discordService = new DiscordService(client, staticValueService);
 
 export const authService = new AuthService(nhostDb);
-export const prioService = new PrioService(nhostDb);
 export const banService = new BanService(nhostDb);
 export const scrimService = new ScrimService(
   nhostDb,
@@ -29,6 +28,7 @@ export const scrimService = new ScrimService(
   huggingFaceService,
 );
 export const leagueService = new LeagueService(nhostDb);
+export const prioService = new PrioService(nhostDb, leagueService);
 export const signupsService = new SignupService(
   nhostDb,
   prioService,
@@ -36,7 +36,6 @@ export const signupsService = new SignupService(
   discordService,
   banService,
   scrimService,
-  leagueService,
 );
 export const rosterService = new RosterService(
   nhostDb,
