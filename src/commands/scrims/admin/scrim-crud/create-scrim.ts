@@ -36,18 +36,18 @@ export class CreateScrimCommand extends AdminCommand {
       isRequired: true,
       channelTypes: [ChannelType.GuildForum],
     });
+    this.addChoiceInput(
+      this.inputNames.scrimType,
+      "Scrim type",
+      ScrimType,
+      true,
+    );
     this.addStringInput(
       this.inputNames.name,
       "The name of the scrim (open, tendies, etc...)",
       {
         maxLength: 25,
       },
-    );
-    this.addChoiceInput(
-      this.inputNames.scrimType,
-      "Scrim type",
-      ScrimType,
-      true,
     );
   }
 
