@@ -37,7 +37,8 @@ function getLeagueTier(
     });
     return thirdPlayerInLeague ? 2 : 3;
   }
-  return 4;
+  if (teamCounts.size === 3) return 4;
+  return 5;
 }
 
 export class SignupService {

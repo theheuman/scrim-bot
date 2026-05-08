@@ -656,8 +656,14 @@ describe("Signups", () => {
           "alpha2",
           "outsider",
         ]);
-        // Tier 4: fewer than 2 on same league team
+        // Tier 4: all 3 on different league teams
         const tier4Team = makeTeam("Tier4", "2024-10-14T20:00:00.000+00:00", [
+          "alpha1",
+          "beta1",
+          "gamma1",
+        ]);
+        // Tier 5: fewer than 2 on same league team, not all in league
+        const tier5Team = makeTeam("Tier5", "2024-10-15T20:00:00.000+00:00", [
           "alpha1",
           "beta1",
           "outsider",
@@ -670,6 +676,9 @@ describe("Signups", () => {
           ["beta1", "Beta"],
           ["beta2", "Beta"],
           ["beta3", "Beta"],
+          ["gamma1", "Gamma"],
+          ["gamma2", "Gamma"],
+          ["gamma3", "Gamma"],
         ]);
         jest
           .spyOn(leagueServiceMock, "getRosterDiscordIds")
@@ -677,7 +686,13 @@ describe("Signups", () => {
         jest
           .spyOn(dbMock, "getScrimSignupsWithPlayers")
           .mockReturnValue(
-            Promise.resolve([tier4Team, tier2Team, tier1Team, tier3Team]),
+            Promise.resolve([
+              tier5Team,
+              tier4Team,
+              tier2Team,
+              tier1Team,
+              tier3Team,
+            ]),
           );
 
         const { mainList, waitList } = await signups.getSignups(
@@ -689,6 +704,7 @@ describe("Signups", () => {
           "Tier2",
           "Tier3",
           "Tier4",
+          "Tier5",
         ]);
       });
 
