@@ -87,8 +87,7 @@ export class SignupService {
       throw Error("Duplicate player");
     }
 
-    const { mainList, waitList } = await this.getSignups(discordChannelID);
-    const scrimSignups = [...mainList, ...waitList];
+    const scrimSignups = await this.getRawSignups(scrim);
     // yes this is a three deep for loop, this is a cry for help, please optimize this
     for (const team of scrimSignups) {
       if (team.teamName === teamName) {

@@ -218,7 +218,6 @@ export class LeagueService {
       for (const row of response.data.values ?? []) {
         const teamName = row[0];
         if (!teamName) continue;
-        // cols 3, 6, 9 are P1 ID, P2 ID, P3 ID
         const p1Id = row[3];
         const p2Id = row[6];
         const p3Id = row[9];
