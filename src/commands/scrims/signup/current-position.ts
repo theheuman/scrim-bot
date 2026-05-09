@@ -69,7 +69,7 @@ export class CurrentPositionCommand extends MemberCommand {
         if (prioActive && (signup.prio?.amount ?? 0) !== 0) {
           userTeamHasPrio = true;
         }
-      } else if (prioActive) {
+      } else if (prioActive && scrim?.scrimType === ScrimType.regular) {
         if ((signup.prio?.amount ?? 0) < 0) {
           teamsWithPrio.negative++;
         } else if ((signup.prio?.amount ?? 0) > 0) {

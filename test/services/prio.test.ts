@@ -211,6 +211,24 @@ describe("Prio", () => {
     });
   });
 
+  describe("getTeamPrioForScrim - tournament type", () => {
+    it("should not set prio when scrim type is tournament", async () => {
+      const tournamentScrim: Scrim = {
+        scrimType: ScrimType.tournament,
+        dateTime: new Date(),
+      } as Scrim;
+      const team: ScrimSignup = {
+        date: new Date(),
+        players: [],
+        signupId: "",
+        signupPlayer: { id: "", discordId: "", displayName: "" },
+        teamName: "",
+      };
+      await prioService.getTeamPrioForScrim(tournamentScrim, [team], []);
+      expect(team.prio).toBeUndefined();
+    });
+  });
+
   describe("setTeamPrioForScrim()", () => {
     describe("correctly set prio", () => {
       beforeEach(() => {});
@@ -332,22 +350,6 @@ describe("Prio", () => {
             },
           },
         ]);
-      });
-
-      it("should not set prio when scrim type is tournament", async () => {
-        const tournamentScrim: Scrim = {
-          scrimType: ScrimType.tournament,
-          dateTime: new Date(),
-        } as Scrim;
-        const team: ScrimSignup = {
-          date: new Date(),
-          players: [],
-          signupId: "",
-          signupPlayer: { id: "", discordId: "", displayName: "" },
-          teamName: "",
-        };
-        await prioService.getTeamPrioForScrim(tournamentScrim, [team], []);
-        expect(team.prio).toBeUndefined();
       });
 
       it("should set high prio for teams from its players", async () => {
