@@ -81,10 +81,17 @@ export class PrioService {
       return teams;
     }
     if (scrim.scrimType === ScrimType.league) {
-      const rosterMap = await this.leagueService.getRosterDiscordIds();
-      for (const team of teams) {
-        const { tier, reason } = getLeagueTierInfo(team.players, rosterMap);
-        team.prio = { amount: tier, reasons: reason };
+      try {
+        const rosterMap = await this.leagueService.getRosterDiscordIds();
+        for (const team of teams) {
+          const { tier, reason } = getLeagueTierInfo(team.players, rosterMap);
+          team.prio = { amount: tier, reasons: reason };
+        }
+      } catch (e) {
+        console.error(
+          "Failed to fetch league roster, defaulting to date-only sort",
+          e,
+        );
       }
       return teams;
     }
