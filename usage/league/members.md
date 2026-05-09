@@ -3,7 +3,7 @@
 Commands any member can use
 
 ## /league-signup
-Signup for the scrim
+Signup for the current league season
 
 ![signup example image](/usage/assets/league/signup-1.png)
 ![signup example image](/usage/assets/league/signup-2.png)
