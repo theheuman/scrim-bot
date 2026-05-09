@@ -21,13 +21,14 @@ export const staticValueService = new StaticValueService(nhostDb);
 export const discordService = new DiscordService(client, staticValueService);
 
 export const authService = new AuthService(nhostDb);
-export const prioService = new PrioService(nhostDb);
 export const banService = new BanService(nhostDb);
 export const scrimService = new ScrimService(
   nhostDb,
   overstatService,
   huggingFaceService,
 );
+export const leagueService = new LeagueService(nhostDb);
+export const prioService = new PrioService(nhostDb, leagueService);
 export const signupsService = new SignupService(
   nhostDb,
   prioService,
@@ -45,5 +46,4 @@ export const rosterService = new RosterService(
   scrimService,
   signupsService,
 );
-export const leagueService = new LeagueService(nhostDb);
 export const mmrService = new MmrService(nhostDb);

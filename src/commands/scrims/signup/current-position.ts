@@ -40,7 +40,7 @@ export class CurrentPositionCommand extends MemberCommand {
       );
     }
     const prioActive =
-      (scrim?.scrimType ?? ScrimType.regular) === ScrimType.regular;
+      (scrim?.scrimType ?? ScrimType.regular) !== ScrimType.tournament;
 
     const { mainList, waitList } = channelSignups;
     const list: ScrimSignup[] = [...mainList, ...waitList];
@@ -69,7 +69,7 @@ export class CurrentPositionCommand extends MemberCommand {
         if (prioActive && (signup.prio?.amount ?? 0) !== 0) {
           userTeamHasPrio = true;
         }
-      } else if (prioActive) {
+      } else if (prioActive && scrim?.scrimType === ScrimType.regular) {
         if ((signup.prio?.amount ?? 0) < 0) {
           teamsWithPrio.negative++;
         } else if ((signup.prio?.amount ?? 0) > 0) {
@@ -81,7 +81,7 @@ export class CurrentPositionCommand extends MemberCommand {
     if (replyArray.length === 0) {
       await interaction.editReply("Member not found on any team in this scrim");
     } else {
-      if (prioActive) {
+      if (prioActive && scrim?.scrimType === ScrimType.regular) {
         const qualifier = userTeamHasPrio ? "other " : "";
         const positiveIsPlural = teamsWithPrio.positive !== 1;
         const negativeIsPlural = teamsWithPrio.negative !== 1;

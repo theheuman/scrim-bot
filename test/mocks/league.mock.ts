@@ -42,6 +42,11 @@ export class LeagueServiceMock {
     });
   }
 
+  async getRosterDiscordIds(): Promise<Map<string, string>> {
+    console.debug("Mock league service getRosterDiscordIds called");
+    return Promise.resolve(new Map());
+  }
+
   async rosterChange(
     teamDivision: string,
     teamName: string,

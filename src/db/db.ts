@@ -416,6 +416,7 @@ export abstract class DB {
     signupSheet: GoogleSheetConfig;
     subSheet: GoogleSheetConfig;
     rosterChangeSheet: GoogleSheetConfig;
+    rosterSheet: GoogleSheetConfig | null;
     signupPrioEndDate: string;
     startDate: string;
   } | null> {
@@ -443,6 +444,7 @@ export abstract class DB {
         { signup_sheet: ["sheet_id", "tab_name", "range_start"] },
         { sub_sheet: ["sheet_id", "tab_name", "range_start"] },
         { roster_change_sheet: ["sheet_id", "tab_name", "range_start"] },
+        { roster_sheet: ["sheet_id", "tab_name", "range_start"] },
       ],
     );
 
@@ -467,6 +469,13 @@ export abstract class DB {
           tabName: row.roster_change_sheet.tab_name as string,
           rangeStart: row.roster_change_sheet.range_start as string,
         },
+        rosterSheet: row.roster_sheet
+          ? {
+              spreadsheetId: row.roster_sheet.sheet_id as string,
+              tabName: row.roster_sheet.tab_name as string,
+              rangeStart: row.roster_sheet.range_start as string,
+            }
+          : null,
       };
     } else {
       return null;

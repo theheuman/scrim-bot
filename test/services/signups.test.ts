@@ -566,81 +566,9 @@ describe("Signups", () => {
 
       jest
         .spyOn(prioServiceMock, "getTeamPrioForScrim")
-        .mockImplementation((_, teams: ScrimSignup[]) => {
-          for (const team of teams) {
-            switch (team.teamName) {
-              case highPrioTeam.team_name:
-                team.prio = { amount: 1, reasons: "High prio" };
-                break;
-              case mediumPrioTeam.team_name:
-                team.prio = { amount: 0, reasons: "" };
-                break;
-              case lowPrioTeam.team_name:
-                team.prio = { amount: -1, reasons: "Low prio" };
-                break;
-            }
-          }
-          return Promise.resolve(teams);
-        });
-      jest
-        .spyOn(dbMock, "getScrimSignupsWithPlayers")
-        .mockReturnValue(
-          Promise.resolve([highPrioTeam, mediumPrioTeam, lowPrioTeam]),
+        .mockImplementation((_, teams: ScrimSignup[]) =>
+          Promise.resolve(teams),
         );
-
-      const { mainList, waitList } = await signups.getSignups(
-        correctDiscordChannelId,
-      );
-      const allTeams = [...mainList, ...waitList];
-      expect(allTeams.map((t) => t.teamName)).toEqual([
-        "Low Prio",
-        "Medium Prio",
-        "High Prio",
-      ]);
-    });
-
-    it("Should sort teams by signup date only when prio type is league", async () => {
-      jest.spyOn(scrimServiceMock, "getScrim").mockReturnValueOnce(
-        Promise.resolve({
-          id: correctScrimId,
-          dateTime: new Date("2026-01-01T20:00:00"),
-          discordChannel: correctDiscordChannelId,
-          active: false,
-          scrimType: ScrimType.league,
-        }),
-      );
-
-      const highPrioTeam: ScrimSignupsWithPlayers = {
-        date_time: "2024-10-28T20:10:35.706+00:00",
-        team_name: "High Prio",
-      } as ScrimSignupsWithPlayers;
-      const lowPrioTeam: ScrimSignupsWithPlayers = {
-        date_time: "2024-10-10T20:10:35.706+00:00",
-        team_name: "Low Prio",
-      } as ScrimSignupsWithPlayers;
-      const mediumPrioTeam: ScrimSignupsWithPlayers = {
-        date_time: "2024-10-13T20:10:35.706+00:00",
-        team_name: "Medium Prio",
-      } as ScrimSignupsWithPlayers;
-
-      jest
-        .spyOn(prioServiceMock, "getTeamPrioForScrim")
-        .mockImplementation((_, teams: ScrimSignup[]) => {
-          for (const team of teams) {
-            switch (team.teamName) {
-              case highPrioTeam.team_name:
-                team.prio = { amount: 1, reasons: "High prio" };
-                break;
-              case mediumPrioTeam.team_name:
-                team.prio = { amount: 0, reasons: "" };
-                break;
-              case lowPrioTeam.team_name:
-                team.prio = { amount: -1, reasons: "Low prio" };
-                break;
-            }
-          }
-          return Promise.resolve(teams);
-        });
       jest
         .spyOn(dbMock, "getScrimSignupsWithPlayers")
         .mockReturnValue(
