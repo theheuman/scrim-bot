@@ -10,14 +10,13 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSignupCommand } from "../../../src/commands/league/league-signup";
 import { LeagueService } from "../../../src/services/league";
-import { LeagueServiceMock } from "../../mocks/league.mock";
 import {
   getPlayerOverstatUrl,
   OverstatService,
 } from "../../../src/services/overstat";
-import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { DB } from "../../../src/db/db";
 import { AlertService } from "../../../src/services/alert";
+import { provideMagickalMock } from "../../mocks/magickal-mock";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -57,14 +56,12 @@ describe("Sign up", () => {
     id: "player3id",
   } as User;
 
-  let mockOverstatService: OverstatService;
-  let mockLeagueService: LeagueService;
+  const mockOverstatService = provideMagickalMock(OverstatService);
+  const mockLeagueService = provideMagickalMock(LeagueService);
 
   beforeAll(() => {
-    mockOverstatService = new OverstatServiceMock() as OverstatService;
-    mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
       mockLeagueService,
     );
@@ -130,7 +127,7 @@ describe("Sign up", () => {
 
   beforeEach(() => {
     command = new LeagueSignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
       mockLeagueService,
     );
@@ -388,9 +385,9 @@ describe("Sign up", () => {
 
   const getPlayerRank = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
-      new LeagueServiceMock() as unknown as LeagueService,
+      provideMagickalMock(LeagueService),
     );
     if (
       key ===
@@ -416,9 +413,9 @@ describe("Sign up", () => {
 
   const getPlayerDivision = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
-      new LeagueServiceMock() as unknown as LeagueService,
+      provideMagickalMock(LeagueService),
     );
     if (
       key ===
@@ -447,9 +444,9 @@ describe("Sign up", () => {
 
   const getPlayerOverstat = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
-      new LeagueServiceMock() as unknown as LeagueService,
+      provideMagickalMock(LeagueService),
     );
     if (
       key ===
@@ -478,9 +475,9 @@ describe("Sign up", () => {
 
   const getPlayerPlatform = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
-      new LeagueServiceMock() as unknown as LeagueService,
+      provideMagickalMock(LeagueService),
     );
     if (
       key ===

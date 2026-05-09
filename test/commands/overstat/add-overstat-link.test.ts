@@ -7,12 +7,11 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
-import { AuthMock } from "../../mocks/auth.mock";
 import { LinkOverstatCommand } from "../../../src/commands/overstat/link-overstat";
 import { OverstatService } from "../../../src/services/overstat";
-import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { AuthService } from "../../../src/services/auth";
 import { AlertService } from "../../../src/services/alert";
+import { provideMagickalMock } from "../../mocks/magickal-mock";
 
 describe("Link overstat", () => {
   let basicInteraction: CustomInteraction;
@@ -33,16 +32,16 @@ describe("Link overstat", () => {
     string
   >;
 
-  const mockAuthService = new AuthMock();
-  const mockOverstatService = new OverstatServiceMock();
+  const mockAuthService = provideMagickalMock(AuthService);
+  const mockOverstatService = provideMagickalMock(OverstatService);
 
   let command: LinkOverstatCommand;
 
   beforeAll(() => {
     command = new LinkOverstatCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      mockAuthService as AuthService,
-      mockOverstatService as unknown as OverstatService,
+      provideMagickalMock(AlertService),
+      mockAuthService,
+      mockOverstatService,
     );
 
     basicInteraction = {

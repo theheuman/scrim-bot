@@ -6,12 +6,11 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { CloseScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/close-scrim";
 import { ScrimService } from "../../../../../src/services/scrim-service";
-import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
 import { AlertService } from "../../../../../src/services/alert";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -30,7 +29,7 @@ describe("Close scrim", () => {
 
   let command: CloseScrimCommand;
 
-  const mockScrimService = new ScrimServiceMock();
+  const mockScrimService = provideMagickalMock(ScrimService);
 
   beforeAll(() => {
     member = {
@@ -60,9 +59,9 @@ describe("Close scrim", () => {
     signupCloseScrimSpy.mockClear();
     channelDeletedSpy.mockClear();
     command = new CloseScrimCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      new AuthMock() as AuthService,
-      mockScrimService as unknown as ScrimService,
+      provideMagickalMock(AlertService),
+      provideMagickalMock(AuthService),
+      mockScrimService,
     );
   });
 

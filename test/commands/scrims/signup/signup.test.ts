@@ -11,13 +11,11 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { SignupCommand } from "../../../../src/commands/scrims/signup/sign-up";
 import { ScrimType, Scrim, ScrimSignup } from "../../../../src/models/Scrims";
-import { PrioServiceMock } from "../../../mocks/prio.mock";
 import { PrioService } from "../../../../src/services/prio";
-import { SignupServiceMock } from "../../../mocks/signups.mock";
 import { SignupService } from "../../../../src/services/signups";
-import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
 import { ScrimService } from "../../../../src/services/scrim-service";
 import { AlertService } from "../../../../src/services/alert";
+import { provideMagickalMock } from "../../../mocks/magickal-mock";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -38,8 +36,13 @@ describe("Sign up", () => {
   >;
   let signupAddTeamSpy: SpyInstance<
     Promise<ScrimSignup>,
-    [channelId: string, teamName: string, signupPlayer: User, players: User[]],
-    string
+    [
+      discordChannelID: string,
+      teamName: string,
+      commandUser: GuildMember,
+      players: User[],
+    ],
+    any
   >;
 
   let command: SignupCommand;
@@ -50,9 +53,9 @@ describe("Sign up", () => {
     roles: {},
   } as GuildMember;
 
-  const mockScrimSignups = new SignupServiceMock();
-  const mockPrioService = new PrioServiceMock();
-  const mockScrimService = new ScrimServiceMock();
+  const mockScrimSignups = provideMagickalMock(SignupService);
+  const mockPrioService = provideMagickalMock(PrioService);
+  const mockScrimService = provideMagickalMock(ScrimService);
 
   const player1 = {
     displayName: "Player 1",
@@ -96,6 +99,33 @@ describe("Sign up", () => {
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     followUpSpy = jest.spyOn(basicInteraction, "followUp");
     signupAddTeamSpy = jest.spyOn(mockScrimSignups, "addTeam");
+    signupAddTeamSpy.mockResolvedValue({
+      date: new Date(),
+      players: [
+        {
+          displayName: "Player 1",
+          discordId: "player1id",
+          id: "db player id 0",
+        },
+        {
+          displayName: "Player 2",
+          discordId: "player2id",
+          id: "db player id 1",
+        },
+        {
+          displayName: "Player 3",
+          discordId: "player3id",
+          id: "db player id 2",
+        },
+      ],
+      signupId: "scrim signup db id",
+      signupPlayer: {
+        displayName: "Signup User",
+        discordId: "signupPlayerId",
+        id: "db player id",
+      },
+      teamName: "team name",
+    } as unknown as ScrimSignup);
   });
 
   beforeEach(() => {
@@ -104,10 +134,10 @@ describe("Sign up", () => {
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
     command = new SignupCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      mockScrimSignups as unknown as SignupService,
-      mockPrioService as PrioService,
-      mockScrimService as ScrimService,
+      provideMagickalMock(AlertService),
+      mockScrimSignups,
+      mockPrioService,
+      mockScrimService,
     );
   });
 

@@ -4,14 +4,14 @@ import { PrioService } from "../../src/services/prio";
 import { DbMock } from "../mocks/db.mock";
 import SpyInstance = jest.SpyInstance;
 import { Scrim, ScrimSignup, ScrimType } from "../../src/models/Scrims";
-import { LeagueServiceMock } from "../mocks/league.mock";
 import { LeagueService } from "../../src/services/league";
 import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 describe("Prio", () => {
   let prioService: PrioService;
   let dbMock: DbMock;
-  let leagueServiceMock: LeagueServiceMock;
+  let leagueServiceMock: LeagueService;
   let dbInsertPlayerSpy: SpyInstance<
     Promise<Player[]>,
     [players: PlayerInsert[]],
@@ -34,11 +34,11 @@ describe("Prio", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    leagueServiceMock = new LeagueServiceMock();
+    leagueServiceMock = provideMagickalMock(LeagueService);
     prioService = new PrioService(
       dbMock,
-      leagueServiceMock as unknown as LeagueService,
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      leagueServiceMock,
+      provideMagickalMock(AlertService),
     );
     dbInsertPlayerSpy = jest.spyOn(dbMock, "insertPlayers");
     dbInsertPlayerSpy.mockReturnValue(Promise.resolve([player]));

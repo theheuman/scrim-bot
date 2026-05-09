@@ -9,17 +9,15 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { LeagueSubRequestCommand } from "../../../src/commands/league/sub-request";
-import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import {
   getPlayerOverstatUrl,
   OverstatService,
 } from "../../../src/services/overstat";
 import { LeagueService } from "../../../src/services/league";
-import { LeagueServiceMock } from "../../mocks/league.mock";
 import { DB } from "../../../src/db/db";
 import { StaticValueService } from "../../../src/services/static-values";
-import { StaticValueServiceMock } from "../../mocks/static-values.mock";
 import { AlertService } from "../../../src/services/alert";
+import { provideMagickalMock } from "../../mocks/magickal-mock";
 
 describe("Sub request", () => {
   let basicInteraction: CustomInteraction;
@@ -37,8 +35,6 @@ describe("Sub request", () => {
   let getPlayerOverstatSpy: SpyInstance<Promise<string>, [user: User], string>;
 
   let command: LeagueSubRequestCommand;
-  let mockLeagueService: LeagueService;
-  let mockStaticValueService: StaticValueService;
   let staticCommandUsedJustForInputNames: LeagueSubRequestCommand;
 
   const signupMember = {
@@ -57,15 +53,13 @@ describe("Sub request", () => {
     id: "player2id",
   } as User;
 
-  let mockOverstatService: OverstatService;
+  const mockOverstatService = provideMagickalMock(OverstatService);
+  const mockLeagueService = provideMagickalMock(LeagueService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
 
   beforeAll(() => {
-    mockOverstatService = new OverstatServiceMock() as OverstatService;
-    mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
-    mockStaticValueService =
-      new StaticValueServiceMock() as unknown as StaticValueService;
     staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
       mockLeagueService,
       mockStaticValueService,
@@ -142,6 +136,14 @@ describe("Sub request", () => {
         : Promise.resolve(overstats.player2),
     );
     subRequestSpy = jest.spyOn(mockLeagueService, "subRequest");
+    subRequestSpy.mockResolvedValue({
+      rowNumber: 0,
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_sub_sheet_id",
+      tabName: "mock_sub_tab_name",
+    });
+    jest
+      .spyOn(mockStaticValueService, "getSubApprovalRoleId")
+      .mockResolvedValue("sub-approval-role-id");
   });
 
   beforeEach(() => {
@@ -150,7 +152,7 @@ describe("Sub request", () => {
     invisibleReplySpy.mockClear();
     getPlayerOverstatSpy.mockClear();
     command = new LeagueSubRequestCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
       mockLeagueService,
       mockStaticValueService,
