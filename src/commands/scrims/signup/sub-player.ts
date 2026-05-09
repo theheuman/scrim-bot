@@ -1,6 +1,7 @@
 import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { RosterService } from "../../../services/rosters";
+import { AlertService } from "../../../services/alert";
 import { isGuildMember } from "../../../utility/utility";
 
 export class SubPlayerCommand extends MemberCommand {
@@ -9,8 +10,11 @@ export class SubPlayerCommand extends MemberCommand {
     removePlayer: "remove-player",
     addPlayer: "add-player",
   };
-  constructor(private rosterService: RosterService) {
-    super("sub-player", "Replace a player on a team");
+  constructor(
+    alertService: AlertService,
+    private rosterService: RosterService,
+  ) {
+    super(alertService, "sub-player", "Replace a player on a team");
     this.addStringInput(this.inputNames.teamName, "team name", {
       isRequired: true,
     });

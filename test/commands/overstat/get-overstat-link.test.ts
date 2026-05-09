@@ -11,6 +11,7 @@ import { AuthMock } from "../../mocks/auth.mock";
 import { OverstatService } from "../../../src/services/overstat";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { AuthService } from "../../../src/services/auth";
+import { AlertService } from "../../../src/services/alert";
 import { GetOverstatCommand } from "../../../src/commands/overstat/get-overstat";
 
 describe("Get overstat", () => {
@@ -30,6 +31,7 @@ describe("Get overstat", () => {
 
   beforeAll(() => {
     command = new GetOverstatCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockAuthService as AuthService,
       mockOverstatService as unknown as OverstatService,
     );

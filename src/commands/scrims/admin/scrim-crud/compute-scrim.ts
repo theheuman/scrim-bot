@@ -2,17 +2,24 @@ import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { ScrimService } from "../../../../services/scrim-service";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 import { DiscordService } from "../../../../services/discord";
 import { OverstatService } from "../../../../services/overstat";
 
 export class ComputeScrimCommand extends AdminCommand {
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private scrimService: ScrimService,
     private discordService: DiscordService,
     private overstatService: OverstatService,
   ) {
-    super(authService, "compute-scrim", "Computes stats for this scrim");
+    super(
+      alertService,
+      authService,
+      "compute-scrim",
+      "Computes stats for this scrim",
+    );
     this.addStringInput(
       "overstat-link",
       "Full length url of the completed scrim (not short url)",

@@ -10,6 +10,7 @@ import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { CreateScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/create-scrim";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
+import { AlertService } from "../../../../../src/services/alert";
 import { StaticValueServiceMock } from "../../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../../src/services/static-values";
 import { ChannelType } from "discord-api-types/v10";
@@ -102,6 +103,7 @@ describe("Create scrim", () => {
     editReplySpy.mockClear();
     signupsCreateScrimSpy.mockClear();
     command = new CreateScrimCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       new AuthMock() as AuthService,
       mockScrimService as unknown as ScrimService,
       mockStaticValueService as StaticValueService,

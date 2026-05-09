@@ -2,16 +2,19 @@ import { AdminCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { OverstatService } from "../../services/overstat";
 import { AuthService } from "../../services/auth";
+import { AlertService } from "../../services/alert";
 
 export class GetUserCommand extends AdminCommand {
   inputNames = {
     overstatLink: "overstat-link",
   };
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private overstatService: OverstatService,
   ) {
     super(
+      alertService,
       authService,
       "get-user",
       "Returns the player (if exists) for a given overstat link",

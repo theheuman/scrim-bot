@@ -2,6 +2,7 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { OverstatService } from "../../services/overstat";
 import { AuthService } from "../../services/auth";
+import { AlertService } from "../../services/alert";
 import { GuildMember } from "discord.js";
 
 export class GetOverstatCommand extends MemberCommand {
@@ -9,10 +10,15 @@ export class GetOverstatCommand extends MemberCommand {
     player: "player",
   };
   constructor(
+    alertService: AlertService,
     private authService: AuthService,
     private overstatService: OverstatService,
   ) {
-    super("get-overstat", "Returns the overstat url for a given player");
+    super(
+      alertService,
+      "get-overstat",
+      "Returns the overstat url for a given player",
+    );
     this.addUserInput("player", "@player", false);
   }
 

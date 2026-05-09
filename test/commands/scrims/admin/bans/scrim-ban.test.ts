@@ -12,6 +12,7 @@ import { ScrimBanCommand } from "../../../../../src/commands/scrims/admin/bans/s
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
+import { AlertService } from "../../../../../src/services/alert";
 import { BanServiceMock } from "../../../../mocks/ban.mock";
 import { BanService } from "../../../../../src/services/ban";
 
@@ -45,6 +46,7 @@ describe("Scrim ban", () => {
 
   beforeAll(() => {
     command = new ScrimBanCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       new AuthMock() as AuthService,
       mockBanService as BanService,
     );

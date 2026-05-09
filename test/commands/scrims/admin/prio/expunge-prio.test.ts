@@ -13,6 +13,7 @@ import { PrioServiceMock } from "../../../../mocks/prio.mock";
 import { PrioService } from "../../../../../src/services/prio";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
+import { AlertService } from "../../../../../src/services/alert";
 
 describe("Expunge prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -76,7 +77,11 @@ describe("Expunge prio", () => {
     expungePrioSpy = jest.spyOn(mockPrioService, "expungePlayerPrio");
     expungePrioSpy.mockClear();
     expungePrioSpy.mockReturnValue(Promise.resolve([]));
-    command = new ExpungePrioCommand(mockAuth, mockPrioService);
+    command = new ExpungePrioCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockAuth,
+      mockPrioService,
+    );
   });
 
   it("Should expunge prio for multiple users", async () => {

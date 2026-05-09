@@ -19,6 +19,7 @@ import { LeagueServiceMock } from "../../mocks/league.mock";
 import { DB } from "../../../src/db/db";
 import { StaticValueService } from "../../../src/services/static-values";
 import { StaticValueServiceMock } from "../../mocks/static-values.mock";
+import { AlertService } from "../../../src/services/alert";
 
 describe("Sub request", () => {
   let basicInteraction: CustomInteraction;
@@ -64,6 +65,7 @@ describe("Sub request", () => {
     mockStaticValueService =
       new StaticValueServiceMock() as unknown as StaticValueService;
     staticCommandUsedJustForInputNames = new LeagueSubRequestCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       mockLeagueService,
       mockStaticValueService,
@@ -148,6 +150,7 @@ describe("Sub request", () => {
     invisibleReplySpy.mockClear();
     getPlayerOverstatSpy.mockClear();
     command = new LeagueSubRequestCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       mockLeagueService,
       mockStaticValueService,

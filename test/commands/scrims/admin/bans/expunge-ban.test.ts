@@ -12,6 +12,7 @@ import { AuthService } from "../../../../../src/services/auth";
 import { BanServiceMock } from "../../../../mocks/ban.mock";
 import { BanService } from "../../../../../src/services/ban";
 import { ExpungeBanCommand } from "../../../../../src/commands/scrims/admin/bans/expunge-ban";
+import { AlertService } from "../../../../../src/services/alert";
 
 describe("Expunge ban", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -77,7 +78,11 @@ describe("Expunge ban", () => {
     expungeBanSpy = jest.spyOn(mockBanService, "expungeBans");
     expungeBanSpy.mockClear();
     expungeBanSpy.mockReturnValue(Promise.resolve([]));
-    command = new ExpungeBanCommand(mockAuth, mockBanService);
+    command = new ExpungeBanCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockAuth,
+      mockBanService,
+    );
   });
 
   it("Should expunge bans for multiple users", async () => {

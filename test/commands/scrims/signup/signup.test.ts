@@ -17,6 +17,7 @@ import { SignupServiceMock } from "../../../mocks/signups.mock";
 import { SignupService } from "../../../../src/services/signups";
 import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
 import { ScrimService } from "../../../../src/services/scrim-service";
+import { AlertService } from "../../../../src/services/alert";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -103,6 +104,7 @@ describe("Sign up", () => {
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
     command = new SignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockScrimSignups as unknown as SignupService,
       mockPrioService as PrioService,
       mockScrimService as ScrimService,

@@ -1,10 +1,12 @@
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 
 export class AddAdminRoleCommand extends AdminCommand {
-  constructor(authService: AuthService) {
+  constructor(alertService: AlertService, authService: AuthService) {
     super(
+      alertService,
       authService,
       "add-admin-role",
       "Adds a role that can perform scrim admin actions",

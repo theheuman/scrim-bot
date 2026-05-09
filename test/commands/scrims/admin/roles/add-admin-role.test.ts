@@ -9,6 +9,7 @@ import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { AddAdminRoleCommand } from "../../../../../src/commands/scrims/admin/roles/add-admin-role";
+import { AlertService } from "../../../../../src/services/alert";
 import { DiscordRole } from "../../../../../src/models/Role";
 
 describe("Add admin role", () => {
@@ -35,7 +36,10 @@ describe("Add admin role", () => {
   let command: AddAdminRoleCommand;
 
   beforeAll(() => {
-    command = new AddAdminRoleCommand(mockAuthService as AuthService);
+    command = new AddAdminRoleCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockAuthService as AuthService,
+    );
 
     basicInteraction = {
       options: {

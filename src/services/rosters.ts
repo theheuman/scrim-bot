@@ -8,6 +8,7 @@ import { Player } from "../models/Player";
 import { StaticValueService } from "./static-values";
 import { SignupService } from "./signups";
 import { ScrimService } from "./scrim-service";
+import { AlertService } from "./alert";
 
 export class RosterService {
   constructor(
@@ -18,6 +19,7 @@ export class RosterService {
     private staticValueService: StaticValueService,
     private scrimService: ScrimService,
     private signupService: SignupService,
+    private alertService: AlertService,
   ) {}
 
   async replaceTeammate(
@@ -180,11 +182,8 @@ export class RosterService {
       const count = (await this.signupService.getRawSignups(scrim)).length;
       await this.discordService.updateSignupPostDescription(scrim, count);
     } catch (e) {
-      console.error(
-        "Unable to update scrim signup count for ",
-        scrim?.id,
-        scrim?.discordChannel,
-        e,
+      await this.alertService.warn(
+        `Unable to update scrim signup count for scrim ${scrim?.id} channel ${scrim?.discordChannel}: ${e}`,
       );
     }
   }

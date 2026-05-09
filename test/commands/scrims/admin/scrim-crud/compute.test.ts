@@ -13,6 +13,7 @@ import { ComputeScrimCommand } from "../../../../../src/commands/scrims/admin/sc
 import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
 import { ScrimService } from "../../../../../src/services/scrim-service";
 import { DiscordServiceMock } from "../../../../mocks/discord-service.mock";
+import { AlertService } from "../../../../../src/services/alert";
 import { DiscordService } from "../../../../../src/services/discord";
 import { OverstatServiceMock } from "../../../../mocks/overstat.mock";
 import { OverstatService } from "../../../../../src/services/overstat";
@@ -90,6 +91,7 @@ describe("Compute scrim", () => {
     });
     sendScoresComputedMessageSpy.mockResolvedValue(undefined);
     command = new ComputeScrimCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       new AuthMock() as AuthService,
       mockScrimService as unknown as ScrimService,
       mockDiscordService as unknown as DiscordService,

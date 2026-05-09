@@ -17,6 +17,7 @@ import {
 } from "../../../src/services/overstat";
 import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { DB } from "../../../src/db/db";
+import { AlertService } from "../../../src/services/alert";
 
 describe("Sign up", () => {
   let basicInteraction: CustomInteraction;
@@ -63,6 +64,7 @@ describe("Sign up", () => {
     mockOverstatService = new OverstatServiceMock() as OverstatService;
     mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       mockLeagueService,
     );
@@ -127,7 +129,11 @@ describe("Sign up", () => {
   });
 
   beforeEach(() => {
-    command = new LeagueSignupCommand(mockOverstatService, mockLeagueService);
+    command = new LeagueSignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockOverstatService,
+      mockLeagueService,
+    );
     getPlayerOverstatSpy = jest
       .spyOn(mockOverstatService, "getPlayerOverstat")
       .mockImplementation(() => {
@@ -382,6 +388,7 @@ describe("Sign up", () => {
 
   const getPlayerRank = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       new LeagueServiceMock() as unknown as LeagueService,
     );
@@ -409,6 +416,7 @@ describe("Sign up", () => {
 
   const getPlayerDivision = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       new LeagueServiceMock() as unknown as LeagueService,
     );
@@ -439,6 +447,7 @@ describe("Sign up", () => {
 
   const getPlayerOverstat = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       new LeagueServiceMock() as unknown as LeagueService,
     );
@@ -469,6 +478,7 @@ describe("Sign up", () => {
 
   const getPlayerPlatform = (key: string) => {
     const staticCommandUsedJustForInputNames = new LeagueSignupCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockOverstatService,
       new LeagueServiceMock() as unknown as LeagueService,
     );

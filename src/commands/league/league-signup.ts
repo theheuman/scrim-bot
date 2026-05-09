@@ -3,6 +3,7 @@ import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
 import { LeagueService } from "../../services/league";
+import { AlertService } from "../../services/alert";
 import {
   PlayerRank,
   Platform,
@@ -44,10 +45,11 @@ export class LeagueSignupCommand extends MemberCommand {
   };
 
   constructor(
+    alertService: AlertService,
     private overstatService: OverstatService,
     private leagueService: LeagueService,
   ) {
-    super("league-signup", "Signup for the league");
+    super(alertService, "league-signup", "Signup for the league");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
       minLength: 1,

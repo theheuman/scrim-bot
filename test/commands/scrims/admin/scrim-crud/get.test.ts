@@ -21,6 +21,7 @@ import { SignupServiceMock } from "../../../../mocks/signups.mock";
 import { SignupService } from "../../../../../src/services/signups";
 import { MmrServiceMock } from "../../../../mocks/mmr.mock";
 import { MmrService } from "../../../../../src/services/mmr";
+import { AlertService } from "../../../../../src/services/alert";
 import * as fs from "node:fs";
 
 jest.mock("node:fs", () => ({
@@ -201,6 +202,7 @@ describe("Get signups", () => {
       });
     });
     command = new GetSignupsCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       new AuthMock() as AuthService,
       mockSignupService as unknown as SignupService,
       mockStaticValueService as unknown as StaticValueService,

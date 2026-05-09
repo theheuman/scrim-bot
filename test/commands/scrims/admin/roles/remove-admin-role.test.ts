@@ -9,6 +9,7 @@ import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { RemoveAdminRoleCommand } from "../../../../../src/commands/scrims/admin/roles/remove-admin-role";
+import { AlertService } from "../../../../../src/services/alert";
 
 describe("Remove admin role", () => {
   let basicInteraction: CustomInteraction;
@@ -34,7 +35,10 @@ describe("Remove admin role", () => {
   let command: RemoveAdminRoleCommand;
 
   beforeAll(() => {
-    command = new RemoveAdminRoleCommand(mockAuthService as AuthService);
+    command = new RemoveAdminRoleCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockAuthService as AuthService,
+    );
 
     basicInteraction = {
       options: {

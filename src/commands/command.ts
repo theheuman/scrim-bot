@@ -6,6 +6,7 @@ import {
   NumberOptionConfig,
 } from "./interaction";
 import { AuthService } from "../services/auth";
+import { AlertService } from "../services/alert";
 import { ApplicationCommandOptionAllowedChannelTypes } from "@discordjs/builders";
 import { formatDateForDiscord, formatTimeForDiscord } from "../utility/time";
 
@@ -27,11 +28,17 @@ export abstract class Command extends SlashCommandBuilder {
     name: string;
     required: boolean;
   }[] = [];
+  protected alertService: AlertService;
 
-  protected constructor(name: string, description: string) {
+  protected constructor(
+    alertService: AlertService,
+    name: string,
+    description: string,
+  ) {
     super();
     this.setName(name);
     this.setDescription(description);
+    this.alertService = alertService;
   }
 
   addUserInput(name: string, description: string, isRequired: boolean = false) {
@@ -253,7 +260,9 @@ export abstract class Command extends SlashCommandBuilder {
       const customInteraction = new CustomInteraction(interaction);
       await this.childExecute(customInteraction);
     } catch (e) {
-      console.error(e);
+      await this.alertService.error(
+        `Unhandled error in command ${interaction.commandName}: ${e}`,
+      );
       await interaction.followUp({
         content: `Error executing ${interaction.commandName}. ` + e,
         ephemeral: true,
@@ -287,11 +296,12 @@ export abstract class Command extends SlashCommandBuilder {
 
 export abstract class AdminCommand extends Command {
   constructor(
+    alertService: AlertService,
     protected authService: AuthService,
     name: string,
     description: string,
   ) {
-    super(name, description);
+    super(alertService, name, description);
   }
 
   async childExecute(interaction: CustomInteraction) {
@@ -307,8 +317,8 @@ export abstract class AdminCommand extends Command {
 }
 
 export abstract class MemberCommand extends Command {
-  constructor(name: string, description: string) {
-    super(name, description);
+  constructor(alertService: AlertService, name: string, description: string) {
+    super(alertService, name, description);
   }
 
   async childExecute(interaction: CustomInteraction) {

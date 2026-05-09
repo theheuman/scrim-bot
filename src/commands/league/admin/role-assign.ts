@@ -1,5 +1,6 @@
 import { AdminCommand } from "../../command";
 import { AuthService } from "../../../services/auth";
+import { AlertService } from "../../../services/alert";
 import { CustomInteraction } from "../../interaction";
 
 export class RoleAssignmentCommand extends AdminCommand {
@@ -8,8 +9,13 @@ export class RoleAssignmentCommand extends AdminCommand {
     userIds: "user-ids",
   };
 
-  constructor(authService: AuthService) {
-    super(authService, "role-assign", "Assign a role to a list of user id's");
+  constructor(alertService: AlertService, authService: AuthService) {
+    super(
+      alertService,
+      authService,
+      "role-assign",
+      "Assign a role to a list of user id's",
+    );
 
     this.addRoleInput(
       this.inputNames.role,

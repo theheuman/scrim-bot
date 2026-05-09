@@ -2,13 +2,16 @@ import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { ScrimService } from "../../../../services/scrim-service";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 
 export class CloseScrimCommand extends AdminCommand {
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private scrimService: ScrimService,
   ) {
     super(
+      alertService,
       authService,
       "close-scrim",
       "Closes the scrim, deletes the channel and all signups for the scrim",
