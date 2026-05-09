@@ -21,6 +21,7 @@ import { AlertService } from "../../../../src/services/alert";
 describe("Get current position", () => {
   let basicInteraction: CustomInteraction;
   let member: GuildMember;
+  let deferReplySpy: SpyInstance;
   let editReplySpy: SpyInstance<
     Promise<Message<boolean>>,
     [options: string | InteractionEditReplyOptions | MessagePayload],
@@ -49,17 +50,19 @@ describe("Get current position", () => {
     basicInteraction = {
       member,
       channelId: "forum thread id",
-      invisibleReply: jest.fn(),
+      deferReply: jest.fn(),
       editReply: jest.fn(),
       options: {
         getString: () => "team name",
       },
     } as unknown as CustomInteraction;
+    deferReplySpy = jest.spyOn(basicInteraction, "deferReply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     getSignupsSpy = jest.spyOn(GetSignupsHelper, "getSignupsForChannel");
   });
 
   beforeEach(() => {
+    deferReplySpy.mockClear();
     editReplySpy.mockClear();
     getSignupsSpy.mockClear();
     jest.spyOn(mockScrimService, "getScrim").mockResolvedValue({
