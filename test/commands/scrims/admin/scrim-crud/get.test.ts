@@ -11,17 +11,14 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { GetSignupsCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/get-signups";
 import { ScrimSignup } from "../../../../../src/models/Scrims";
-import { StaticValueServiceMock } from "../../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../../src/services/static-values";
-import { SignupServiceMock } from "../../../../mocks/signups.mock";
 import { SignupService } from "../../../../../src/services/signups";
-import { MmrServiceMock } from "../../../../mocks/mmr.mock";
 import { MmrService } from "../../../../../src/services/mmr";
 import { AlertService } from "../../../../../src/services/alert";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 import * as fs from "node:fs";
 
 jest.mock("node:fs", () => ({
@@ -56,8 +53,8 @@ describe("Get signups", () => {
   >;
   let getSignupsSpy: SpyInstance<
     Promise<{ mainList: ScrimSignup[]; waitList: ScrimSignup[] }>,
-    [channelId: string],
-    string
+    [discordChannelID: string, discordIdsWithScrimPass?: string[]],
+    any
   >;
   let getMembersWithScrimPassRoleSpy: SpyInstance<
     Promise<Role | null>,
@@ -122,9 +119,9 @@ describe("Get signups", () => {
 
   let command: GetSignupsCommand;
 
-  const mockSignupService = new SignupServiceMock();
-  const mockStaticValueService = new StaticValueServiceMock();
-  const mockMmrService = new MmrServiceMock();
+  const mockSignupService = provideMagickalMock(SignupService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
+  const mockMmrService = provideMagickalMock(MmrService);
 
   function generateTeams(count: number): ScrimSignup[] {
     return Array.from({ length: count }, (_, i) => ({
@@ -185,6 +182,10 @@ describe("Get signups", () => {
       Promise.resolve({ members: [] } as unknown as Role),
     );
     getMmrMapSpy = jest.spyOn(mockMmrService, "getMmrMap");
+    getMmrMapSpy.mockResolvedValue(new Map());
+    jest
+      .spyOn(mockStaticValueService, "getScrimPassRoleId")
+      .mockResolvedValue("3568173514");
   });
 
   beforeEach(() => {
@@ -202,11 +203,11 @@ describe("Get signups", () => {
       });
     });
     command = new GetSignupsCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      new AuthMock() as AuthService,
-      mockSignupService as unknown as SignupService,
-      mockStaticValueService as unknown as StaticValueService,
-      mockMmrService as unknown as MmrService,
+      provideMagickalMock(AlertService),
+      provideMagickalMock(AuthService),
+      mockSignupService,
+      mockStaticValueService,
+      mockMmrService,
     );
   });
 

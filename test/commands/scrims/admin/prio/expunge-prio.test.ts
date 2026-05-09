@@ -9,11 +9,10 @@ import SpyInstance = jest.SpyInstance;
 import { ExpungedPlayerPrio } from "../../../../../src/models/Prio";
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { ExpungePrioCommand } from "../../../../../src/commands/scrims/admin/prio/expunge-prio";
-import { PrioServiceMock } from "../../../../mocks/prio.mock";
 import { PrioService } from "../../../../../src/services/prio";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { AlertService } from "../../../../../src/services/alert";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Expunge prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -34,8 +33,8 @@ describe("Expunge prio", () => {
   >;
   let command: ExpungePrioCommand;
 
-  const mockPrioService = new PrioServiceMock() as PrioService;
-  const mockAuth = new AuthMock() as AuthService;
+  const mockPrioService = provideMagickalMock(PrioService);
+  const mockAuth = provideMagickalMock(AuthService);
 
   beforeAll(() => {
     member = {
@@ -78,7 +77,7 @@ describe("Expunge prio", () => {
     expungePrioSpy.mockClear();
     expungePrioSpy.mockReturnValue(Promise.resolve([]));
     command = new ExpungePrioCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockAuth,
       mockPrioService,
     );

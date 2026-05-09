@@ -6,13 +6,12 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
-import { AuthMock } from "../../mocks/auth.mock";
 import { OverstatService } from "../../../src/services/overstat";
-import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import { AuthService } from "../../../src/services/auth";
 import { AlertService } from "../../../src/services/alert";
 import { GetUserCommand } from "../../../src/commands/overstat/get-user";
 import { Player } from "../../../src/models/Player";
+import { provideMagickalMock } from "../../mocks/magickal-mock";
 
 describe("Get user", () => {
   let basicInteraction: CustomInteraction;
@@ -28,16 +27,16 @@ describe("Get user", () => {
     string
   >;
 
-  const mockAuthService = new AuthMock();
-  const mockOverstatService = new OverstatServiceMock();
+  const mockAuthService = provideMagickalMock(AuthService);
+  const mockOverstatService = provideMagickalMock(OverstatService);
 
   let command: GetUserCommand;
 
   beforeAll(() => {
     command = new GetUserCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      mockAuthService as AuthService,
-      mockOverstatService as unknown as OverstatService,
+      provideMagickalMock(AlertService),
+      mockAuthService,
+      mockOverstatService,
     );
 
     basicInteraction = {

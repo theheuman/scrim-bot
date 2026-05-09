@@ -8,15 +8,13 @@ import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { CurrentPositionCommand } from "../../../../src/commands/scrims/signup/current-position";
 import { StaticValueService } from "../../../../src/services/static-values";
-import { StaticValueServiceMock } from "../../../mocks/static-values.mock";
 import { ScrimType, ScrimSignup } from "../../../../src/models/Scrims";
 import { GetSignupsHelper } from "../../../../src/commands/utility/get-signups";
 import { Player } from "../../../../src/models/Player";
 import { SignupService } from "../../../../src/services/signups";
-import { SignupServiceMock } from "../../../mocks/signups.mock";
-import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
 import { ScrimService } from "../../../../src/services/scrim-service";
 import { AlertService } from "../../../../src/services/alert";
+import { provideMagickalMock } from "../../../mocks/magickal-mock";
 
 describe("Get current position", () => {
   let basicInteraction: CustomInteraction;
@@ -38,9 +36,9 @@ describe("Get current position", () => {
 
   let command: CurrentPositionCommand;
 
-  const mockSignpuService = new SignupServiceMock();
-  const mockStaticValueService = new StaticValueServiceMock();
-  const mockScrimService = new ScrimServiceMock();
+  const mockSignpuService = provideMagickalMock(SignupService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
+  const mockScrimService = provideMagickalMock(ScrimService);
 
   beforeAll(() => {
     member = {
@@ -70,10 +68,10 @@ describe("Get current position", () => {
       scrimType: ScrimType.regular,
     });
     command = new CurrentPositionCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      mockSignpuService as unknown as SignupService,
-      mockStaticValueService as StaticValueService,
-      mockScrimService as unknown as ScrimService,
+      provideMagickalMock(AlertService),
+      mockSignpuService,
+      mockStaticValueService,
+      mockScrimService,
     );
   });
 

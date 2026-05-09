@@ -13,16 +13,12 @@ import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 import SpyInstance = jest.SpyInstance;
-import { PrioServiceMock } from "../mocks/prio.mock";
-import { AuthMock } from "../mocks/auth.mock";
 import { AuthService } from "../../src/services/auth";
 import { DiscordService } from "../../src/services/discord";
-import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { BanService } from "../../src/services/ban";
-import { BanServiceMock } from "../mocks/ban.mock";
-import { ScrimServiceMock } from "../mocks/scrim-service.mock";
 import { ScrimService } from "../../src/services/scrim-service";
 import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -35,10 +31,10 @@ jest.mock("../../src/config", () => {
 describe("Signups", () => {
   let dbMock: DbMock;
   let signups: SignupService;
-  let prioServiceMock: PrioServiceMock;
-  let authServiceMock: AuthMock;
+  let prioServiceMock: PrioService;
+  let authServiceMock: AuthService;
   let mockBanService: BanService;
-  let scrimServiceMock: ScrimServiceMock;
+  let scrimServiceMock: ScrimService;
   const correctDiscordChannelId = "a forum post";
   const correctScrimId = "32451";
 
@@ -46,20 +42,22 @@ describe("Signups", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    prioServiceMock = new PrioServiceMock();
-    mockBanService = new BanServiceMock() as BanService;
-
-    authServiceMock = new AuthMock();
-    scrimServiceMock = new ScrimServiceMock();
+    prioServiceMock = provideMagickalMock(PrioService);
+    mockBanService = provideMagickalMock(BanService);
+    authServiceMock = provideMagickalMock(AuthService);
+    scrimServiceMock = provideMagickalMock(ScrimService);
     signups = new SignupService(
       dbMock,
-      prioServiceMock as PrioService,
-      authServiceMock as AuthService,
-      new DiscordServiceMock() as DiscordService,
+      prioServiceMock,
+      authServiceMock,
+      provideMagickalMock(DiscordService),
       mockBanService,
-      scrimServiceMock as unknown as ScrimService,
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      scrimServiceMock,
+      provideMagickalMock(AlertService),
     );
+    jest
+      .spyOn(mockBanService, "teamHasBan")
+      .mockResolvedValue({ hasBan: false, reason: "" });
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
       Promise.resolve([
