@@ -3,6 +3,7 @@ import { CustomInteraction } from "../../../interaction";
 import { BanService } from "../../../../services/ban";
 import { setEasternHours } from "../../../../utility/time";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 
 export class ScrimBanCommand extends AdminCommand {
   inputNames = {
@@ -15,10 +16,16 @@ export class ScrimBanCommand extends AdminCommand {
   };
 
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private banService: BanService,
   ) {
-    super(authService, "scrim-ban", "Adds a ban entry for up to three players");
+    super(
+      alertService,
+      authService,
+      "scrim-ban",
+      "Adds a ban entry for up to three players",
+    );
 
     this.addUserInput(this.inputNames.user1, "First user", true);
     this.addDateInput(this.inputNames.endDate, "End date", true);

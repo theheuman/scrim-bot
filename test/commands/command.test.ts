@@ -11,6 +11,7 @@ import SpyInstance = jest.SpyInstance;
 import { MockAdminCommand, MockMemberCommand } from "../mocks/command.mock";
 import { AuthMock } from "../mocks/auth.mock";
 import { AuthService } from "../../src/services/auth";
+import { AlertService } from "../../src/services/alert";
 import { CustomInteraction } from "../../src/commands/interaction";
 
 describe("abstract command", () => {
@@ -44,8 +45,14 @@ describe("abstract command", () => {
   let memberCommand: MockMemberCommand;
 
   beforeAll(() => {
-    adminCommand = new MockAdminCommand(authMock);
-    memberCommand = new MockMemberCommand();
+    adminCommand = new MockAdminCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      authMock,
+    );
+    memberCommand = new MockMemberCommand({
+      warn: jest.fn(),
+      error: jest.fn(),
+    } as unknown as AlertService);
 
     member = {
       id: "authorized",

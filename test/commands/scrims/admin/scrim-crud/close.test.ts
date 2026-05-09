@@ -11,6 +11,7 @@ import { AuthService } from "../../../../../src/services/auth";
 import { CloseScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/close-scrim";
 import { ScrimService } from "../../../../../src/services/scrim-service";
 import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
+import { AlertService } from "../../../../../src/services/alert";
 
 describe("Close scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -59,6 +60,7 @@ describe("Close scrim", () => {
     signupCloseScrimSpy.mockClear();
     channelDeletedSpy.mockClear();
     command = new CloseScrimCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       new AuthMock() as AuthService,
       mockScrimService as unknown as ScrimService,
     );

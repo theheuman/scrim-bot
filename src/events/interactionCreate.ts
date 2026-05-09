@@ -1,4 +1,5 @@
 import { Events } from "discord.js";
+import { alertService } from "../services";
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -8,7 +9,7 @@ module.exports = {
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
-      console.error(
+      await alertService.error(
         `No command matching ${interaction.commandName} was found.`,
       );
       return;
@@ -17,7 +18,9 @@ module.exports = {
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error(error);
+      await alertService.error(
+        `Unhandled error in interactionCreate for ${interaction.commandName}: ${error}`,
+      );
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: "There was an error while executing this command!",

@@ -6,6 +6,7 @@ import SpyInstance = jest.SpyInstance;
 import { Scrim, ScrimSignup, ScrimType } from "../../src/models/Scrims";
 import { LeagueServiceMock } from "../mocks/league.mock";
 import { LeagueService } from "../../src/services/league";
+import { AlertService } from "../../src/services/alert";
 
 describe("Prio", () => {
   let prioService: PrioService;
@@ -37,6 +38,7 @@ describe("Prio", () => {
     prioService = new PrioService(
       dbMock,
       leagueServiceMock as unknown as LeagueService,
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
     );
     dbInsertPlayerSpy = jest.spyOn(dbMock, "insertPlayers");
     dbInsertPlayerSpy.mockReturnValue(Promise.resolve([player]));

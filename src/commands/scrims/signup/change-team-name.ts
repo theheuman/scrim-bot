@@ -1,6 +1,7 @@
 import { CustomInteraction } from "../../interaction";
 import { MemberCommand } from "../../command";
 import { RosterService } from "../../../services/rosters";
+import { AlertService } from "../../../services/alert";
 import { isGuildMember } from "../../../utility/utility";
 
 export class ChangeTeamNameCommand extends MemberCommand {
@@ -9,8 +10,11 @@ export class ChangeTeamNameCommand extends MemberCommand {
     newName: "new-team-name",
   };
 
-  constructor(private rosterService: RosterService) {
-    super("change-team-name", "Change the name of a team");
+  constructor(
+    alertService: AlertService,
+    private rosterService: RosterService,
+  ) {
+    super(alertService, "change-team-name", "Change the name of a team");
     this.addStringInput(this.inputNames.oldName, "Old name", {
       isRequired: true,
       minLength: 1,

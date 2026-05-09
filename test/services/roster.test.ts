@@ -15,6 +15,7 @@ import { ScrimServiceMock } from "../mocks/scrim-service.mock";
 import { SignupServiceMock } from "../mocks/signups.mock";
 import { ScrimService } from "../../src/services/scrim-service";
 import { SignupService } from "../../src/services/signups";
+import { AlertService } from "../../src/services/alert";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
@@ -41,6 +42,7 @@ describe("Rosters", () => {
       staticValueService,
       scrimServiceMock as unknown as ScrimService,
       signupServiceMock as unknown as SignupService,
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
     );
     jest
       .spyOn(authService, "memberIsAdmin")

@@ -1,10 +1,12 @@
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 
 export class RemoveAdminRoleCommand extends AdminCommand {
-  constructor(authService: AuthService) {
+  constructor(alertService: AlertService, authService: AuthService) {
     super(
+      alertService,
       authService,
       "remove-admin-role",
       "Removes a role from performing scrim admin actions",

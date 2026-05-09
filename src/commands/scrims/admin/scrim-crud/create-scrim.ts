@@ -4,6 +4,7 @@ import { CustomInteraction } from "../../../interaction";
 import { ScrimService } from "../../../../services/scrim-service";
 import { formatInTimeZone } from "date-fns-tz";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 import { StaticValueService } from "../../../../services/static-values";
 import { ForumThreadChannel } from "discord.js/typings";
 import { ChannelType } from "discord-api-types/v10";
@@ -22,11 +23,13 @@ export class CreateScrimCommand extends AdminCommand {
   };
 
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private scrimService: ScrimService,
     private staticValueService: StaticValueService,
   ) {
     super(
+      alertService,
       authService,
       "create-scrim",
       "Creates a new scrim, including a new forum post and signup instructions",

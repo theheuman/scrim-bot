@@ -11,6 +11,7 @@ import { CustomInteraction } from "../../../../src/commands/interaction";
 import { RosterServiceMock } from "../../../mocks/roster.mock";
 import { RosterService } from "../../../../src/services/rosters";
 import { DropoutCommand } from "../../../../src/commands/scrims/signup/droput-scrims";
+import { AlertService } from "../../../../src/services/alert";
 
 describe("Drop out name", () => {
   let basicInteraction: CustomInteraction;
@@ -61,7 +62,10 @@ describe("Drop out name", () => {
     replySpy.mockClear();
     editReplySpy.mockClear();
     removeTeamSpy.mockClear();
-    command = new DropoutCommand(mockRosterService as unknown as RosterService);
+    command = new DropoutCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockRosterService as unknown as RosterService,
+    );
   });
 
   it("Should dropout", async () => {

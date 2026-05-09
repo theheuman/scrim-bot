@@ -22,6 +22,7 @@ import { BanService } from "../../src/services/ban";
 import { BanServiceMock } from "../mocks/ban.mock";
 import { ScrimServiceMock } from "../mocks/scrim-service.mock";
 import { ScrimService } from "../../src/services/scrim-service";
+import { AlertService } from "../../src/services/alert";
 
 jest.mock("../../src/config", () => {
   return {
@@ -57,6 +58,7 @@ describe("Signups", () => {
       new DiscordServiceMock() as DiscordService,
       mockBanService,
       scrimServiceMock as unknown as ScrimService,
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(

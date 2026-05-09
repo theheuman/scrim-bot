@@ -48,6 +48,14 @@ export class StaticValueService {
     return this.fetchStaticValue("scrim_scores_channel_id");
   }
 
+  async getAlertChannelId(): Promise<string | undefined> {
+    return this.fetchStaticValue("alert_channel_id");
+  }
+
+  async getAlertPingUserId(): Promise<string | undefined> {
+    return this.fetchStaticValue("alert_ping_user_id");
+  }
+
   private async fetchStaticValue(key: string): Promise<string | undefined> {
     const dbResult: { value: DbValue }[] = await this.db.get(
       DbTable.staticKeyValues,

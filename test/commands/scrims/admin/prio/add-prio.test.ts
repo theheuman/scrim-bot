@@ -12,6 +12,7 @@ import { AddPrioCommand } from "../../../../../src/commands/scrims/admin/prio/ad
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
+import { AlertService } from "../../../../../src/services/alert";
 import { PrioServiceMock } from "../../../../mocks/prio.mock";
 import { PrioService } from "../../../../../src/services/prio";
 
@@ -51,6 +52,7 @@ describe("Add prio", () => {
 
   beforeAll(() => {
     command = new AddPrioCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       new AuthMock() as AuthService,
       mockPrioService as PrioService,
     );

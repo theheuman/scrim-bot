@@ -9,6 +9,7 @@ import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
+import { AlertService } from "./alert";
 
 export class SignupService {
   constructor(
@@ -18,6 +19,7 @@ export class SignupService {
     private discordService: DiscordService,
     private banService: BanService,
     private scrimService: ScrimService,
+    private alertService: AlertService,
   ) {}
 
   async addTeam(
@@ -216,11 +218,8 @@ export class SignupService {
     try {
       await this.discordService.updateSignupPostDescription(scrim, count);
     } catch (e) {
-      console.error(
-        "Unable to update scrim signup count for ",
-        scrim.id,
-        scrim.discordChannel,
-        e,
+      await this.alertService.warn(
+        `Unable to update scrim signup count for scrim ${scrim.id} channel ${scrim.discordChannel}: ${e}`,
       );
     }
   }

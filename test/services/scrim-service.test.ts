@@ -12,6 +12,7 @@ import { HuggingFaceService } from "../../src/services/hugging-face";
 import { BanServiceMock } from "../mocks/ban.mock";
 import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
 import { ScrimService } from "../../src/services/scrim-service";
+import { AlertService } from "../../src/services/alert";
 
 jest.mock("../../src/config", () => {
   return {
@@ -50,6 +51,7 @@ describe("ScrimService", () => {
       dbMock,
       overstatServiceMock as OverstatService,
       mockHuggingFaceService,
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(

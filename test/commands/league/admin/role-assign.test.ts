@@ -14,6 +14,7 @@ import {
 import { AuthMock } from "../../../mocks/auth.mock";
 import { RoleAssignmentCommand } from "../../../../src/commands/league/admin/role-assign";
 import { AuthService } from "../../../../src/services/auth";
+import { AlertService } from "../../../../src/services/alert";
 
 describe("Assign roles", () => {
   let basicInteraction: CustomInteraction;
@@ -47,7 +48,10 @@ describe("Assign roles", () => {
   let returnedRole: Role;
 
   beforeAll(() => {
-    command = new RoleAssignmentCommand(mockAuthService as AuthService);
+    command = new RoleAssignmentCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      mockAuthService as AuthService,
+    );
     returnedRole = {
       id: "discord role id",
       name: "Division 1",

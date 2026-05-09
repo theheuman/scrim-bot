@@ -11,6 +11,7 @@ import { CustomInteraction } from "../../../../src/commands/interaction";
 import { RosterServiceMock } from "../../../mocks/roster.mock";
 import { RosterService } from "../../../../src/services/rosters";
 import { ChangeTeamNameCommand } from "../../../../src/commands/scrims/signup/change-team-name";
+import { AlertService } from "../../../../src/services/alert";
 
 describe("Change team name", () => {
   let basicInteraction: CustomInteraction;
@@ -71,6 +72,7 @@ describe("Change team name", () => {
     editReplySpy.mockClear();
     rosterServiceChangeNameSpy.mockClear();
     command = new ChangeTeamNameCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockRosterService as unknown as RosterService,
     );
   });

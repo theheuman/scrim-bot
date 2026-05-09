@@ -6,6 +6,7 @@ import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
 import { LeagueService } from "../../services/league";
 import { StaticValueService } from "../../services/static-values";
+import { AlertService } from "../../services/alert";
 
 export class LeagueSubRequestCommand extends MemberCommand {
   inputNames = {
@@ -27,11 +28,12 @@ export class LeagueSubRequestCommand extends MemberCommand {
   };
 
   constructor(
+    alertService: AlertService,
     private overstatService: OverstatService,
     private leagueService: LeagueService,
     private staticValueService: StaticValueService,
   ) {
-    super("sub-request", "Request a sub");
+    super(alertService, "sub-request", "Request a sub");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
       minLength: 1,

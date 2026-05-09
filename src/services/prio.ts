@@ -4,6 +4,7 @@ import { Scrim, ScrimSignup, ScrimType } from "../models/Scrims";
 import { ExpungedPlayerPrio, PlayerMap, PlayerPrio } from "../models/Prio";
 import { Player } from "../models/Player";
 import { LeagueService } from "./league";
+import { AlertService } from "./alert";
 
 function getLeagueTierInfo(
   players: Player[],
@@ -54,6 +55,7 @@ export class PrioService {
   constructor(
     private db: DB,
     private leagueService: LeagueService,
+    private alertService: AlertService,
   ) {}
 
   async setPlayerPrio(
@@ -81,10 +83,16 @@ export class PrioService {
       return teams;
     }
     if (scrim.scrimType === ScrimType.league) {
-      const rosterMap = await this.leagueService.getRosterDiscordIds();
-      for (const team of teams) {
-        const { tier, reason } = getLeagueTierInfo(team.players, rosterMap);
-        team.prio = { amount: tier, reasons: reason };
+      try {
+        const rosterMap = await this.leagueService.getRosterDiscordIds();
+        for (const team of teams) {
+          const { tier, reason } = getLeagueTierInfo(team.players, rosterMap);
+          team.prio = { amount: tier, reasons: reason };
+        }
+      } catch (e) {
+        await this.alertService.warn(
+          `Failed to fetch league roster, defaulting to date-only sort: ${e}`,
+        );
       }
       return teams;
     }

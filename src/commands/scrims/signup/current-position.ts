@@ -5,14 +5,17 @@ import { StaticValueService } from "../../../services/static-values";
 import { ScrimType, ScrimSignup } from "../../../models/Scrims";
 import { GetSignupsHelper } from "../../utility/get-signups";
 import { ScrimService } from "../../../services/scrim-service";
+import { AlertService } from "../../../services/alert";
 
 export class CurrentPositionCommand extends MemberCommand {
   constructor(
+    alertService: AlertService,
     private signupService: SignupService,
     private staticValueService: StaticValueService,
     private scrimService: ScrimService,
   ) {
     super(
+      alertService,
       "current-position",
       "Returns your teams priority position for the scrim",
     );
@@ -35,7 +38,7 @@ export class CurrentPositionCommand extends MemberCommand {
 
     const scrim = await this.scrimService.getScrim(interaction.channelId);
     if (!scrim) {
-      console.error(
+      await this.alertService.warn(
         "Unable to get scrim for current position command, defaulting to regular prio type",
       );
     }

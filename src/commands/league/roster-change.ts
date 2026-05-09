@@ -6,6 +6,7 @@ import { VesaDivision } from "../../models/league-models";
 import { LeagueCommandHelper } from "./league-command-helper";
 import { LeagueService } from "../../services/league";
 import { StaticValueService } from "../../services/static-values";
+import { AlertService } from "../../services/alert";
 
 export class RosterChangeCommand extends MemberCommand {
   inputNames = {
@@ -25,11 +26,12 @@ export class RosterChangeCommand extends MemberCommand {
   };
 
   constructor(
+    alertService: AlertService,
     private overstatService: OverstatService,
     private leagueService: LeagueService,
     private staticValueService: StaticValueService,
   ) {
-    super("roster-change", "Request a roster change");
+    super(alertService, "roster-change", "Request a roster change");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
       minLength: 1,

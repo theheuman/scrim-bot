@@ -2,12 +2,14 @@ import { DB } from "../db/db";
 import { OverstatService } from "./overstat";
 import { HuggingFaceService } from "./hugging-face";
 import { ScrimType, Scrim } from "../models/Scrims";
+import { AlertService } from "./alert";
 
 export class ScrimService {
   constructor(
     private db: DB,
     private overstatService: OverstatService,
     private huggingFaceService: HuggingFaceService,
+    private alertService: AlertService,
   ) {}
 
   async createScrim(
@@ -106,8 +108,9 @@ export class ScrimService {
           stats,
         );
       } catch (e) {
-        // TODO use currently unimplemented discord service error message to send error in a relevant channel
-        console.error(e);
+        await this.alertService.error(
+          `Failed to upload overstat JSON for ${overstatId}: ${e}`,
+        );
       }
     }
   }
@@ -141,8 +144,9 @@ export class ScrimService {
       }
     }
     if (errors.length > 0) {
-      // TODO use currently unimplemented discord service error message to send error in a relevant channel
-      console.error(errors);
+      await this.alertService.error(
+        `Failed to upload overstat JSON for new scrims:\n${errors.join("\n")}`,
+      );
     }
   }
 

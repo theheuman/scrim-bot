@@ -3,6 +3,7 @@ import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { SignupService } from "../../../../services/signups";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 import * as fs from "node:fs";
 import { StaticValueService } from "../../../../services/static-values";
 import { Player } from "../../../../models/Player";
@@ -15,12 +16,18 @@ const MMR_SORT_THRESHOLD = appConfig.lobbySize * 2;
 
 export class GetSignupsCommand extends AdminCommand {
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private signupService: SignupService,
     private staticValueService: StaticValueService,
     private mmrService: MmrService,
   ) {
-    super(authService, "get-signups", "Gets signups for this scrim");
+    super(
+      alertService,
+      authService,
+      "get-signups",
+      "Gets signups for this scrim",
+    );
     this.addBooleanInput("refresh-mmr", "Force a fresh fetch of MMR data");
   }
 

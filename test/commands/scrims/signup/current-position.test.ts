@@ -16,6 +16,7 @@ import { SignupService } from "../../../../src/services/signups";
 import { SignupServiceMock } from "../../../mocks/signups.mock";
 import { ScrimServiceMock } from "../../../mocks/scrim-service.mock";
 import { ScrimService } from "../../../../src/services/scrim-service";
+import { AlertService } from "../../../../src/services/alert";
 
 describe("Get current position", () => {
   let basicInteraction: CustomInteraction;
@@ -69,6 +70,7 @@ describe("Get current position", () => {
       scrimType: ScrimType.regular,
     });
     command = new CurrentPositionCommand(
+      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
       mockSignpuService as unknown as SignupService,
       mockStaticValueService as StaticValueService,
       mockScrimService as unknown as ScrimService,
