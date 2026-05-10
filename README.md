@@ -89,6 +89,26 @@ Refer to the [official nhost documentation](https://github.com/nhost/nhost/tree/
 
 Start nhost by running the `npm run nhost` command, you can then navigate to the dashboard link the command gives you to see that its running correctly
 
+**Local nhost DNS setup (required once per machine)**
+
+nhost-js generates URLs like `https://local.graphql.nhost.run` for `subdomain: "local"`, but the actual local services run at `*.local.nhost.run` (e.g. `local.graphql.local.nhost.run`). The browser resolves these via DNS-over-HTTPS, but Node.js uses the system DNS resolver which won't have these records.
+
+Two one-time setup steps are required:
+
+1. Add the nhost domains to `/etc/hosts`:
+```sh
+sudo sh -c 'echo "127.0.0.1 local.graphql.local.nhost.run local.auth.local.nhost.run local.storage.local.nhost.run" >> /etc/hosts'
+```
+
+2. Add these env vars to your shell profile (`~/.zshrc` or `~/.bash_profile`):
+```sh
+export NHOST_GRAPHQL_URL=https://local.graphql.local.nhost.run/v1
+export NHOST_AUTH_URL=https://local.auth.local.nhost.run/v1
+export NHOST_STORAGE_URL=https://local.storage.local.nhost.run/v1
+```
+
+Then reload your shell (`source ~/.zshrc`) and restart nhost.
+
 You'll also need to either create a new discord bot, or ask me (TheHeuman) for my test bot credentials and then input those in the dev section of the config file
 
 Before merge to main, test your new or updated commands on a private discord server, update your config.json file dev property with that servers discord info and insert necessary data into nhost (scrim_admin_roles and static_key_values.signup_channel).
