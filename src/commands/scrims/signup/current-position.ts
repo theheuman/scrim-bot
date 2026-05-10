@@ -22,7 +22,7 @@ export class CurrentPositionCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
 
     const channelSignups = await GetSignupsHelper.getSignupsForChannel(
       this.signupService,
