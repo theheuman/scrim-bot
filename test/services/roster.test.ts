@@ -4,50 +4,64 @@ import { GuildMember, User } from "discord.js";
 import { RosterService } from "../../src/services/rosters";
 import { ScrimType, Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { AuthService } from "../../src/services/auth";
-import { AuthMock } from "../mocks/auth.mock";
-import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { DiscordService } from "../../src/services/discord";
 import { BanService } from "../../src/services/ban";
-import { BanServiceMock } from "../mocks/ban.mock";
 import { StaticValueService } from "../../src/services/static-values";
-import { StaticValueServiceMock } from "../mocks/static-values.mock";
-import { ScrimServiceMock } from "../mocks/scrim-service.mock";
-import { SignupServiceMock } from "../mocks/signups.mock";
 import { ScrimService } from "../../src/services/scrim-service";
 import { SignupService } from "../../src/services/signups";
 import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 describe("Rosters", () => {
   let dbMock: DbMock;
   let rosters: RosterService;
-  let authService: AuthMock;
+  let authService: AuthService;
   let banServiceMock: BanService;
   let staticValueService: StaticValueService;
-  let scrimServiceMock: ScrimServiceMock;
-  let signupServiceMock: SignupServiceMock;
+  let scrimServiceMock: ScrimService;
+  let signupServiceMock: SignupService;
   const discordChannel = "034528";
 
   beforeEach(() => {
     dbMock = new DbMock();
-    authService = new AuthMock();
-    banServiceMock = new BanServiceMock() as BanService;
-    staticValueService = new StaticValueServiceMock() as StaticValueService;
-    scrimServiceMock = new ScrimServiceMock();
-    signupServiceMock = new SignupServiceMock();
+    authService = provideMagickalMock(AuthService);
+    banServiceMock = provideMagickalMock(BanService);
+    staticValueService = provideMagickalMock(StaticValueService);
+    jest
+      .spyOn(staticValueService, "getScrimInfoTimes")
+      .mockImplementation(async (scrimDate: Date) => {
+        const lobbyPostDate = new Date(
+          scrimDate.valueOf() - 2 * 60 * 60 * 1000,
+        );
+        const lowPrioDate = new Date(
+          scrimDate.valueOf() - 1.5 * 60 * 60 * 1000,
+        );
+        const draftDate = new Date(scrimDate.valueOf() - 30 * 60 * 1000);
+        return {
+          lobbyPostDate,
+          lowPrioDate,
+          draftDate,
+          rosterLockDate: lobbyPostDate,
+        };
+      });
+    scrimServiceMock = provideMagickalMock(ScrimService);
+    signupServiceMock = provideMagickalMock(SignupService);
     rosters = new RosterService(
       dbMock,
-      authService as AuthService,
-      new DiscordServiceMock() as DiscordService,
+      authService,
+      provideMagickalMock(DiscordService),
       banServiceMock,
       staticValueService,
-      scrimServiceMock as unknown as ScrimService,
-      signupServiceMock as unknown as SignupService,
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      scrimServiceMock,
+      signupServiceMock,
+      provideMagickalMock(AlertService),
     );
     jest
       .spyOn(authService, "memberIsAdmin")
       .mockReturnValue(Promise.resolve(true));
-
+    jest
+      .spyOn(banServiceMock, "teamHasBan")
+      .mockResolvedValue({ hasBan: false, reason: "" });
     jest
       .spyOn(scrimServiceMock, "getScrim")
       .mockReturnValue(Promise.resolve(null));

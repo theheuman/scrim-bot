@@ -4,15 +4,10 @@ import { OverstatService } from "../../src/services/overstat";
 import { ScrimType, Scrim } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import SpyInstance = jest.SpyInstance;
-import { PrioServiceMock } from "../mocks/prio.mock";
-import { AuthMock } from "../mocks/auth.mock";
-import { OverstatServiceMock } from "../mocks/overstat.mock";
-import { BanService } from "../../src/services/ban";
 import { HuggingFaceService } from "../../src/services/hugging-face";
-import { BanServiceMock } from "../mocks/ban.mock";
-import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
 import { ScrimService } from "../../src/services/scrim-service";
 import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -25,10 +20,7 @@ jest.mock("../../src/config", () => {
 describe("ScrimService", () => {
   let dbMock: DbMock;
   let service: ScrimService;
-  let prioServiceMock: PrioServiceMock;
-  let overstatServiceMock: OverstatServiceMock;
-  let authServiceMock: AuthMock;
-  let mockBanService: BanService;
+  let overstatServiceMock: OverstatService;
   let mockHuggingFaceService: HuggingFaceService;
 
   let insertPlayersSpy: SpyInstance;
@@ -40,18 +32,13 @@ describe("ScrimService", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    overstatServiceMock = new OverstatServiceMock();
-    prioServiceMock = new PrioServiceMock();
-    mockBanService = new BanServiceMock() as BanService;
-    mockHuggingFaceService =
-      new HuggingFaceServiceMock() as unknown as HuggingFaceService;
-
-    authServiceMock = new AuthMock();
+    overstatServiceMock = provideMagickalMock(OverstatService);
+    mockHuggingFaceService = provideMagickalMock(HuggingFaceService);
     service = new ScrimService(
       dbMock,
-      overstatServiceMock as OverstatService,
+      overstatServiceMock,
       mockHuggingFaceService,
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -76,11 +63,6 @@ describe("ScrimService", () => {
         },
       ]),
     );
-    jest
-      .spyOn(authServiceMock, "memberIsAdmin")
-      .mockImplementation((member) =>
-        Promise.resolve(member === (theheuman as unknown as GuildMember)),
-      );
     huggingFaceUploadSpy = jest.spyOn(
       mockHuggingFaceService,
       "uploadOverstatJson",

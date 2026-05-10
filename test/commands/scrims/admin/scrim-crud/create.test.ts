@@ -8,15 +8,13 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
 import { CreateScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/create-scrim";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { AlertService } from "../../../../../src/services/alert";
-import { StaticValueServiceMock } from "../../../../mocks/static-values.mock";
 import { StaticValueService } from "../../../../../src/services/static-values";
 import { ChannelType } from "discord-api-types/v10";
 import { ScrimService } from "../../../../../src/services/scrim-service";
-import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
 import { ScrimType } from "../../../../../src/models/Scrims";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Create scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -33,8 +31,8 @@ describe("Create scrim", () => {
   >;
   let signupsCreateScrimSpy: SpyInstance<
     Promise<string>,
-    [channelId: string, scrimDate: Date, scrimType?: ScrimType | null],
-    string
+    [discordChannelID: string, dateTime: Date, scrimType?: ScrimType],
+    any
   >;
   const channelCreatedSpy = jest.fn();
   const channelDeleteSpy = jest.fn();
@@ -45,8 +43,8 @@ describe("Create scrim", () => {
 
   let command: CreateScrimCommand;
 
-  const mockScrimService = new ScrimServiceMock();
-  const mockStaticValueService = new StaticValueServiceMock();
+  const mockScrimService = provideMagickalMock(ScrimService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
 
   beforeAll(() => {
     member = {
@@ -91,6 +89,27 @@ describe("Create scrim", () => {
     signupsCreateScrimSpy.mockImplementation(() => {
       return Promise.resolve("uuid-87623");
     });
+    jest
+      .spyOn(mockStaticValueService, "getInstructionText")
+      .mockResolvedValue(
+        "Scrim date: ${scrimTime}\nDraft time: ${draftTime}\nLobby post time: ${lobbyPostTime}\nLow prio time: ${lowPrioTime}\nscrim signup instruction text",
+      );
+    jest
+      .spyOn(mockStaticValueService, "getScrimInfoTimes")
+      .mockImplementation(async (scrimDate: Date) => {
+        const lobbyPostDate = new Date(scrimDate.valueOf());
+        lobbyPostDate.setTime(lobbyPostDate.valueOf() - 2 * 60 * 60 * 1000);
+        const lowPrioDate = new Date(scrimDate.valueOf());
+        lowPrioDate.setTime(lowPrioDate.valueOf() - 1.5 * 60 * 60 * 1000);
+        const draftDate = new Date(scrimDate.valueOf());
+        draftDate.setTime(draftDate.valueOf() - 30 * 60 * 1000);
+        return {
+          lobbyPostDate,
+          lowPrioDate,
+          draftDate,
+          rosterLockDate: lobbyPostDate,
+        };
+      });
     jest.useFakeTimers().setSystemTime(fakeCurrentDate);
   });
 
@@ -103,10 +122,10 @@ describe("Create scrim", () => {
     editReplySpy.mockClear();
     signupsCreateScrimSpy.mockClear();
     command = new CreateScrimCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      new AuthMock() as AuthService,
-      mockScrimService as unknown as ScrimService,
-      mockStaticValueService as StaticValueService,
+      provideMagickalMock(AlertService),
+      provideMagickalMock(AuthService),
+      mockScrimService,
+      mockStaticValueService,
     );
   });
 

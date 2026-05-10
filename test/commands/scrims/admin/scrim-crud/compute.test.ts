@@ -7,16 +7,13 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { ComputeScrimCommand } from "../../../../../src/commands/scrims/admin/scrim-crud/compute-scrim";
-import { ScrimServiceMock } from "../../../../mocks/scrim-service.mock";
 import { ScrimService } from "../../../../../src/services/scrim-service";
-import { DiscordServiceMock } from "../../../../mocks/discord-service.mock";
 import { AlertService } from "../../../../../src/services/alert";
 import { DiscordService } from "../../../../../src/services/discord";
-import { OverstatServiceMock } from "../../../../mocks/overstat.mock";
 import { OverstatService } from "../../../../../src/services/overstat";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Compute scrim", () => {
   let basicInteraction: CustomInteraction;
@@ -41,9 +38,9 @@ describe("Compute scrim", () => {
 
   let command: ComputeScrimCommand;
 
-  const mockScrimService = new ScrimServiceMock();
-  const mockDiscordService = new DiscordServiceMock();
-  const mockOverstatService = new OverstatServiceMock();
+  const mockScrimService = provideMagickalMock(ScrimService);
+  const mockDiscordService = provideMagickalMock(DiscordService);
+  const mockOverstatService = provideMagickalMock(OverstatService);
   const mockDateTime = new Date("2026-04-18");
 
   beforeAll(() => {
@@ -78,6 +75,9 @@ describe("Compute scrim", () => {
       mockDiscordService,
       "sendScoresComputedMessage",
     );
+    jest
+      .spyOn(mockOverstatService, "getLobbyName")
+      .mockReturnValue("Mock Lobby Name");
   });
 
   beforeEach(() => {
@@ -91,11 +91,11 @@ describe("Compute scrim", () => {
     });
     sendScoresComputedMessageSpy.mockResolvedValue(undefined);
     command = new ComputeScrimCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
-      new AuthMock() as AuthService,
-      mockScrimService as unknown as ScrimService,
-      mockDiscordService as unknown as DiscordService,
-      mockOverstatService as unknown as OverstatService,
+      provideMagickalMock(AlertService),
+      provideMagickalMock(AuthService),
+      mockScrimService,
+      mockDiscordService,
+      mockOverstatService,
     );
     getStringCallCount = 0;
   });

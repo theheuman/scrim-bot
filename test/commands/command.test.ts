@@ -9,16 +9,16 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { MockAdminCommand, MockMemberCommand } from "../mocks/command.mock";
-import { AuthMock } from "../mocks/auth.mock";
 import { AuthService } from "../../src/services/auth";
 import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 import { CustomInteraction } from "../../src/commands/interaction";
 
 describe("abstract command", () => {
   let basicInteraction: ChatInputCommandInteraction;
   let noMemberInteraction: ChatInputCommandInteraction;
   let unAuthorizedMemberInteraction: ChatInputCommandInteraction;
-  const authMock = new AuthMock() as AuthService;
+  const authMock = provideMagickalMock(AuthService);
 
   let runSpy: SpyInstance<
     Promise<void>,
@@ -46,13 +46,10 @@ describe("abstract command", () => {
 
   beforeAll(() => {
     adminCommand = new MockAdminCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       authMock,
     );
-    memberCommand = new MockMemberCommand({
-      warn: jest.fn(),
-      error: jest.fn(),
-    } as unknown as AlertService);
+    memberCommand = new MockMemberCommand(provideMagickalMock(AlertService));
 
     member = {
       id: "authorized",

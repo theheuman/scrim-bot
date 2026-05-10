@@ -9,17 +9,15 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../src/commands/interaction";
 import { RosterChangeCommand } from "../../../src/commands/league/roster-change";
-import { OverstatServiceMock } from "../../mocks/overstat.mock";
 import {
   getPlayerOverstatUrl,
   OverstatService,
 } from "../../../src/services/overstat";
 import { LeagueService } from "../../../src/services/league";
-import { LeagueServiceMock } from "../../mocks/league.mock";
 import { DB } from "../../../src/db/db";
 import { StaticValueService } from "../../../src/services/static-values";
-import { StaticValueServiceMock } from "../../mocks/static-values.mock";
 import { AlertService } from "../../../src/services/alert";
+import { provideMagickalMock } from "../../mocks/magickal-mock";
 
 describe("Roster change", () => {
   let basicInteraction: CustomInteraction;
@@ -37,8 +35,6 @@ describe("Roster change", () => {
   let getPlayerOverstatSpy: SpyInstance<Promise<string>, [user: User], string>;
 
   let command: RosterChangeCommand;
-  let mockLeagueService: LeagueService;
-  let mockStaticValueService: StaticValueService;
   let staticCommandUsedJustForInputNames: RosterChangeCommand;
 
   const requestingMember = {
@@ -57,15 +53,13 @@ describe("Roster change", () => {
     id: "player2id",
   } as User;
 
-  let mockOverstatService: OverstatService;
+  const mockOverstatService = provideMagickalMock(OverstatService);
+  const mockLeagueService = provideMagickalMock(LeagueService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
 
   beforeAll(() => {
-    mockOverstatService = new OverstatServiceMock() as OverstatService;
-    mockLeagueService = new LeagueServiceMock() as unknown as LeagueService;
-    mockStaticValueService =
-      new StaticValueServiceMock() as unknown as StaticValueService;
     staticCommandUsedJustForInputNames = new RosterChangeCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
       mockLeagueService,
       mockStaticValueService,
@@ -132,6 +126,14 @@ describe("Roster change", () => {
         : Promise.resolve(overstats.player2),
     );
     rosterChangeSpy = jest.spyOn(mockLeagueService, "rosterChange");
+    rosterChangeSpy.mockResolvedValue({
+      rowNumber: 0,
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_roster_sheet_id",
+      tabName: "mock_roster_tab_name",
+    });
+    jest
+      .spyOn(mockStaticValueService, "getSubApprovalRoleId")
+      .mockResolvedValue("sub-approval-role-id");
   });
 
   beforeEach(() => {
@@ -140,7 +142,7 @@ describe("Roster change", () => {
     invisibleReplySpy.mockClear();
     getPlayerOverstatSpy.mockClear();
     command = new RosterChangeCommand(
-      { warn: jest.fn(), error: jest.fn() } as unknown as AlertService,
+      provideMagickalMock(AlertService),
       mockOverstatService,
       mockLeagueService,
       mockStaticValueService,
