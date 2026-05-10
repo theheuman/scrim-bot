@@ -15,6 +15,6 @@ INSERT INTO public.google_sheets (id, name, sheet_id, tab_name, range_start) VAL
   ('4a18fd46-b155-4ea8-b203-a9a83ba23e6e', 'roster change',    '1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo', 'Sheet3', 'A1')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.league_seasons (id, signup_sheet_id, sub_sheet_id, roster_change_sheet_id, signup_prio_end_date, start_date) VALUES
-  ('28662209-500c-4211-8f38-cf9d3d5af0de', 'f148d921-b95c-42bc-bb2d-c705f10b7570', '21af6e03-671b-4dc1-9101-2531799e7da2', '4a18fd46-b155-4ea8-b203-a9a83ba23e6e', '2026-05-08T04:00:00+00:00', '2026-05-11T04:00:00+00:00')
+INSERT INTO public.league_seasons (id, name, signup_start_date, signup_end_date, signup_sheet_id, sub_sheet_id, roster_change_sheet_id, signup_prio_end_date, start_date, google_sheet_id, google_sheet_name, google_sheet_range_start) VALUES
+  ('28662209-500c-4211-8f38-cf9d3d5af0de', 'S14', '2026-04-28T04:00:00+00:00', '2026-05-09T04:00:00+00:00', 'f148d921-b95c-42bc-bb2d-c705f10b7570', '21af6e03-671b-4dc1-9101-2531799e7da2', '4a18fd46-b155-4ea8-b203-a9a83ba23e6e', '2026-05-08T04:00:00+00:00', '2026-05-11T04:00:00+00:00', '1_e_TdsjAc077eHSzcAOVs8xBHAJSPVd9JXJiLDfVHeo', 's14 signup sheet', 'A1')
 ON CONFLICT (id) DO NOTHING;
