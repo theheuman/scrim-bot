@@ -52,7 +52,7 @@ describe("Link overstat", () => {
       user: { id: "discord command user id" },
       member: { id: "discord member id" },
       editReply: jest.fn(),
-      invisibleReply: jest.fn(),
+      deferReply: jest.fn(),
       followUp: jest.fn(),
       deleteReply: jest.fn(),
     } as unknown as CustomInteraction;
@@ -95,7 +95,7 @@ describe("Link overstat", () => {
       },
       user: { id: "discord command user id" },
       member: { id: "discord admin id" },
-      invisibleReply: jest.fn(),
+      deferReply: jest.fn(),
       editReply: jest.fn(),
       followUp: jest.fn(),
       deleteReply: jest.fn(),
@@ -121,9 +121,10 @@ describe("Link overstat", () => {
       });
 
       await command.run(basicInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
-        "Overstat not linked. Error: The database fell asleep",
-      );
+      expect(followUpSpy).toHaveBeenCalledWith({
+        content: "Overstat not linked. Error: The database fell asleep",
+        ephemeral: true,
+      });
     });
 
     it("Should reply with an error if normal member tries to link someone else", async () => {
@@ -137,17 +138,17 @@ describe("Link overstat", () => {
         },
         user: { id: "discord command user id" },
         member: { id: "discord member id" },
-        editReply: jest.fn(),
-        invisibleReply: jest.fn(),
+        deferReply: jest.fn(),
         followUp: jest.fn(),
         deleteReply: jest.fn(),
       } as unknown as CustomInteraction;
-      editReplySpy = jest.spyOn(memberInteraction, "editReply");
-      editReplySpy.mockClear();
+      const memberFollowUpSpy = jest.spyOn(memberInteraction, "followUp");
       await command.run(memberInteraction);
-      expect(editReplySpy).toHaveBeenCalledWith(
-        "Admin permissions not found for this user. You may only run this command for yourself.",
-      );
+      expect(memberFollowUpSpy).toHaveBeenCalledWith({
+        content:
+          "Admin permissions not found for this user. You may only run this command for yourself.",
+        ephemeral: true,
+      });
     });
   });
 });

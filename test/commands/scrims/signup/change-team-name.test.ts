@@ -51,14 +51,13 @@ describe("Change team name", () => {
     basicInteraction = {
       member,
       channelId: "forum thread id",
-      reply: jest.fn(),
+      deferReply: jest.fn(),
       editReply: jest.fn(),
       options: {
         getString: (key: string) =>
           key === "old-team-name" ? "old team name" : "new team name",
       },
     } as unknown as CustomInteraction;
-    replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     rosterServiceChangeNameSpy = jest.spyOn(
       mockRosterService,
@@ -68,7 +67,6 @@ describe("Change team name", () => {
   });
 
   beforeEach(() => {
-    replySpy.mockClear();
     editReplySpy.mockClear();
     rosterServiceChangeNameSpy.mockClear();
     command = new ChangeTeamNameCommand(

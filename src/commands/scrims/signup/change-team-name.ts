@@ -44,7 +44,7 @@ export class ChangeTeamNameCommand extends MemberCommand {
       true,
     );
 
-    await interaction.reply("Fetched all input and working on your request!");
+    await interaction.deferReply();
 
     try {
       await this.rosterService.changeTeamName(

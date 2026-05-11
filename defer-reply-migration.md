@@ -10,25 +10,29 @@ Each individual command owns its interaction handling.
 
 ## Pattern
 
+### All responses ephemeral (personal info — position, overstat lookup)
 ```
-// Before
-await interaction.invisibleReply("Fetched all input, working on request");
-// ... async work ...
-await interaction.editReply("result");
-
-// After
 await interaction.deferReply({ ephemeral: true });
 // ... async work ...
-await interaction.editReply("result");   // inherits ephemeral from deferReply
+await interaction.editReply("result");   // ephemeral, inherits from deferReply
+```
+
+### Public success, ephemeral errors (announcements — signup, roster change)
+```
+await interaction.deferReply();          // public "thinking..." indicator
+// ... async work ...
+await interaction.followUp("result");    // public
+// on error:
+await interaction.followUp({ content: "error", ephemeral: true });  // ephemeral
 ```
 
 **Key facts:**
 - `invisibleReply` always passes `ephemeral: true`. Any `deferReply` replacing it **must** also pass `{ ephemeral: true }` or the response becomes public.
-- `editReply` works after `deferReply` — that is what it's designed for.
+- **`deferReply({ ephemeral: true })` locks the entire interaction as ephemeral.** Both `editReply` and `followUp` will be ephemeral — there is no way to send a public message after an ephemeral defer.
 - After `deferReply`, you cannot call `reply()` or `invisibleReply()` again (they will throw).
-- For error returns after `deferReply`: use `editReply("error message")`.
-- `editReply` inherits the ephemeral flag set on `deferReply` — you don't pass it again.
-- For a public response from a command that defers ephemerally: use `followUp(...)` (which is not bound by the ephemeral flag).
+- `editReply` after `deferReply()` (public) is public. `editReply` after `deferReply({ ephemeral: true })` is ephemeral.
+- To send an ephemeral error after a public defer: `followUp({ content: "error", ephemeral: true })`.
+- `deleteReply()` removes the deferred placeholder; subsequent `followUp` calls are then independent messages.
 
 ## Commands to migrate
 
@@ -56,13 +60,13 @@ Guard error stays as `invisibleReply` (fires before any defer, so no conflict). 
 ### Group 3 — Already using `deferReply` on the happy path, but validation errors still use `invisibleReply`
 
 Validation errors fire before `deferReply`, so the `invisibleReply` calls don't conflict.
-All three use `deferReply()` **without** `{ ephemeral: true }` (public "thinking..." indicator) and then only call `followUp` — they never call `editReply` to resolve the deferred message. Confirm whether the public defer and missing `editReply` are intentional before touching these.
+All three migrated to `deferReply({ ephemeral: true })`. Catch-block errors changed from `followUp` to `editReply` (ephemeral + resolves deferred placeholder). Success and "problem parsing" responses stay as public `followUp`.
 
-| Command file | Visibility |
-|---|---|
-| `src/commands/league/league-signup.ts` | public defer |
-| `src/commands/league/roster-change.ts` | public defer |
-| `src/commands/league/sub-request.ts` | public defer |
+| Command file | Visibility | Status |
+|---|---|---|
+| `src/commands/league/league-signup.ts` | ephemeral defer, public followUp | ✅ Done |
+| `src/commands/league/roster-change.ts` | ephemeral defer, public followUp | ✅ Done |
+| `src/commands/league/sub-request.ts` | ephemeral defer, public followUp | ✅ Done |
 
 ### Out of scope — synchronous MemberCommand (no async work, `reply()` is correct)
 

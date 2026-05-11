@@ -9,6 +9,13 @@ array_relationships:
         table:
           name: league_seasons
           schema: public
+  - name: league_seasons_by_roster_sheet
+    using:
+      foreign_key_constraint_on:
+        column: roster_sheet_id
+        table:
+          name: league_seasons
+          schema: public
   - name: league_seasons_by_signup_sheet
     using:
       foreign_key_constraint_on:

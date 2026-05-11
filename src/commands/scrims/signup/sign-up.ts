@@ -41,7 +41,7 @@ export class SignupCommand extends MemberCommand {
       );
       return;
     }
-    await interaction.invisibleReply("Fetched all input, working on request");
+    await interaction.deferReply();
 
     let signup: ScrimSignup;
     try {
@@ -55,7 +55,10 @@ export class SignupCommand extends MemberCommand {
         `${teamName}\n<@${player1.id}>, <@${player2.id}>, <@${player3.id}>\nSigned up by <@${signupPlayer.id}>.\n${signup.signupId}`,
       );
     } catch (error) {
-      await interaction.editReply("Team not signed up. " + error);
+      await interaction.followUp({
+        content: "Team not signed up. " + error,
+        ephemeral: true,
+      });
       return;
     }
 

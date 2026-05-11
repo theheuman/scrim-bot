@@ -305,9 +305,10 @@ describe("Sub request", () => {
     it("should not complete the signup because google did a bad", async () => {
       subRequestSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
       await command.run(basicInteraction);
-      expect(followUpSpy).toHaveBeenCalledWith(
-        "Sub request not made. Error: Sheets Failure",
-      );
+      expect(followUpSpy).toHaveBeenCalledWith({
+        content: "Sub request not made. Error: Sheets Failure",
+        ephemeral: true,
+      });
     });
 
     it("should not complete the signup because the player-in overstat is not valid", async () => {

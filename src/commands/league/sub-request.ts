@@ -219,7 +219,10 @@ export class LeagueSubRequestCommand extends MemberCommand {
       const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
-      await interaction.followUp(`Sub request not made. ${e}`);
+      await interaction.followUp({
+        content: `Sub request not made. ${e}`,
+        ephemeral: true,
+      });
     }
   }
 }

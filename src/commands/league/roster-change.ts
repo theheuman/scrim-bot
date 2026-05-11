@@ -184,7 +184,10 @@ export class RosterChangeCommand extends MemberCommand {
       const discordReplyMessage = `Roster change requested for __${teamName}__ (${VesaDivision[teamDivision]})\nRemoving <@${playerOut.id}>${playerOutOverstatText}\nAdding <@${playerIn.id}>${playerInOverstatText}\n[Sheet row #${rosterResult.rowNumber}](<${rosterResult.sheetUrl}>)\nNavigate to the "${rosterResult.tabName}" tab at the bottom of the sheet${roleMention}`;
       await interaction.followUp(discordReplyMessage);
     } catch (e) {
-      await interaction.followUp(`Roster change not made. ${e}`);
+      await interaction.followUp({
+        content: `Roster change not made. ${e}`,
+        ephemeral: true,
+      });
     }
   }
 }

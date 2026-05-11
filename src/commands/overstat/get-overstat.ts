@@ -25,7 +25,7 @@ export class GetOverstatCommand extends MemberCommand {
   async run(interaction: CustomInteraction) {
     const overstatUser = interaction.user;
     const otherPlayer = interaction.options.getUser("player", false);
-    await interaction.invisibleReply("Fetched all input, working on request");
+    await interaction.deferReply({ ephemeral: true });
 
     try {
       if (
