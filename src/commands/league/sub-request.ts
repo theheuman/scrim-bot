@@ -226,9 +226,15 @@ export class LeagueSubRequestCommand extends MemberCommand {
           `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting\n<${subResult.sheetUrl}>`,
         );
         return;
+      } else {
+        const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
+        await interaction.followUp(discordReplyMessage);
       }
-      const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
-      await interaction.followUp(discordReplyMessage);
+      if (!playerInOverstat) {
+        await interaction.followUp(
+          `<@${requestedByMember.id}> No overstat provided for the player subbing in, please reply to this message with screenshots of the entire screen showing their ranked stats from the last two seasons in this channel.`,
+        );
+      }
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);
     }

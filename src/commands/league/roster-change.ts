@@ -171,18 +171,26 @@ export class RosterChangeCommand extends MemberCommand {
           `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting\n<${rosterResult.sheetUrl}>`,
         );
         return;
+      } else {
+        const subApprovalRoleId =
+          await this.staticValueService.getSubApprovalRoleId();
+        const roleMention = subApprovalRoleId
+          ? `\n<@&${subApprovalRoleId}>`
+          : "";
+        const playerOutOverstatText = playerOutOverstat
+          ? ` [Overstat](<${playerOutOverstat}>)`
+          : "";
+        const playerInOverstatText = playerInOverstat
+          ? ` [Overstat](<${playerInOverstat}>)`
+          : "";
+        const discordReplyMessage = `Roster change requested for __${teamName}__ (${VesaDivision[teamDivision]})\nRemoving <@${playerOut.id}>${playerOutOverstatText}\nAdding <@${playerIn.id}>${playerInOverstatText}\n[Sheet row #${rosterResult.rowNumber}](<${rosterResult.sheetUrl}>)\nNavigate to the "${rosterResult.tabName}" tab at the bottom of the sheet${roleMention}`;
+        await interaction.followUp(discordReplyMessage);
       }
-      const subApprovalRoleId =
-        await this.staticValueService.getSubApprovalRoleId();
-      const roleMention = subApprovalRoleId ? `\n<@&${subApprovalRoleId}>` : "";
-      const playerOutOverstatText = playerOutOverstat
-        ? ` [Overstat](<${playerOutOverstat}>)`
-        : "";
-      const playerInOverstatText = playerInOverstat
-        ? ` [Overstat](<${playerInOverstat}>)`
-        : "";
-      const discordReplyMessage = `Roster change requested for __${teamName}__ (${VesaDivision[teamDivision]})\nRemoving <@${playerOut.id}>${playerOutOverstatText}\nAdding <@${playerIn.id}>${playerInOverstatText}\n[Sheet row #${rosterResult.rowNumber}](<${rosterResult.sheetUrl}>)\nNavigate to the "${rosterResult.tabName}" tab at the bottom of the sheet${roleMention}`;
-      await interaction.followUp(discordReplyMessage);
+      if (!playerInOverstat) {
+        await interaction.followUp(
+          `<@${requestedByMember.id}> No overstat provided for the player being added, create a ticket to finalize this change https://discord.com/channels/1292412338749837383/1354736726748172429`,
+        );
+      }
     } catch (e) {
       await interaction.followUp(`Roster change not made. ${e}`);
     }

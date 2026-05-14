@@ -184,6 +184,39 @@ describe("Sub request", () => {
     );
   });
 
+  it("should post no-overstat instructions when player-in has no overstat", async () => {
+    const noOverstatInteraction = {
+      ...basicInteraction,
+      options: {
+        ...(basicInteraction.options as object),
+        getString: (key: string) => {
+          if (
+            key ===
+            staticCommandUsedJustForInputNames.inputNames.playerInInputNames
+              .overstatLink
+          ) {
+            return "None";
+          }
+          return (
+            basicInteraction.options as unknown as {
+              getString: (key: string) => string | null;
+            }
+          ).getString(key);
+        },
+      },
+    } as unknown as CustomInteraction;
+
+    getPlayerOverstatSpy
+      .mockResolvedValueOnce(overstats.player1)
+      .mockRejectedValueOnce(new Error("not in db"));
+
+    await command.run(noOverstatInteraction);
+    expect(followUpSpy).toHaveBeenCalledTimes(2);
+    expect(followUpSpy).toHaveBeenLastCalledWith(
+      `<@player1id> No overstat provided for the player subbing in, please reply to this message with screenshots of the entire screen showing their ranked stats from the last two seasons in this channel.`,
+    );
+  });
+
   it("Should complete signup but warn that response can't be parsed", async () => {
     subRequestSpy.mockResolvedValueOnce({
       rowNumber: null,
