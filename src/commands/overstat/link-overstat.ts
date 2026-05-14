@@ -2,6 +2,7 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { OverstatService } from "../../services/overstat";
 import { AuthService } from "../../services/auth";
+import { AlertService } from "../../services/alert";
 import { GuildMember } from "discord.js";
 
 export class LinkOverstatCommand extends MemberCommand {
@@ -11,10 +12,15 @@ export class LinkOverstatCommand extends MemberCommand {
   };
 
   constructor(
+    alertService: AlertService,
     private authService: AuthService,
     private overstatService: OverstatService,
   ) {
-    super("link-overstat", "Links an overstat overview url to a player");
+    super(
+      alertService,
+      "link-overstat",
+      "Links an overstat overview url to a player",
+    );
     this.addStringInput(this.inputNames.overstat, "The overstat link", {
       isRequired: true,
     });

@@ -12,7 +12,13 @@ import {
 } from "./types";
 import { DiscordRole } from "../models/Role";
 import { ExpungedPlayerPrio } from "../models/Prio";
-import { parsePrioType, PrioType, Scrim } from "../models/Scrims";
+import { parseScrimType, ScrimType, Scrim } from "../models/Scrims";
+
+export interface GoogleSheetConfig {
+  spreadsheetId: string;
+  tabName: string;
+  rangeStart: string;
+}
 
 export abstract class DB {
   abstract get<K extends FieldSelection[]>(
@@ -68,7 +74,7 @@ export abstract class DB {
     discordChannelID: string,
     overstatId: string | null = null,
     overstatJson: JSON | null = null,
-    prioType?: PrioType,
+    scrimType?: ScrimType,
   ): Promise<string> {
     const ids = await this.post(DbTable.scrims, [
       this.removeUndefined({
@@ -76,7 +82,7 @@ export abstract class DB {
         discord_channel: discordChannelID,
         overstat_id: overstatId,
         overstat_json: overstatJson,
-        prio_type: prioType,
+        scrim_type: scrimType,
       }),
     ]);
     return ids[0];
@@ -367,7 +373,7 @@ export abstract class DB {
         comparator: "eq",
         value: discordChannelID,
       },
-      ["id", "overstat_id", "date_time_field", "active", "prio_type"],
+      ["id", "overstat_id", "date_time_field", "active", "scrim_type"],
     );
     return dbResult.map((entry) => ({
       id: entry.id as string,
@@ -375,7 +381,7 @@ export abstract class DB {
       overstatId: entry.overstat_id as string,
       discordChannel: discordChannelID,
       active: entry.active as boolean,
-      prioType: parsePrioType(entry.prio_type as string),
+      scrimType: parseScrimType(entry.scrim_type as string),
     }));
   }
 
@@ -384,32 +390,33 @@ export abstract class DB {
       discordChannel: string;
       id: string;
       dateTimeField: string;
-      prioType: PrioType;
+      scrimType: ScrimType;
     }[]
   > {
     const dbData = (await this.get(
       DbTable.scrims,
       { fieldName: "active", comparator: "eq", value: true },
-      ["discord_channel", "id", "date_time_field", "prio_type"],
+      ["discord_channel", "id", "date_time_field", "scrim_type"],
     )) as {
       discord_channel: string;
       id: string;
       date_time_field: string;
-      prio_type: string;
+      scrim_type: string;
     }[];
     return dbData.map((dbScrim) => ({
       discordChannel: dbScrim.discord_channel as string,
       id: dbScrim.id as string,
       dateTimeField: dbScrim.date_time_field as string,
-      prioType: parsePrioType(dbData[0].prio_type),
+      scrimType: parseScrimType(dbScrim.scrim_type),
     }));
   }
 
   async getActiveLeagueSeason(date: Date = new Date()): Promise<{
     id: string;
-    googleSheetId: string;
-    googleSheetName: string;
-    googleSheetRangeStart: string;
+    signupSheet: GoogleSheetConfig;
+    subSheet: GoogleSheetConfig;
+    rosterChangeSheet: GoogleSheetConfig;
+    rosterSheet: GoogleSheetConfig | null;
     signupPrioEndDate: string;
     startDate: string;
   } | null> {
@@ -432,22 +439,43 @@ export abstract class DB {
       },
       [
         "id",
-        "google_sheet_id",
-        "google_sheet_name",
-        "google_sheet_range_start",
         "signup_prio_end_date",
         "start_date",
+        { signup_sheet: ["sheet_id", "tab_name", "range_start"] },
+        { sub_sheet: ["sheet_id", "tab_name", "range_start"] },
+        { roster_change_sheet: ["sheet_id", "tab_name", "range_start"] },
+        { roster_sheet: ["sheet_id", "tab_name", "range_start"] },
       ],
     );
 
     if (dbData.length > 0) {
+      const row = dbData[0];
       return {
-        id: dbData[0].id as string,
-        googleSheetId: dbData[0].google_sheet_id as string,
-        googleSheetName: dbData[0].google_sheet_name as string,
-        googleSheetRangeStart: dbData[0].google_sheet_range_start as string,
-        signupPrioEndDate: dbData[0].signup_prio_end_date as string,
-        startDate: dbData[0].start_date as string,
+        id: row.id as string,
+        signupPrioEndDate: row.signup_prio_end_date as string,
+        startDate: row.start_date as string,
+        signupSheet: {
+          spreadsheetId: row.signup_sheet.sheet_id as string,
+          tabName: row.signup_sheet.tab_name as string,
+          rangeStart: row.signup_sheet.range_start as string,
+        },
+        subSheet: {
+          spreadsheetId: row.sub_sheet.sheet_id as string,
+          tabName: row.sub_sheet.tab_name as string,
+          rangeStart: row.sub_sheet.range_start as string,
+        },
+        rosterChangeSheet: {
+          spreadsheetId: row.roster_change_sheet.sheet_id as string,
+          tabName: row.roster_change_sheet.tab_name as string,
+          rangeStart: row.roster_change_sheet.range_start as string,
+        },
+        rosterSheet: row.roster_sheet
+          ? {
+              spreadsheetId: row.roster_sheet.sheet_id as string,
+              tabName: row.roster_sheet.tab_name as string,
+              rangeStart: row.roster_sheet.range_start as string,
+            }
+          : null,
       };
     } else {
       return null;

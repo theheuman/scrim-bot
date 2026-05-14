@@ -8,9 +8,10 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
-import { RosterServiceMock } from "../../../mocks/roster.mock";
 import { RosterService } from "../../../../src/services/rosters";
 import { DropoutCommand } from "../../../../src/commands/scrims/signup/droput-scrims";
+import { AlertService } from "../../../../src/services/alert";
+import { provideMagickalMock } from "../../../mocks/magickal-mock";
 
 describe("Drop out name", () => {
   let basicInteraction: CustomInteraction;
@@ -33,7 +34,7 @@ describe("Drop out name", () => {
 
   let command: DropoutCommand;
 
-  const mockRosterService = new RosterServiceMock();
+  const mockRosterService = provideMagickalMock(RosterService);
 
   beforeAll(() => {
     member = {
@@ -61,7 +62,10 @@ describe("Drop out name", () => {
     replySpy.mockClear();
     editReplySpy.mockClear();
     removeTeamSpy.mockClear();
-    command = new DropoutCommand(mockRosterService as unknown as RosterService);
+    command = new DropoutCommand(
+      provideMagickalMock(AlertService),
+      mockRosterService,
+    );
   });
 
   it("Should dropout", async () => {

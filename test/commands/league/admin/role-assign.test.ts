@@ -11,9 +11,10 @@ import {
   Role,
   RoleResolvable,
 } from "discord.js";
-import { AuthMock } from "../../../mocks/auth.mock";
 import { RoleAssignmentCommand } from "../../../../src/commands/league/admin/role-assign";
 import { AuthService } from "../../../../src/services/auth";
+import { AlertService } from "../../../../src/services/alert";
+import { provideMagickalMock } from "../../../mocks/magickal-mock";
 
 describe("Assign roles", () => {
   let basicInteraction: CustomInteraction;
@@ -41,13 +42,16 @@ describe("Assign roles", () => {
     string
   >;
 
-  const mockAuthService = new AuthMock();
+  const mockAuthService = provideMagickalMock(AuthService);
 
   let command: RoleAssignmentCommand;
   let returnedRole: Role;
 
   beforeAll(() => {
-    command = new RoleAssignmentCommand(mockAuthService as AuthService);
+    command = new RoleAssignmentCommand(
+      provideMagickalMock(AlertService),
+      mockAuthService,
+    );
     returnedRole = {
       id: "discord role id",
       name: "Division 1",

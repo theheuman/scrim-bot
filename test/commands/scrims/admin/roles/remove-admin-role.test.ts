@@ -6,9 +6,10 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { RemoveAdminRoleCommand } from "../../../../../src/commands/scrims/admin/roles/remove-admin-role";
+import { AlertService } from "../../../../../src/services/alert";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Remove admin role", () => {
   let basicInteraction: CustomInteraction;
@@ -29,12 +30,15 @@ describe("Remove admin role", () => {
     string
   >;
 
-  const mockAuthService = new AuthMock();
+  const mockAuthService = provideMagickalMock(AuthService);
 
   let command: RemoveAdminRoleCommand;
 
   beforeAll(() => {
-    command = new RemoveAdminRoleCommand(mockAuthService as AuthService);
+    command = new RemoveAdminRoleCommand(
+      provideMagickalMock(AlertService),
+      mockAuthService,
+    );
 
     basicInteraction = {
       options: {

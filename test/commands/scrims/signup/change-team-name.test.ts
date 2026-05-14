@@ -8,9 +8,10 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
-import { RosterServiceMock } from "../../../mocks/roster.mock";
 import { RosterService } from "../../../../src/services/rosters";
 import { ChangeTeamNameCommand } from "../../../../src/commands/scrims/signup/change-team-name";
+import { AlertService } from "../../../../src/services/alert";
+import { provideMagickalMock } from "../../../mocks/magickal-mock";
 
 describe("Change team name", () => {
   let basicInteraction: CustomInteraction;
@@ -38,7 +39,7 @@ describe("Change team name", () => {
 
   let command: ChangeTeamNameCommand;
 
-  const mockRosterService = new RosterServiceMock();
+  const mockRosterService = provideMagickalMock(RosterService);
 
   beforeAll(() => {
     member = {
@@ -71,7 +72,8 @@ describe("Change team name", () => {
     editReplySpy.mockClear();
     rosterServiceChangeNameSpy.mockClear();
     command = new ChangeTeamNameCommand(
-      mockRosterService as unknown as RosterService,
+      provideMagickalMock(AlertService),
+      mockRosterService,
     );
   });
 

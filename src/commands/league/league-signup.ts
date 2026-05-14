@@ -2,14 +2,15 @@ import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
 import { isGuildMember } from "../../utility/utility";
 import { OverstatService } from "../../services/overstat";
-import { User } from "discord.js";
+import { LeagueService } from "../../services/league";
+import { AlertService } from "../../services/alert";
 import {
-  LeagueService,
-  SheetsPlayer,
   PlayerRank,
   Platform,
+  SheetsPlayer,
   VesaDivision,
-} from "../../services/league-signup";
+} from "../../models/league-models";
+import { LeagueCommandHelper } from "./league-command-helper";
 
 export class LeagueSignupCommand extends MemberCommand {
   inputNames = {
@@ -44,10 +45,11 @@ export class LeagueSignupCommand extends MemberCommand {
   };
 
   constructor(
+    alertService: AlertService,
     private overstatService: OverstatService,
     private leagueService: LeagueService,
   ) {
-    super("league-signup", "Signup for the league");
+    super(alertService, "league-signup", "Signup for the league");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
       minLength: 1,
@@ -274,9 +276,10 @@ export class LeagueSignupCommand extends MemberCommand {
     interaction: CustomInteraction,
   ): Promise<SheetsPlayer> {
     const user = interaction.options.getUser(playerNumberInputs.user, true);
-    const overstatLink = await this.validateOverstatLink(
+    const overstatLink = await LeagueCommandHelper.VALIDATE_OVERSTAT_LINK(
       user,
       interaction.options.getString(playerNumberInputs.overstatLink, true),
+      this.overstatService,
     );
     return {
       elo: undefined,
@@ -299,43 +302,5 @@ export class LeagueSignupCommand extends MemberCommand {
         true,
       ),
     };
-  }
-
-  // throws if provided link is illegal or if provided link does not match link for that user in db, otherwise returns valid link, if "none" provided attempts to fetch from db. Sends undefined if it can't fetch it
-  async validateOverstatLink(
-    user: User,
-    overstatLink: string,
-  ): Promise<string | undefined> {
-    let linkToReturn: string | undefined;
-    if (overstatLink.toLowerCase() === "none") {
-      try {
-        linkToReturn = await this.overstatService.getPlayerOverstat(user);
-      } catch {
-        linkToReturn = undefined;
-        console.log(
-          "No overstat provided and none found in db for " + user.displayName,
-        );
-      }
-    } else {
-      // will throw an error if link is invalid
-      this.overstatService.validateLinkUrl(overstatLink);
-      let dbOverstatLink;
-      try {
-        dbOverstatLink = await this.overstatService.getPlayerOverstat(user);
-      } catch {
-        await this.overstatService.addPlayerOverstatLink(user, overstatLink);
-      }
-      if (
-        dbOverstatLink &&
-        this.overstatService.getPlayerId(overstatLink) !==
-          this.overstatService.getPlayerId(dbOverstatLink)
-      ) {
-        throw new Error(
-          `Overstat provided for ${user.displayName} does not match link previously provided with /link-overstat command`,
-        );
-      }
-      linkToReturn = overstatLink;
-    }
-    return linkToReturn;
   }
 }

@@ -6,9 +6,10 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
 import { AddAdminRoleCommand } from "../../../../../src/commands/scrims/admin/roles/add-admin-role";
+import { AlertService } from "../../../../../src/services/alert";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 import { DiscordRole } from "../../../../../src/models/Role";
 
 describe("Add admin role", () => {
@@ -30,12 +31,15 @@ describe("Add admin role", () => {
     string
   >;
 
-  const mockAuthService = new AuthMock();
+  const mockAuthService = provideMagickalMock(AuthService);
 
   let command: AddAdminRoleCommand;
 
   beforeAll(() => {
-    command = new AddAdminRoleCommand(mockAuthService as AuthService);
+    command = new AddAdminRoleCommand(
+      provideMagickalMock(AlertService),
+      mockAuthService,
+    );
 
     basicInteraction = {
       options: {

@@ -7,10 +7,10 @@ import {
 } from "discord.js";
 import { Scrim } from "../../src/models/Scrims";
 import { DiscordService } from "../../src/services/discord";
-import { StaticValueServiceMock } from "../mocks/static-values.mock";
 import { ExtendedClient } from "../../src/ExtendedClient";
 import { ForumThreadChannel } from "discord.js/typings";
 import { StaticValueService } from "../../src/services/static-values";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 import SpyInstance = jest.SpyInstance;
 
 jest.mock("../../src/config", () => {
@@ -27,7 +27,7 @@ jest.mock("../../src/config", () => {
 
 describe("Discord service", () => {
   let discordService: DiscordService;
-  let staticValueMock: StaticValueServiceMock;
+  let staticValueMock: jest.Mocked<StaticValueService>;
   let client: ExtendedClient;
   let guild: Guild;
   let forumChannel: ForumThreadChannel;
@@ -41,7 +41,24 @@ describe("Discord service", () => {
   const scrim = { dateTime: new Date(), discordChannel: "channel" } as Scrim;
 
   beforeEach(() => {
-    staticValueMock = new StaticValueServiceMock();
+    staticValueMock = provideMagickalMock(StaticValueService);
+    jest
+      .spyOn(staticValueMock, "getScrimInfoTimes")
+      .mockImplementation(async (scrimDate: Date) => {
+        const lobbyPostDate = new Date(
+          scrimDate.valueOf() - 2 * 60 * 60 * 1000,
+        );
+        const lowPrioDate = new Date(
+          scrimDate.valueOf() - 1.5 * 60 * 60 * 1000,
+        );
+        const draftDate = new Date(scrimDate.valueOf() - 30 * 60 * 1000);
+        return {
+          lobbyPostDate,
+          lowPrioDate,
+          draftDate,
+          rosterLockDate: lobbyPostDate,
+        };
+      });
     message = {
       edit: jest.fn(),
     } as unknown as Message;
@@ -68,10 +85,7 @@ describe("Discord service", () => {
       },
     } as unknown as ExtendedClient;
 
-    discordService = new DiscordService(
-      client,
-      staticValueMock as StaticValueService,
-    );
+    discordService = new DiscordService(client, staticValueMock);
 
     jest
       .spyOn(staticValueMock, "getInstructionText")
@@ -175,15 +189,33 @@ describe("Discord service", () => {
   });
 
   describe("errors", () => {
-    it("Should instruction text not found error", async () => {
+    it("Should use fallback message when instruction text not found", async () => {
+      const fixedDate = new Date("2026-05-08T22:00:00Z");
+      const fixedScrim = {
+        dateTime: fixedDate,
+        discordChannel: "channel",
+      } as Scrim;
       jest
         .spyOn(staticValueMock, "getInstructionText")
         .mockReturnValueOnce(Promise.resolve(undefined));
-      const causeException = async () => {
-        await discordService.updateSignupPostDescription(scrim, 0);
-      };
-      await expect(causeException).rejects.toThrow(
-        "Instruction text not found",
+
+      await discordService.updateSignupPostDescription(fixedScrim, 5);
+
+      const scrimTimestamp = Math.floor(fixedDate.valueOf() / 1000);
+      const draftTimestamp = scrimTimestamp - 30 * 60;
+      const lobbyPostTimestamp = scrimTimestamp - 2 * 60 * 60;
+      const lowPrioTimestamp = scrimTimestamp - 90 * 60;
+
+      expect(messageEditSpy).toHaveBeenCalledWith(
+        [
+          `Scrim Date: <t:${scrimTimestamp}:f>`,
+          `Scrim Time: <t:${scrimTimestamp}:t>`,
+          `Draft Time: <t:${draftTimestamp}:t>`,
+          `Lobby Post Time: <t:${lobbyPostTimestamp}:t>`,
+          `Low Prio Time: <t:${lowPrioTimestamp}:t>`,
+          `Roster Lock Time: <t:${lobbyPostTimestamp}:t>`,
+          `Signup Count: 5`,
+        ].join("\n"),
       );
     });
 

@@ -10,8 +10,9 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../src/commands/interaction";
 import { SubPlayerCommand } from "../../../../src/commands/scrims/signup/sub-player";
-import { RosterServiceMock } from "../../../mocks/roster.mock";
 import { RosterService } from "../../../../src/services/rosters";
+import { AlertService } from "../../../../src/services/alert";
+import { provideMagickalMock } from "../../../mocks/magickal-mock";
 import { ScrimSignup } from "../../../../src/models/Scrims";
 import { Player } from "../../../../src/models/Player";
 
@@ -42,7 +43,7 @@ describe("Sub player", () => {
 
   let command: SubPlayerCommand;
 
-  const mockRosterService = new RosterServiceMock();
+  const mockRosterService = provideMagickalMock(RosterService);
 
   const player1 = {
     displayName: "Player 1",
@@ -100,7 +101,8 @@ describe("Sub player", () => {
     editReplySpy.mockClear();
     replaceTeammateSpy.mockClear();
     command = new SubPlayerCommand(
-      mockRosterService as unknown as RosterService,
+      provideMagickalMock(AlertService),
+      mockRosterService,
     );
   });
 

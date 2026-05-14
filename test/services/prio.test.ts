@@ -3,11 +3,15 @@ import { Player, PlayerInsert } from "../../src/models/Player";
 import { PrioService } from "../../src/services/prio";
 import { DbMock } from "../mocks/db.mock";
 import SpyInstance = jest.SpyInstance;
-import { Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { Scrim, ScrimSignup, ScrimType } from "../../src/models/Scrims";
+import { LeagueService } from "../../src/services/league";
+import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 describe("Prio", () => {
   let prioService: PrioService;
   let dbMock: DbMock;
+  let leagueServiceMock: LeagueService;
   let dbInsertPlayerSpy: SpyInstance<
     Promise<Player[]>,
     [players: PlayerInsert[]],
@@ -30,7 +34,12 @@ describe("Prio", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    prioService = new PrioService(dbMock);
+    leagueServiceMock = provideMagickalMock(LeagueService);
+    prioService = new PrioService(
+      dbMock,
+      leagueServiceMock,
+      provideMagickalMock(AlertService),
+    );
     dbInsertPlayerSpy = jest.spyOn(dbMock, "insertPlayers");
     dbInsertPlayerSpy.mockReturnValue(Promise.resolve([player]));
   });
@@ -87,6 +96,138 @@ describe("Prio", () => {
           },
         ]);
       });
+    });
+  });
+
+  describe("getTeamPrioForScrim - league type", () => {
+    const leagueScrim: Scrim = {
+      scrimType: ScrimType.league,
+      dateTime: new Date(),
+    } as Scrim;
+
+    const makePlayer = (discordId: string): Player => ({
+      discordId,
+      displayName: discordId,
+      id: discordId,
+    });
+
+    const makeTeam = (discordIds: [string, string, string]): ScrimSignup => ({
+      date: new Date(),
+      players: [
+        makePlayer(discordIds[0]),
+        makePlayer(discordIds[1]),
+        makePlayer(discordIds[2]),
+      ],
+      signupId: "",
+      signupPlayer: makePlayer(""),
+      teamName: "",
+    });
+
+    it("should assign tier 5 when all 3 on same league team", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["alpha2", "Alpha"],
+            ["alpha3", "Alpha"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "alpha2", "alpha3"]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      expect(team.prio).toEqual({
+        amount: 5,
+        reasons: "3/3 players from Alpha",
+      });
+    });
+
+    it("should assign tier 4 when 2 on same team and 1 on different league team", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["alpha2", "Alpha"],
+            ["beta1", "Beta"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "alpha2", "beta1"]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      expect(team.prio).toEqual({
+        amount: 4,
+        reasons: "2/3 players from Alpha, 1 from Beta",
+      });
+    });
+
+    it("should assign tier 3 when 2 on same team and 1 not in league", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["alpha2", "Alpha"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "alpha2", "outsider"]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      expect(team.prio).toEqual({
+        amount: 3,
+        reasons: "2/3 players from Alpha, 1 not in league",
+      });
+    });
+
+    it("should assign tier 2 when all 3 on different league teams", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["beta1", "Beta"],
+            ["gamma1", "Gamma"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "beta1", "gamma1"]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      expect(team.prio).toEqual({
+        amount: 2,
+        reasons:
+          "all 3 players from different league teams: Alpha, Beta, Gamma",
+      });
+    });
+
+    it("should assign tier 1 when fewer than 2 on same league team", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["beta1", "Beta"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "beta1", "outsider"]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      expect(team.prio).toEqual({
+        amount: 1,
+        reasons: "fewer than 2 players from same league team",
+      });
+    });
+  });
+
+  describe("getTeamPrioForScrim - tournament type", () => {
+    it("should not set prio when scrim type is tournament", async () => {
+      const tournamentScrim: Scrim = {
+        scrimType: ScrimType.tournament,
+        dateTime: new Date(),
+      } as Scrim;
+      const team: ScrimSignup = {
+        date: new Date(),
+        players: [],
+        signupId: "",
+        signupPlayer: { id: "", discordId: "", displayName: "" },
+        teamName: "",
+      };
+      await prioService.getTeamPrioForScrim(tournamentScrim, [team], []);
+      expect(team.prio).toBeUndefined();
     });
   });
 

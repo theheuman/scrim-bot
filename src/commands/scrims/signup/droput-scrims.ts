@@ -2,13 +2,17 @@ import { isGuildMember } from "../../../utility/utility";
 import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { RosterService } from "../../../services/rosters";
+import { AlertService } from "../../../services/alert";
 
 export class DropoutCommand extends MemberCommand {
   inputNames = {
     teamName: "team-name",
   };
-  constructor(private rosterService: RosterService) {
-    super("dropout", "Drops a team from the signup list");
+  constructor(
+    alertService: AlertService,
+    private rosterService: RosterService,
+  ) {
+    super(alertService, "dropout", "Drops a team from the signup list");
     this.addStringInput(this.inputNames.teamName, "Team name", {
       isRequired: true,
       minLength: 1,

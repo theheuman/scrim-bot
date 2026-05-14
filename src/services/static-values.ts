@@ -1,20 +1,29 @@
 import { DB } from "../db/db";
 import { DbTable, DbValue } from "../db/types";
+import { ScrimType } from "../models/Scrims";
+
+const instructionTextKeys: Record<ScrimType, string> = {
+  [ScrimType.regular]: "signups_instruction_text",
+  [ScrimType.tournament]: "tournament_signups_instruction_text",
+  [ScrimType.league]: "league_signups_instruction_text",
+};
 
 export class StaticValueService {
-  private instructionText: string | undefined;
+  private instructionTextCache: Partial<Record<ScrimType, string>> = {};
   private scrimPassRoleId: string | undefined;
+  private subApprovalRoleId: string | undefined;
 
   constructor(private db: DB) {}
 
-  async getInstructionText(): Promise<string | undefined> {
-    if (this.instructionText) {
-      return this.instructionText;
+  async getInstructionText(scrimType: ScrimType): Promise<string | undefined> {
+    if (this.instructionTextCache[scrimType]) {
+      return this.instructionTextCache[scrimType];
     }
-    this.instructionText = await this.fetchStaticValue(
-      "signups_instruction_text",
-    );
-    return this.instructionText;
+    const text = await this.fetchStaticValue(instructionTextKeys[scrimType]);
+    if (text) {
+      this.instructionTextCache[scrimType] = text;
+    }
+    return text;
   }
 
   async getScrimPassRoleId(): Promise<string | undefined> {
@@ -25,8 +34,26 @@ export class StaticValueService {
     return this.scrimPassRoleId;
   }
 
+  async getSubApprovalRoleId(): Promise<string | undefined> {
+    if (this.subApprovalRoleId) {
+      return this.subApprovalRoleId;
+    }
+    this.subApprovalRoleId = await this.fetchStaticValue(
+      "sub_approval_role_id",
+    );
+    return this.subApprovalRoleId;
+  }
+
   async getScrimScoresChannelId(): Promise<string | undefined> {
     return this.fetchStaticValue("scrim_scores_channel_id");
+  }
+
+  async getAlertChannelId(): Promise<string | undefined> {
+    return this.fetchStaticValue("alert_channel_id");
+  }
+
+  async getAlertPingUserId(): Promise<string | undefined> {
+    return this.fetchStaticValue("alert_ping_user_id");
   }
 
   private async fetchStaticValue(key: string): Promise<string | undefined> {

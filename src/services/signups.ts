@@ -2,13 +2,14 @@ import { GuildMember, User } from "discord.js";
 import { Player, PlayerInsert } from "../models/Player";
 import { DB } from "../db/db";
 import { ScrimSignupsWithPlayers } from "../db/table.interfaces";
-import { PrioType, Scrim, ScrimSignup } from "../models/Scrims";
+import { Scrim, ScrimSignup } from "../models/Scrims";
 import { PrioService } from "./prio";
 import { appConfig } from "../config";
 import { AuthService } from "./auth";
 import { DiscordService } from "./discord";
 import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
+import { AlertService } from "./alert";
 
 export class SignupService {
   constructor(
@@ -18,6 +19,7 @@ export class SignupService {
     private discordService: DiscordService,
     private banService: BanService,
     private scrimService: ScrimService,
+    private alertService: AlertService,
   ) {}
 
   async addTeam(
@@ -40,8 +42,7 @@ export class SignupService {
       throw Error("Duplicate player");
     }
 
-    const { mainList, waitList } = await this.getSignups(discordChannelID);
-    const scrimSignups = [...mainList, ...waitList];
+    const scrimSignups = await this.getRawSignups(scrim);
     // yes this is a three deep for loop, this is a cry for help, please optimize this
     for (const team of scrimSignups) {
       if (team.teamName === teamName) {
@@ -121,19 +122,15 @@ export class SignupService {
       throw Error("No scrim found for that channel");
     }
     const teams = await this.getRawSignups(scrim);
-    // this adds prio to the teams
     await this.prioService.getTeamPrioForScrim(
       scrim,
       teams,
       discordIdsWithScrimPass ?? [],
     );
-    return this.sortTeams(teams, scrim.prioType);
+    return this.sortTeams(teams);
   }
 
-  private sortTeams(
-    teams: ScrimSignup[],
-    prioType: PrioType,
-  ): {
+  private sortTeams(teams: ScrimSignup[]): {
     mainList: ScrimSignup[];
     waitList: ScrimSignup[];
   } {
@@ -141,14 +138,10 @@ export class SignupService {
     const waitlistCutoff =
       lobbySize * Math.floor(teams.length / lobbySize) || lobbySize;
     const sortedTeams = [...teams].sort((teamA, teamB) => {
-      if (prioType === PrioType.regular) {
-        const lowPrioResult =
-          (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
-        if (lowPrioResult !== 0) {
-          return lowPrioResult;
-        }
+      const prioResult = (teamB.prio?.amount ?? 0) - (teamA.prio?.amount ?? 0);
+      if (prioResult !== 0) {
+        return prioResult;
       }
-      // lower date is better, so subtract b from a
       return teamA.date.valueOf() - teamB.date.valueOf();
     });
     return {
@@ -220,16 +213,13 @@ export class SignupService {
   }
 
   private async updateScrimSignupCount(scrim: Scrim) {
-    const { mainList, waitList } = await this.getSignups(scrim.discordChannel);
-    const count = mainList.length + waitList.length;
+    const signups = await this.getRawSignups(scrim);
+    const count = signups.length;
     try {
       await this.discordService.updateSignupPostDescription(scrim, count);
     } catch (e) {
-      console.error(
-        "Unable to update scrim signup count for ",
-        scrim.id,
-        scrim.discordChannel,
-        e,
+      await this.alertService.warn(
+        `Unable to update scrim signup count for scrim ${scrim.id} channel ${scrim.discordChannel}: ${e}`,
       );
     }
   }

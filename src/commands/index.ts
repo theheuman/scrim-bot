@@ -25,6 +25,7 @@ import {
   banService,
   leagueService,
   mmrService,
+  alertService,
 } from "../services";
 import { LinkOverstatCommand } from "./overstat/link-overstat";
 import { GetOverstatCommand } from "./overstat/get-overstat";
@@ -33,53 +34,79 @@ import { ScrimBanCommand } from "./scrims/admin/bans/scrim-ban";
 import { ExpungeBanCommand } from "./scrims/admin/bans/expunge-ban";
 import { LeagueSignupCommand } from "./league/league-signup";
 import { GetUserCommand } from "./overstat/get-user";
+import { LeagueSubRequestCommand } from "./league/sub-request";
+import { RosterChangeCommand } from "./league/roster-change";
 import { RoleAssignmentCommand } from "./league/admin/role-assign";
 
 export const commonCommands: Command[] = [
   // test commands
-  new PingCommand(),
-  new UserCommand(),
+  new PingCommand(alertService),
+  new UserCommand(alertService),
 
-  new AddAdminRoleCommand(authService),
-  new RemoveAdminRoleCommand(authService),
+  new AddAdminRoleCommand(alertService, authService),
+  new RemoveAdminRoleCommand(alertService, authService),
 
-  new LinkOverstatCommand(authService, overstatService),
-  new GetOverstatCommand(authService, overstatService),
-  new GetUserCommand(authService, overstatService),
+  new LinkOverstatCommand(alertService, authService, overstatService),
+  new GetOverstatCommand(alertService, authService, overstatService),
+  new GetUserCommand(alertService, authService, overstatService),
 ];
 
 export const scrimCommands: Command[] = [
-  new AddPrioCommand(authService, prioService),
-  new ExpungePrioCommand(authService, prioService),
+  new AddPrioCommand(alertService, authService, prioService),
+  new ExpungePrioCommand(alertService, authService, prioService),
 
-  new ScrimBanCommand(authService, banService),
-  new ExpungeBanCommand(authService, banService),
+  new ScrimBanCommand(alertService, authService, banService),
+  new ExpungeBanCommand(alertService, authService, banService),
 
-  new CreateScrimCommand(authService, scrimService, staticValueService),
+  new CreateScrimCommand(
+    alertService,
+    authService,
+    scrimService,
+    staticValueService,
+  ),
   new GetSignupsCommand(
+    alertService,
     authService,
     signupsService,
     staticValueService,
     mmrService,
   ),
   new ComputeScrimCommand(
+    alertService,
     authService,
     scrimService,
     discordService,
     overstatService,
   ),
-  new CloseScrimCommand(authService, scrimService),
+  new CloseScrimCommand(alertService, authService, scrimService),
 
-  new ChangeTeamNameCommand(rosterService),
-  new DropoutCommand(rosterService),
-  new SignupCommand(signupsService, prioService, scrimService),
-  new SubPlayerCommand(rosterService),
-  new CurrentPositionCommand(signupsService, staticValueService, scrimService),
+  new ChangeTeamNameCommand(alertService, rosterService),
+  new DropoutCommand(alertService, rosterService),
+  new SignupCommand(alertService, signupsService, prioService, scrimService),
+  new SubPlayerCommand(alertService, rosterService),
+  new CurrentPositionCommand(
+    alertService,
+    signupsService,
+    staticValueService,
+    scrimService,
+  ),
 ];
 
 export const leagueCommands: Command[] = [
-  new LeagueSignupCommand(overstatService, leagueService),
-  new RoleAssignmentCommand(authService),
+  new LeagueSignupCommand(alertService, overstatService, leagueService),
+  new LeagueSubRequestCommand(
+    alertService,
+    overstatService,
+    leagueService,
+    staticValueService,
+  ),
+  new RosterChangeCommand(
+    alertService,
+    overstatService,
+    leagueService,
+    staticValueService,
+  ),
+  new RoleAssignmentCommand(alertService, authService),
 ];
 
 export const commands: Command[] = [

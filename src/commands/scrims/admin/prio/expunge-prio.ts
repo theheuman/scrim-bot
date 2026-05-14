@@ -1,14 +1,17 @@
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 import { PrioService } from "../../../../services/prio";
 
 export class ExpungePrioCommand extends AdminCommand {
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private prioService: PrioService,
   ) {
     super(
+      alertService,
       authService,
       "expunge-prio",
       "Removes a prio entry for up to three players",

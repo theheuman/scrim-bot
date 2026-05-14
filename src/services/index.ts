@@ -10,8 +10,9 @@ import { DiscordService } from "./discord";
 import { client } from "../Client";
 import { BanService } from "./ban";
 import { HuggingFaceService } from "./hugging-face";
-import { LeagueService } from "./league-signup";
+import { LeagueService } from "./league";
 import { MmrService } from "./mmr";
+import { AlertService } from "./alert";
 
 // This file creates all the singleton services
 export const huggingFaceService = new HuggingFaceService();
@@ -19,14 +20,21 @@ export const overstatService = new OverstatService(nhostDb);
 export const staticValueService = new StaticValueService(nhostDb);
 
 export const discordService = new DiscordService(client, staticValueService);
+export const alertService = new AlertService(client, staticValueService);
 
 export const authService = new AuthService(nhostDb);
-export const prioService = new PrioService(nhostDb);
 export const banService = new BanService(nhostDb);
 export const scrimService = new ScrimService(
   nhostDb,
   overstatService,
   huggingFaceService,
+  alertService,
+);
+export const leagueService = new LeagueService(nhostDb);
+export const prioService = new PrioService(
+  nhostDb,
+  leagueService,
+  alertService,
 );
 export const signupsService = new SignupService(
   nhostDb,
@@ -35,6 +43,7 @@ export const signupsService = new SignupService(
   discordService,
   banService,
   scrimService,
+  alertService,
 );
 export const rosterService = new RosterService(
   nhostDb,
@@ -44,6 +53,6 @@ export const rosterService = new RosterService(
   staticValueService,
   scrimService,
   signupsService,
+  alertService,
 );
-export const leagueService = new LeagueService(nhostDb);
 export const mmrService = new MmrService(nhostDb);

@@ -1,9 +1,10 @@
 import { MemberCommand } from "../command";
 import { CustomInteraction } from "../interaction";
+import { AlertService } from "../../services/alert";
 
 export class UserCommand extends MemberCommand {
-  constructor() {
-    super("user", "Provides information about the user.");
+  constructor(alertService: AlertService) {
+    super(alertService, "user", "Provides information about the user.");
   }
 
   async run(interaction: CustomInteraction): Promise<void> {

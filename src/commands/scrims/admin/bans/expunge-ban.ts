@@ -1,14 +1,17 @@
 import { AdminCommand } from "../../../command";
 import { CustomInteraction } from "../../../interaction";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 import { BanService } from "../../../../services/ban";
 
 export class ExpungeBanCommand extends AdminCommand {
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private banService: BanService,
   ) {
     super(
+      alertService,
       authService,
       "expunge-ban",
       "Removes a ban entry for up to three players",

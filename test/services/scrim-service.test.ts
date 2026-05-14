@@ -1,17 +1,13 @@
 import { DbMock } from "../mocks/db.mock";
 import { GuildMember, User } from "discord.js";
 import { OverstatService } from "../../src/services/overstat";
-import { PrioType, Scrim } from "../../src/models/Scrims";
+import { ScrimType, Scrim } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import SpyInstance = jest.SpyInstance;
-import { PrioServiceMock } from "../mocks/prio.mock";
-import { AuthMock } from "../mocks/auth.mock";
-import { OverstatServiceMock } from "../mocks/overstat.mock";
-import { BanService } from "../../src/services/ban";
 import { HuggingFaceService } from "../../src/services/hugging-face";
-import { BanServiceMock } from "../mocks/ban.mock";
-import { HuggingFaceServiceMock } from "../mocks/hugging-face.mock";
 import { ScrimService } from "../../src/services/scrim-service";
+import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -24,10 +20,7 @@ jest.mock("../../src/config", () => {
 describe("ScrimService", () => {
   let dbMock: DbMock;
   let service: ScrimService;
-  let prioServiceMock: PrioServiceMock;
-  let overstatServiceMock: OverstatServiceMock;
-  let authServiceMock: AuthMock;
-  let mockBanService: BanService;
+  let overstatServiceMock: OverstatService;
   let mockHuggingFaceService: HuggingFaceService;
 
   let insertPlayersSpy: SpyInstance;
@@ -39,17 +32,13 @@ describe("ScrimService", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    overstatServiceMock = new OverstatServiceMock();
-    prioServiceMock = new PrioServiceMock();
-    mockBanService = new BanServiceMock() as BanService;
-    mockHuggingFaceService =
-      new HuggingFaceServiceMock() as unknown as HuggingFaceService;
-
-    authServiceMock = new AuthMock();
+    overstatServiceMock = provideMagickalMock(OverstatService);
+    mockHuggingFaceService = provideMagickalMock(HuggingFaceService);
     service = new ScrimService(
       dbMock,
-      overstatServiceMock as OverstatService,
+      overstatServiceMock,
       mockHuggingFaceService,
+      provideMagickalMock(AlertService),
     );
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
@@ -74,11 +63,6 @@ describe("ScrimService", () => {
         },
       ]),
     );
-    jest
-      .spyOn(authServiceMock, "memberIsAdmin")
-      .mockImplementation((member) =>
-        Promise.resolve(member === (theheuman as unknown as GuildMember)),
-      );
     huggingFaceUploadSpy = jest.spyOn(
       mockHuggingFaceService,
       "uploadOverstatJson",
@@ -115,7 +99,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             id: "123",
             dateTimeField: "2020-01-01",
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -202,7 +186,7 @@ describe("ScrimService", () => {
             id: scrimId,
             discordChannel: channelId,
             dateTime: time,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -235,7 +219,7 @@ describe("ScrimService", () => {
             id: scrimId,
             discordChannel: channelId,
             dateTime: time,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -288,8 +272,8 @@ describe("ScrimService", () => {
       expect(updateScrimSpy).toHaveBeenCalledTimes(1);
 
       expect(createNewScrimSpy.mock.calls).toEqual([
-        [time, channelId, lobby2OverstatId, tournamentStats, PrioType.regular],
-        [time, channelId, lobby3OverstatId, tournamentStats, PrioType.regular],
+        [time, channelId, lobby2OverstatId, tournamentStats, ScrimType.regular],
+        [time, channelId, lobby3OverstatId, tournamentStats, ScrimType.regular],
       ]);
       expect(createNewScrimSpy).toHaveBeenCalledTimes(2);
       expect(huggingFaceUploadSpy.mock.calls).toEqual([
@@ -308,7 +292,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             dateTime: time,
             overstatId,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );
@@ -344,7 +328,7 @@ describe("ScrimService", () => {
         channelId,
         newLobbyOverstatId,
         tournamentStats,
-        PrioType.regular,
+        ScrimType.regular,
       );
     });
 
@@ -357,7 +341,7 @@ describe("ScrimService", () => {
             discordChannel: channelId,
             dateTime: time,
             overstatId,
-            prioType: PrioType.regular,
+            scrimType: ScrimType.regular,
           },
         ]),
       );

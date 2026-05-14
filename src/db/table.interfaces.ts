@@ -30,5 +30,5 @@ export interface Scrims {
   discord_channel: string;
   active: boolean;
   overstat_id?: string;
-  prio_type: string;
+  scrim_type: string;
 }

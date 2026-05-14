@@ -10,10 +10,10 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { ScrimBanCommand } from "../../../../../src/commands/scrims/admin/bans/scrim-ban";
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { BanServiceMock } from "../../../../mocks/ban.mock";
+import { AlertService } from "../../../../../src/services/alert";
 import { BanService } from "../../../../../src/services/ban";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Scrim ban", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -39,14 +39,15 @@ describe("Scrim ban", () => {
     string
   >;
 
-  const mockBanService = new BanServiceMock();
+  const mockBanService = provideMagickalMock(BanService);
 
   let command: ScrimBanCommand;
 
   beforeAll(() => {
     command = new ScrimBanCommand(
-      new AuthMock() as AuthService,
-      mockBanService as BanService,
+      provideMagickalMock(AlertService),
+      provideMagickalMock(AuthService),
+      mockBanService,
     );
 
     member = {

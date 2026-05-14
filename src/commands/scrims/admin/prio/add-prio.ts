@@ -3,6 +3,7 @@ import { CustomInteraction } from "../../../interaction";
 import { PrioService } from "../../../../services/prio";
 import { setEasternHours } from "../../../../utility/time";
 import { AuthService } from "../../../../services/auth";
+import { AlertService } from "../../../../services/alert";
 
 export class AddPrioCommand extends AdminCommand {
   inputNames = {
@@ -16,10 +17,16 @@ export class AddPrioCommand extends AdminCommand {
   };
 
   constructor(
+    alertService: AlertService,
     authService: AuthService,
     private prioService: PrioService,
   ) {
-    super(authService, "add-prio", "Adds a prio entry for up to three players");
+    super(
+      alertService,
+      authService,
+      "add-prio",
+      "Adds a prio entry for up to three players",
+    );
 
     this.addUserInput(this.inputNames.user1, "First user", true);
     this.addDateInput(this.inputNames.endDate, "End date", true);

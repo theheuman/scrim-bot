@@ -7,11 +7,11 @@ import {
 } from "discord.js";
 import SpyInstance = jest.SpyInstance;
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { BanServiceMock } from "../../../../mocks/ban.mock";
 import { BanService } from "../../../../../src/services/ban";
 import { ExpungeBanCommand } from "../../../../../src/commands/scrims/admin/bans/expunge-ban";
+import { AlertService } from "../../../../../src/services/alert";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Expunge ban", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -34,8 +34,8 @@ describe("Expunge ban", () => {
   >;
   let command: ExpungeBanCommand;
 
-  const mockBanService = new BanServiceMock() as BanService;
-  const mockAuth = new AuthMock() as AuthService;
+  const mockBanService = provideMagickalMock(BanService);
+  const mockAuth = provideMagickalMock(AuthService);
 
   beforeAll(() => {
     member = {
@@ -77,7 +77,11 @@ describe("Expunge ban", () => {
     expungeBanSpy = jest.spyOn(mockBanService, "expungeBans");
     expungeBanSpy.mockClear();
     expungeBanSpy.mockReturnValue(Promise.resolve([]));
-    command = new ExpungeBanCommand(mockAuth, mockBanService);
+    command = new ExpungeBanCommand(
+      provideMagickalMock(AlertService),
+      mockAuth,
+      mockBanService,
+    );
   });
 
   it("Should expunge bans for multiple users", async () => {

@@ -10,10 +10,10 @@ import {
 import SpyInstance = jest.SpyInstance;
 import { AddPrioCommand } from "../../../../../src/commands/scrims/admin/prio/add-prio";
 import { CustomInteraction } from "../../../../../src/commands/interaction";
-import { AuthMock } from "../../../../mocks/auth.mock";
 import { AuthService } from "../../../../../src/services/auth";
-import { PrioServiceMock } from "../../../../mocks/prio.mock";
+import { AlertService } from "../../../../../src/services/alert";
 import { PrioService } from "../../../../../src/services/prio";
+import { provideMagickalMock } from "../../../../mocks/magickal-mock";
 
 describe("Add prio", () => {
   // this is supposed to be a Snowflake but I don't want to mock it strings work just fine
@@ -45,14 +45,15 @@ describe("Add prio", () => {
     string
   >;
 
-  const mockPrioService = new PrioServiceMock();
+  const mockPrioService = provideMagickalMock(PrioService);
 
   let command: AddPrioCommand;
 
   beforeAll(() => {
     command = new AddPrioCommand(
-      new AuthMock() as AuthService,
-      mockPrioService as PrioService,
+      provideMagickalMock(AlertService),
+      provideMagickalMock(AuthService),
+      mockPrioService,
     );
 
     member = {

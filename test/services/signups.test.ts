@@ -8,20 +8,17 @@ import {
   MessagePayload,
   User,
 } from "discord.js";
-import { PrioType, Scrim, ScrimSignup } from "../../src/models/Scrims";
+import { ScrimType, Scrim, ScrimSignup } from "../../src/models/Scrims";
 import { OverstatTournamentResponse } from "../../src/models/overstatModels";
 import { PrioService } from "../../src/services/prio";
 import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
 import SpyInstance = jest.SpyInstance;
-import { PrioServiceMock } from "../mocks/prio.mock";
-import { AuthMock } from "../mocks/auth.mock";
 import { AuthService } from "../../src/services/auth";
 import { DiscordService } from "../../src/services/discord";
-import { DiscordServiceMock } from "../mocks/discord-service.mock";
 import { BanService } from "../../src/services/ban";
-import { BanServiceMock } from "../mocks/ban.mock";
-import { ScrimServiceMock } from "../mocks/scrim-service.mock";
 import { ScrimService } from "../../src/services/scrim-service";
+import { AlertService } from "../../src/services/alert";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 
 jest.mock("../../src/config", () => {
   return {
@@ -34,10 +31,10 @@ jest.mock("../../src/config", () => {
 describe("Signups", () => {
   let dbMock: DbMock;
   let signups: SignupService;
-  let prioServiceMock: PrioServiceMock;
-  let authServiceMock: AuthMock;
+  let prioServiceMock: PrioService;
+  let authServiceMock: AuthService;
   let mockBanService: BanService;
-  let scrimServiceMock: ScrimServiceMock;
+  let scrimServiceMock: ScrimService;
   const correctDiscordChannelId = "a forum post";
   const correctScrimId = "32451";
 
@@ -45,19 +42,22 @@ describe("Signups", () => {
 
   beforeEach(() => {
     dbMock = new DbMock();
-    prioServiceMock = new PrioServiceMock();
-    mockBanService = new BanServiceMock() as BanService;
-
-    authServiceMock = new AuthMock();
-    scrimServiceMock = new ScrimServiceMock();
+    prioServiceMock = provideMagickalMock(PrioService);
+    mockBanService = provideMagickalMock(BanService);
+    authServiceMock = provideMagickalMock(AuthService);
+    scrimServiceMock = provideMagickalMock(ScrimService);
     signups = new SignupService(
       dbMock,
-      prioServiceMock as PrioService,
-      authServiceMock as AuthService,
-      new DiscordServiceMock() as DiscordService,
+      prioServiceMock,
+      authServiceMock,
+      provideMagickalMock(DiscordService),
       mockBanService,
-      scrimServiceMock as unknown as ScrimService,
+      scrimServiceMock,
+      provideMagickalMock(AlertService),
     );
+    jest
+      .spyOn(mockBanService, "teamHasBan")
+      .mockResolvedValue({ hasBan: false, reason: "" });
     insertPlayersSpy = jest.spyOn(dbMock, "insertPlayers");
     insertPlayersSpy.mockReturnValue(
       Promise.resolve([
@@ -93,7 +93,7 @@ describe("Signups", () => {
         dateTime: new Date("2026-01-01T20:00:00"),
         discordChannel: correctDiscordChannelId,
         active: false,
-        prioType: PrioType.regular,
+        scrimType: ScrimType.regular,
       }),
     );
   });
@@ -547,7 +547,7 @@ describe("Signups", () => {
           dateTime: new Date("2026-01-01T20:00:00"),
           discordChannel: correctDiscordChannelId,
           active: false,
-          prioType: PrioType.off,
+          scrimType: ScrimType.tournament,
         }),
       );
 
@@ -566,81 +566,9 @@ describe("Signups", () => {
 
       jest
         .spyOn(prioServiceMock, "getTeamPrioForScrim")
-        .mockImplementation((_, teams: ScrimSignup[]) => {
-          for (const team of teams) {
-            switch (team.teamName) {
-              case highPrioTeam.team_name:
-                team.prio = { amount: 1, reasons: "High prio" };
-                break;
-              case mediumPrioTeam.team_name:
-                team.prio = { amount: 0, reasons: "" };
-                break;
-              case lowPrioTeam.team_name:
-                team.prio = { amount: -1, reasons: "Low prio" };
-                break;
-            }
-          }
-          return Promise.resolve(teams);
-        });
-      jest
-        .spyOn(dbMock, "getScrimSignupsWithPlayers")
-        .mockReturnValue(
-          Promise.resolve([highPrioTeam, mediumPrioTeam, lowPrioTeam]),
+        .mockImplementation((_, teams: ScrimSignup[]) =>
+          Promise.resolve(teams),
         );
-
-      const { mainList, waitList } = await signups.getSignups(
-        correctDiscordChannelId,
-      );
-      const allTeams = [...mainList, ...waitList];
-      expect(allTeams.map((t) => t.teamName)).toEqual([
-        "Low Prio",
-        "Medium Prio",
-        "High Prio",
-      ]);
-    });
-
-    it("Should sort teams by signup date only when prio type is league", async () => {
-      jest.spyOn(scrimServiceMock, "getScrim").mockReturnValueOnce(
-        Promise.resolve({
-          id: correctScrimId,
-          dateTime: new Date("2026-01-01T20:00:00"),
-          discordChannel: correctDiscordChannelId,
-          active: false,
-          prioType: PrioType.league,
-        }),
-      );
-
-      const highPrioTeam: ScrimSignupsWithPlayers = {
-        date_time: "2024-10-28T20:10:35.706+00:00",
-        team_name: "High Prio",
-      } as ScrimSignupsWithPlayers;
-      const lowPrioTeam: ScrimSignupsWithPlayers = {
-        date_time: "2024-10-10T20:10:35.706+00:00",
-        team_name: "Low Prio",
-      } as ScrimSignupsWithPlayers;
-      const mediumPrioTeam: ScrimSignupsWithPlayers = {
-        date_time: "2024-10-13T20:10:35.706+00:00",
-        team_name: "Medium Prio",
-      } as ScrimSignupsWithPlayers;
-
-      jest
-        .spyOn(prioServiceMock, "getTeamPrioForScrim")
-        .mockImplementation((_, teams: ScrimSignup[]) => {
-          for (const team of teams) {
-            switch (team.teamName) {
-              case highPrioTeam.team_name:
-                team.prio = { amount: 1, reasons: "High prio" };
-                break;
-              case mediumPrioTeam.team_name:
-                team.prio = { amount: 0, reasons: "" };
-                break;
-              case lowPrioTeam.team_name:
-                team.prio = { amount: -1, reasons: "Low prio" };
-                break;
-            }
-          }
-          return Promise.resolve(teams);
-        });
       jest
         .spyOn(dbMock, "getScrimSignupsWithPlayers")
         .mockReturnValue(

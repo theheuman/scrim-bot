@@ -13,15 +13,19 @@ export class DiscordService {
   ) {}
 
   async updateSignupPostDescription(scrim: Scrim, signupCount: number) {
-    const instructionText = await this.staticValueService.getInstructionText();
-    if (!instructionText) {
-      throw Error("Instruction text not found");
-    }
-    const updatedMessage = await this.replaceScrimVariablesFromScrim(
-      instructionText,
-      scrim,
-      signupCount,
+    const instructionText = await this.staticValueService.getInstructionText(
+      scrim.scrimType,
     );
+    let updatedMessage: string;
+    if (!instructionText) {
+      updatedMessage = await this.buildFallbackMessage(scrim, signupCount);
+    } else {
+      updatedMessage = await this.replaceScrimVariablesFromScrim(
+        instructionText,
+        scrim,
+        signupCount,
+      );
+    }
     const guild = this.client.guilds.cache.get(appConfig.discord.guildId.scrim);
     if (!guild) {
       throw Error("Guild not found");
@@ -62,6 +66,24 @@ export class DiscordService {
       .map((lobby) => `[${lobby.name}](<${lobby.link}>)`)
       .join("\n");
     await channel.send(`${formatDateForDiscord(date)}\n${lobbyLines}`);
+  }
+
+  private async buildFallbackMessage(
+    scrim: Scrim,
+    signupCount: number,
+  ): Promise<string> {
+    const { draftDate, lobbyPostDate, lowPrioDate, rosterLockDate } =
+      await this.staticValueService.getScrimInfoTimes(scrim.dateTime);
+
+    return [
+      `Scrim Date: ${formatDateForDiscord(scrim.dateTime)}`,
+      `Scrim Time: ${formatTimeForDiscord(scrim.dateTime)}`,
+      `Draft Time: ${formatTimeForDiscord(draftDate)}`,
+      `Lobby Post Time: ${formatTimeForDiscord(lobbyPostDate)}`,
+      `Low Prio Time: ${formatTimeForDiscord(lowPrioDate)}`,
+      `Roster Lock Time: ${formatTimeForDiscord(rosterLockDate)}`,
+      `Signup Count: ${signupCount}`,
+    ].join("\n");
   }
 
   private async replaceScrimVariablesFromScrim(
