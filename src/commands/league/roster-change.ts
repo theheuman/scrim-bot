@@ -170,7 +170,6 @@ export class RosterChangeCommand extends MemberCommand {
         await interaction.followUp(
           `Problem parsing google sheets response, please check sheet to see if your roster change went through before resubmitting\n<${rosterResult.sheetUrl}>`,
         );
-        return;
       } else {
         const subApprovalRoleId =
           await this.staticValueService.getSubApprovalRoleId();

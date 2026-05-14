@@ -217,6 +217,44 @@ describe("Roster change", () => {
     );
   });
 
+  it("should post no-overstat instructions even when response can't be parsed", async () => {
+    const noOverstatInteraction = {
+      ...basicInteraction,
+      options: {
+        ...(basicInteraction.options as object),
+        getString: (key: string) => {
+          if (
+            key ===
+            staticCommandUsedJustForInputNames.inputNames.playerInInputNames
+              .overstatLink
+          ) {
+            return "None";
+          }
+          return (
+            basicInteraction.options as unknown as {
+              getString: (key: string) => string | null;
+            }
+          ).getString(key);
+        },
+      },
+    } as unknown as CustomInteraction;
+
+    rosterChangeSpy.mockResolvedValueOnce({
+      rowNumber: null,
+      sheetUrl: "https://docs.google.com/spreadsheets/d/mock_roster_sheet_id",
+      tabName: "mock_roster_tab_name",
+    });
+    getPlayerOverstatSpy
+      .mockResolvedValueOnce(overstats.player1)
+      .mockRejectedValueOnce(new Error("not in db"));
+
+    await command.run(noOverstatInteraction);
+    expect(followUpSpy).toHaveBeenCalledTimes(2);
+    expect(followUpSpy).toHaveBeenLastCalledWith(
+      `<@player1id> No overstat provided for the player being added, create a ticket to finalize this change https://discord.com/channels/1292412338749837383/1354736726748172429`,
+    );
+  });
+
   describe("player-out overstat provided directly", () => {
     let interactionWithPlayerOutOverstat: CustomInteraction;
 
