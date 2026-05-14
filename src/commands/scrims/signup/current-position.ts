@@ -25,7 +25,7 @@ export class CurrentPositionCommand extends MemberCommand {
     await interaction.invisibleReply(
       "Fetching scrim information, command in progress",
     );
-    
+
     const channelSignups = await GetSignupsHelper.getSignupsForChannel(
       this.signupService,
       this.staticValueService,
