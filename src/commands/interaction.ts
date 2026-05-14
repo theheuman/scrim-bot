@@ -145,7 +145,7 @@ export class CustomInteraction {
   }
 
   deferReply(
-    argument?: InteractionDeferReplyOptions,
+    argument?: InteractionDeferReplyOptions & { withResponse: true },
   ): Promise<InteractionResponse<boolean>> {
     console.log(
       `\tReplying to interaction ${this.ogInteraction.id}: `,
