@@ -22,8 +22,10 @@ export class CurrentPositionCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    await interaction.deferReply();
-
+    await interaction.invisibleReply(
+      "Fetching scrim information, command in progress",
+    );
+    
     const channelSignups = await GetSignupsHelper.getSignupsForChannel(
       this.signupService,
       this.staticValueService,
