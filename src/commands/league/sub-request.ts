@@ -111,6 +111,17 @@ export class LeagueSubRequestCommand extends MemberCommand {
       VesaDivision,
       true,
     );
+
+    if (
+      playerInDivision !== VesaDivision.None &&
+      playerInDivision < teamDivision
+    ) {
+      await interaction.invisibleReply(
+        `Sub request not made. The player subbing in is in ${VesaDivision[playerInDivision]} which is a higher division than the team's division (${VesaDivision[teamDivision]}).`,
+      );
+      return;
+    }
+
     const requestedByMember = interaction.member;
     const playerOut = interaction.options.getUser(
       this.inputNames.playerOutInputNames.user,
@@ -214,10 +225,15 @@ export class LeagueSubRequestCommand extends MemberCommand {
         await interaction.followUp(
           `Problem parsing google sheets response, please check sheet to see if your sub request went through before resubmitting\n<${subResult.sheetUrl}>`,
         );
-        return;
+      } else {
+        const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
+        await interaction.followUp(discordReplyMessage);
       }
-      const discordReplyMessage = `Sub requested for __${teamName}__ (${VesaDivision[teamDivision]})\nSubbing out <@${playerOut.id}>${playerOutOverstatText}\nSubbing in <@${playerIn.id}>${playerInOverstatText}\nRequested week: ${WeekNumbers[weekNumber]}\n[Sheet row #${subResult.rowNumber}](<${subResult.sheetUrl}>)\nNavigate to the "${subResult.tabName}" tab at the bottom of the sheet${roleMention}`;
-      await interaction.followUp(discordReplyMessage);
+      if (!playerInOverstat) {
+        await interaction.followUp(
+          `<@${requestedByMember.id}> No overstat provided for the player subbing in, please reply to this message with screenshots of the entire screen showing their ranked stats from the last two seasons in this channel.`,
+        );
+      }
     } catch (e) {
       await interaction.followUp(`Sub request not made. ${e}`);
     }
