@@ -201,7 +201,7 @@ describe("Roster change", () => {
     await command.run(noOverstatInteraction);
     expect(followUpSpy).toHaveBeenCalledTimes(2);
     expect(followUpSpy).toHaveBeenLastCalledWith(
-      `<@player1id> No overstat provided for the player being added, create a ticket to finalize this change https://discord.com/channels/1292412338749837383/1354736726748172429`,
+      `<@player1id> No overstat provided for the player being added, create a ticket to finalize this change https://discord.com/channels/1292412338749837383/1354736726748172429. You'll need to provide screenshots of the entire screen showing their ranked stats from the last two seasons in the ticket.`,
     );
   });
 
@@ -251,7 +251,7 @@ describe("Roster change", () => {
     await command.run(noOverstatInteraction);
     expect(followUpSpy).toHaveBeenCalledTimes(2);
     expect(followUpSpy).toHaveBeenLastCalledWith(
-      `<@player1id> No overstat provided for the player being added, create a ticket to finalize this change https://discord.com/channels/1292412338749837383/1354736726748172429`,
+      `<@player1id> No overstat provided for the player being added, create a ticket to finalize this change https://discord.com/channels/1292412338749837383/1354736726748172429. You'll need to provide screenshots of the entire screen showing their ranked stats from the last two seasons in the ticket.`,
     );
   });
 
