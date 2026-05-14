@@ -42,7 +42,7 @@ describe("Get overstat", () => {
       user: { id: "discord command user id" },
       member: { id: "discord member id" },
       editReply: jest.fn(),
-      deferReply: jest.fn(),
+      invisibleReply: jest.fn(),
     } as unknown as CustomInteraction;
   });
 
@@ -79,7 +79,7 @@ describe("Get overstat", () => {
       },
       user: { id: "discord command user id" },
       member: { id: "discord admin id" },
-      deferReply: jest.fn(),
+      invisibleReply: jest.fn(),
       editReply: jest.fn(),
     } as unknown as CustomInteraction;
 
@@ -120,7 +120,7 @@ describe("Get overstat", () => {
         user: { id: "discord command user id" },
         member: { id: "discord member id" },
         editReply: jest.fn(),
-        deferReply: jest.fn(),
+        invisibleReply: jest.fn(),
       } as unknown as CustomInteraction;
       editReplySpy = jest.spyOn(memberInteraction, "editReply");
       editReplySpy.mockClear();

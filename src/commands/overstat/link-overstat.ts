@@ -34,7 +34,7 @@ export class LinkOverstatCommand extends MemberCommand {
       this.inputNames.player,
       false,
     );
-    await interaction.deferReply();
+    await interaction.invisibleReply("Fetched all input, working on request");
 
     try {
       if (
@@ -43,11 +43,9 @@ export class LinkOverstatCommand extends MemberCommand {
           interaction.member as GuildMember,
         ))
       ) {
-        await interaction.followUp({
-          content:
-            "Admin permissions not found for this user. You may only run this command for yourself.",
-          ephemeral: true,
-        });
+        await interaction.editReply(
+          "Admin permissions not found for this user. You may only run this command for yourself.",
+        );
         return;
       }
 
@@ -57,10 +55,7 @@ export class LinkOverstatCommand extends MemberCommand {
       await interaction.deleteReply();
       await interaction.followUp(`<@${player.id}>'s overstat set to ${link}`);
     } catch (error) {
-      await interaction.followUp({
-        content: "Overstat not linked. " + error,
-        ephemeral: true,
-      });
+      await interaction.editReply("Overstat not linked. " + error);
       return;
     }
   }

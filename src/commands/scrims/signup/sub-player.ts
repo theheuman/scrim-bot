@@ -42,7 +42,7 @@ export class SubPlayerCommand extends MemberCommand {
       this.inputNames.addPlayer,
       true,
     );
-    await interaction.deferReply();
+    await interaction.reply("Fetched all input and working on your request!");
 
     try {
       const team = await this.rosterService.replaceTeammate(

@@ -65,7 +65,7 @@ describe("Sub player", () => {
     basicInteraction = {
       member,
       channelId: "forum thread id",
-      deferReply: jest.fn(),
+      reply: jest.fn(),
       editReply: jest.fn(),
       options: {
         getUser: (key: string) => {
@@ -78,6 +78,7 @@ describe("Sub player", () => {
         getString: () => "team name",
       },
     } as unknown as CustomInteraction;
+    replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     replaceTeammateSpy = jest.spyOn(mockRosterService, "replaceTeammate");
     replaceTeammateSpy.mockReturnValue(
@@ -96,6 +97,7 @@ describe("Sub player", () => {
   });
 
   beforeEach(() => {
+    replySpy.mockClear();
     editReplySpy.mockClear();
     replaceTeammateSpy.mockClear();
     command = new SubPlayerCommand(

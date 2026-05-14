@@ -46,18 +46,20 @@ describe("Drop out name", () => {
     basicInteraction = {
       member,
       channelId: "forum thread id",
-      deferReply: jest.fn(),
+      reply: jest.fn(),
       editReply: jest.fn(),
       options: {
         getString: () => "team name",
       },
     } as unknown as CustomInteraction;
+    replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
     removeTeamSpy = jest.spyOn(mockRosterService, "removeSignup");
     removeTeamSpy.mockImplementation(() => Promise.resolve());
   });
 
   beforeEach(() => {
+    replySpy.mockClear();
     editReplySpy.mockClear();
     removeTeamSpy.mockClear();
     command = new DropoutCommand(

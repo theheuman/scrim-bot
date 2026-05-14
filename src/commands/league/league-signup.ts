@@ -261,10 +261,7 @@ export class LeagueSignupCommand extends MemberCommand {
         `${signupString}\nSignup #${signupResult.rowNumber}. Your priority based on returning players will be determined by admins manually${additionalInfo}`,
       );
     } catch (e) {
-      await interaction.followUp({
-        content: `Team not signed up. ${e}`,
-        ephemeral: true,
-      });
+      await interaction.followUp(`Team not signed up. ${e}`);
     }
   }
 

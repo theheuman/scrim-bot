@@ -247,10 +247,9 @@ describe("Roster change", () => {
     it("should not complete because google did a bad", async () => {
       rosterChangeSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
       await command.run(basicInteraction);
-      expect(followUpSpy).toHaveBeenCalledWith({
-        content: "Roster change not made. Error: Sheets Failure",
-        ephemeral: true,
-      });
+      expect(followUpSpy).toHaveBeenCalledWith(
+        "Roster change not made. Error: Sheets Failure",
+      );
     });
 
     it("should not complete because the player-in overstat is not valid", async () => {

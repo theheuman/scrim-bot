@@ -78,7 +78,7 @@ describe("Sign up", () => {
     basicInteraction = {
       channelId: "forum thread id",
       reply: jest.fn(),
-      deferReply: jest.fn(),
+      invisibleReply: jest.fn(),
       editReply: jest.fn(),
       followUp: jest.fn(),
       options: {
@@ -262,11 +262,11 @@ describe("Sign up", () => {
       signupAddTeamSpy.mockImplementationOnce(async () => {
         throw Error("DB Failure");
       });
+      editReplySpy = jest.spyOn(basicInteraction, "editReply");
       await command.run(basicInteraction);
-      expect(followUpSpy).toHaveBeenCalledWith({
-        content: "Team not signed up. Error: DB Failure",
-        ephemeral: true,
-      });
+      expect(editReplySpy).toHaveBeenCalledWith(
+        "Team not signed up. Error: DB Failure",
+      );
     });
 
     it("should not create scrim because the command member does not exist", async () => {

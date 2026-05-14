@@ -310,10 +310,9 @@ describe("Sign up", () => {
     it("should not complete the signup because google did a bad", async () => {
       signupSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
       await command.run(basicInteraction);
-      expect(followUpSpy).toHaveBeenCalledWith({
-        content: "Team not signed up. Error: Sheets Failure",
-        ephemeral: true,
-      });
+      expect(followUpSpy).toHaveBeenCalledWith(
+        "Team not signed up. Error: Sheets Failure",
+      );
     });
 
     it("should not complete the signup because the overstats are not valid", async () => {
@@ -333,10 +332,9 @@ describe("Sign up", () => {
         new Error("No season found with active signups."),
       );
       await command.run(basicInteraction);
-      expect(followUpSpy).toHaveBeenCalledWith({
-        content: `Team not signed up. Error: No season found with active signups.`,
-        ephemeral: true,
-      });
+      expect(followUpSpy).toHaveBeenCalledWith(
+        `Team not signed up. Error: No season found with active signups.`,
+      );
     });
 
     it("Should not complete signup since overstat link is not valid", async () => {

@@ -31,7 +31,7 @@ export class DropoutCommand extends MemberCommand {
     const channelId = interaction.channelId;
     const teamName = interaction.options.getString(this.inputNames.teamName);
 
-    await interaction.deferReply();
+    await interaction.reply("Fetched all input and working on your request!");
 
     try {
       await this.rosterService.removeSignup(
