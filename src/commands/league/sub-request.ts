@@ -111,6 +111,17 @@ export class LeagueSubRequestCommand extends MemberCommand {
       VesaDivision,
       true,
     );
+
+    if (
+      playerInDivision !== VesaDivision.None &&
+      playerInDivision < teamDivision
+    ) {
+      await interaction.invisibleReply(
+        `Sub request not made. The player subbing in is in ${VesaDivision[playerInDivision]} which is a higher division than the team's division (${VesaDivision[teamDivision]}).`,
+      );
+      return;
+    }
+
     const requestedByMember = interaction.member;
     const playerOut = interaction.options.getUser(
       this.inputNames.playerOutInputNames.user,

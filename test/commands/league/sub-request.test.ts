@@ -302,6 +302,63 @@ describe("Sub request", () => {
   });
 
   describe("errors", () => {
+    it("should complete because player-in is in a lower division than the team", async () => {
+      const lowerDivInteraction = {
+        ...basicInteraction,
+        options: {
+          ...(basicInteraction.options as object),
+          getChoice: (key: string) => {
+            if (
+              key ===
+              staticCommandUsedJustForInputNames.inputNames.playerInInputNames
+                .division
+            ) {
+              return 6; // Division6, lower than team's Division4
+            }
+            return (
+              basicInteraction.options as unknown as {
+                getChoice: (key: string) => number | null;
+              }
+            ).getChoice(key);
+          },
+        },
+      } as unknown as CustomInteraction;
+      await command.run(lowerDivInteraction);
+      expect(subRequestSpy).toHaveBeenCalled();
+    });
+
+    it("should not complete because player-in is in a higher division than the team", async () => {
+      const higherDivInteraction = {
+        ...basicInteraction,
+        options: {
+          ...(basicInteraction.options as object),
+          getChoice: (key: string) => {
+            if (
+              key ===
+              staticCommandUsedJustForInputNames.inputNames.playerInInputNames
+                .division
+            ) {
+              return 2; // Division2, higher than team's Division4
+            }
+            return (
+              basicInteraction.options as unknown as {
+                getChoice: (key: string) => number | null;
+              }
+            ).getChoice(key);
+          },
+        },
+      } as unknown as CustomInteraction;
+      const higherDivInvisibleReplySpy = jest.spyOn(
+        higherDivInteraction,
+        "invisibleReply",
+      );
+      await command.run(higherDivInteraction);
+      expect(higherDivInvisibleReplySpy).toHaveBeenCalledWith(
+        `Sub request not made. The player subbing in is in Division2 which is a higher division than the team's division (Division4).`,
+      );
+      expect(subRequestSpy).not.toHaveBeenCalled();
+    });
+
     it("should not complete the signup because google did a bad", async () => {
       subRequestSpy.mockRejectedValueOnce(new Error("Sheets Failure"));
       await command.run(basicInteraction);
