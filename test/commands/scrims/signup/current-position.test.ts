@@ -47,7 +47,7 @@ describe("Get current position", () => {
     basicInteraction = {
       member,
       channelId: "forum thread id",
-      deferReply: jest.fn(),
+      invisibleReply: jest.fn(),
       editReply: jest.fn(),
       options: {
         getString: () => "team name",
