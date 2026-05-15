@@ -1,5 +1,10 @@
 import { Player, PlayerInsert } from "../models/Player";
-import { ScrimSignupsWithPlayers } from "./table.interfaces";
+import {
+  LeagueRosterChangeInsert,
+  LeagueSubRequestInsert,
+  LeagueTeamPlayerInsert,
+  ScrimSignupsWithPlayers,
+} from "./table.interfaces";
 import {
   Comparator,
   DbTable,
@@ -714,6 +719,147 @@ export abstract class DB {
       ["id"],
     );
     return deletedEntries.map((entry) => entry.id as string);
+  }
+
+  async insertLeagueSignup(
+    seasonId: string,
+    team: {
+      teamName: string;
+      daysUnableToPlay: string;
+      compKnowledge: string;
+      additionalComments: string | null;
+    },
+    players: LeagueTeamPlayerInsert[],
+  ): Promise<{ teamId: string; signupNumber: number }> {
+    const existingTeams = await this.get(
+      DbTable.leagueTeams,
+      { fieldName: "season_id", comparator: "eq", value: seasonId },
+      ["id"],
+    );
+    const signupNumber = existingTeams.length + 1;
+
+    const [teamId] = await this.post(DbTable.leagueTeams, [
+      {
+        season_id: seasonId,
+        team_name: team.teamName,
+        days_unable_to_play: team.daysUnableToPlay,
+        comp_knowledge: team.compKnowledge,
+        additional_comments: team.additionalComments,
+        signup_number: signupNumber,
+        status: "pending",
+        submitted_at: new Date(),
+      },
+    ]);
+
+    await this.post(
+      DbTable.leagueTeamPlayers,
+      players.map((p) => ({
+        team_id: teamId,
+        player_id: p.playerId,
+        slot: p.slot,
+        apex_rank: p.apexRank,
+        platform: p.platform,
+        prev_season_division: p.prevSeasonDivision,
+        overstat_link: p.overstatLink,
+        elo: p.elo,
+      })),
+    );
+
+    return { teamId, signupNumber };
+  }
+
+  async getLeagueTeamIdByName(
+    seasonId: string,
+    teamName: string,
+  ): Promise<string | null> {
+    const teams = await this.get(
+      DbTable.leagueTeams,
+      {
+        operator: "and",
+        expressions: [
+          { fieldName: "season_id", comparator: "eq", value: seasonId },
+          { fieldName: "team_name", comparator: "eq", value: teamName },
+        ],
+      },
+      ["id"],
+    );
+    return (teams[0]?.id as string) ?? null;
+  }
+
+  async insertLeagueSubRequest(data: LeagueSubRequestInsert): Promise<string> {
+    const [id] = await this.post(DbTable.leagueSubRequests, [
+      {
+        season_id: data.seasonId,
+        team_id: data.teamId,
+        team_name: data.teamName,
+        division: data.division,
+        week_number: data.weekNumber,
+        player_out_id: data.playerOutId,
+        player_out_overstat_link: data.playerOutOverstatLink,
+        player_in_id: data.playerInId,
+        player_in_overstat_link: data.playerInOverstatLink,
+        player_in_division: data.playerInDivision,
+        requested_by_id: data.requestedById,
+        additional_comments: data.additionalComments,
+        status: "pending",
+        submitted_at: new Date(),
+      },
+    ]);
+    return id;
+  }
+
+  async insertLeagueRosterChange(
+    data: LeagueRosterChangeInsert,
+  ): Promise<string> {
+    const [id] = await this.post(DbTable.leagueRosterChanges, [
+      {
+        season_id: data.seasonId,
+        team_id: data.teamId,
+        team_name: data.teamName,
+        division: data.division,
+        player_out_id: data.playerOutId,
+        player_out_overstat_link: data.playerOutOverstatLink,
+        player_in_id: data.playerInId,
+        player_in_overstat_link: data.playerInOverstatLink,
+        requested_by_id: data.requestedById,
+        additional_comments: data.additionalComments,
+        status: "pending",
+        submitted_at: new Date(),
+      },
+    ]);
+    return id;
+  }
+
+  async getLeagueRosterMap(seasonId: string): Promise<Map<string, string>> {
+    const query = `
+      query GetLeagueRoster {
+        league_teams(where: {season_id: {_eq: "${seasonId}"}}) {
+          team_name
+          league_team_players {
+            player {
+              discord_id
+            }
+          }
+        }
+      }
+    `;
+
+    const result = (await this.customQuery(query)) as {
+      league_teams: {
+        team_name: string;
+        league_team_players: {
+          player: { discord_id: string };
+        }[];
+      }[];
+    };
+
+    const rosterMap = new Map<string, string>();
+    for (const team of result.league_teams) {
+      for (const teamPlayer of team.league_team_players) {
+        rosterMap.set(teamPlayer.player.discord_id, team.team_name);
+      }
+    }
+    return rosterMap;
   }
 
   private generatePlayerUpdateQuery(

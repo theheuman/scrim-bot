@@ -7,7 +7,12 @@ import {
   LogicalExpression,
 } from "../../src/db/types";
 import { Player, PlayerInsert } from "../../src/models/Player";
-import { ScrimSignupsWithPlayers } from "../../src/db/table.interfaces";
+import {
+  LeagueRosterChangeInsert,
+  LeagueSubRequestInsert,
+  LeagueTeamPlayerInsert,
+  ScrimSignupsWithPlayers,
+} from "../../src/db/table.interfaces";
 import { ScrimType } from "../../src/models/Scrims";
 
 export class DbMock extends DB {
@@ -189,6 +194,40 @@ export class DbMock extends DB {
         discordId: "id",
       },
     ]);
+  }
+
+  async insertLeagueSignup(
+    _seasonId: string,
+    _team: {
+      teamName: string;
+      daysUnableToPlay: string;
+      compKnowledge: string;
+      additionalComments: string | null;
+    },
+    _players: LeagueTeamPlayerInsert[],
+  ): Promise<{ teamId: string; signupNumber: number }> {
+    return Promise.resolve({ teamId: "team-id", signupNumber: 1 });
+  }
+
+  async getLeagueTeamIdByName(
+    _seasonId: string,
+    _teamName: string,
+  ): Promise<string | null> {
+    return Promise.resolve(null);
+  }
+
+  async insertLeagueSubRequest(_data: LeagueSubRequestInsert): Promise<string> {
+    return Promise.resolve("sub-request-id");
+  }
+
+  async insertLeagueRosterChange(
+    _data: LeagueRosterChangeInsert,
+  ): Promise<string> {
+    return Promise.resolve("roster-change-id");
+  }
+
+  async getLeagueRosterMap(_seasonId: string): Promise<Map<string, string>> {
+    return Promise.resolve(new Map());
   }
 
   async expungePrio() {

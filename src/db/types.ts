@@ -30,6 +30,10 @@ export enum DbTable {
   staticKeyValues = "static_key_value",
   lobbyEventTimes = "lobby_event_times",
   leagueSeasons = "league_seasons",
+  leagueTeams = "league_teams",
+  leagueTeamPlayers = "league_team_players",
+  leagueRosterChanges = "league_roster_changes",
+  leagueSubRequests = "league_sub_requests",
 }
 
 // Recursive type to infer the return structure

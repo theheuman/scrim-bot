@@ -32,3 +32,41 @@ export interface Scrims {
   overstat_id?: string;
   scrim_type: string;
 }
+
+export interface LeagueTeamPlayerInsert {
+  playerId: string;
+  slot: number;
+  apexRank: string;
+  platform: string;
+  prevSeasonDivision: string;
+  overstatLink: string | null;
+  elo: number | null;
+}
+
+export interface LeagueSubRequestInsert {
+  seasonId: string;
+  teamId: string | null;
+  teamName: string;
+  division: string;
+  weekNumber: string;
+  playerOutId: string;
+  playerOutOverstatLink: string | null;
+  playerInId: string;
+  playerInOverstatLink: string | null;
+  playerInDivision: string;
+  requestedById: string;
+  additionalComments: string | null;
+}
+
+export interface LeagueRosterChangeInsert {
+  seasonId: string;
+  teamId: string | null;
+  teamName: string;
+  division: string;
+  playerOutId: string;
+  playerOutOverstatLink: string | null;
+  playerInId: string;
+  playerInOverstatLink: string | null;
+  requestedById: string;
+  additionalComments: string | null;
+}
