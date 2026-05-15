@@ -11,6 +11,7 @@ import { client } from "../Client";
 import { BanService } from "./ban";
 import { HuggingFaceService } from "./hugging-face";
 import { LeagueService } from "./league";
+import { LeagueSheetRepository } from "../repositories/league-sheet.repository";
 import { MmrService } from "./mmr";
 import { AlertService } from "./alert";
 
@@ -30,7 +31,8 @@ export const scrimService = new ScrimService(
   huggingFaceService,
   alertService,
 );
-export const leagueService = new LeagueService(nhostDb);
+const leagueSheetRepository = new LeagueSheetRepository(nhostDb);
+export const leagueService = new LeagueService(leagueSheetRepository);
 export const prioService = new PrioService(
   nhostDb,
   leagueService,
