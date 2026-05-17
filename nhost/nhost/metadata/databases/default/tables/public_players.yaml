@@ -2,6 +2,41 @@ table:
   name: players
   schema: public
 array_relationships:
+  - name: league_roster_changes_in
+    using:
+      foreign_key_constraint_on:
+        column: player_in_id
+        table:
+          name: league_roster_changes
+          schema: public
+  - name: league_roster_changes_out
+    using:
+      foreign_key_constraint_on:
+        column: player_out_id
+        table:
+          name: league_roster_changes
+          schema: public
+  - name: league_sub_requests_in
+    using:
+      foreign_key_constraint_on:
+        column: player_in_id
+        table:
+          name: league_sub_requests
+          schema: public
+  - name: league_sub_requests_out
+    using:
+      foreign_key_constraint_on:
+        column: player_out_id
+        table:
+          name: league_sub_requests
+          schema: public
+  - name: league_team_players
+    using:
+      foreign_key_constraint_on:
+        column: player_id
+        table:
+          name: league_team_players
+          schema: public
   - name: low_prio
     using:
       foreign_key_constraint_on:
