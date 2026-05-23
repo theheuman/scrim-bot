@@ -14,6 +14,7 @@ import { LeagueService } from "./league";
 import { LeagueSheetRepository } from "../repositories/league-sheet.repository";
 import { MmrService } from "./mmr";
 import { AlertService } from "./alert";
+// import { LeagueDbRepository } from "../repositories/league-db.repository";
 
 // This file creates all the singleton services
 export const huggingFaceService = new HuggingFaceService();
@@ -32,6 +33,7 @@ export const scrimService = new ScrimService(
   alertService,
 );
 const leagueSheetRepository = new LeagueSheetRepository(nhostDb);
+// const leagueDbRepository = new LeagueDbRepository(nhostDb)
 export const leagueService = new LeagueService(leagueSheetRepository);
 export const prioService = new PrioService(
   nhostDb,

@@ -1,0 +1,15 @@
+table:
+  name: league_lobbies
+  schema: public
+object_relationships:
+  - name: season
+    using:
+      foreign_key_constraint_on: season_id
+array_relationships:
+  - name: league_team_lobbies
+    using:
+      foreign_key_constraint_on:
+        column: lobby_id
+        table:
+          name: league_team_lobbies
+          schema: public
