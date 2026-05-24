@@ -12,9 +12,10 @@ import { BanService } from "./ban";
 import { HuggingFaceService } from "./hugging-face";
 import { LeagueService } from "./league";
 import { LeagueSheetRepository } from "../repositories/league-sheet.repository";
+import { LeagueDbRepository } from "../repositories/league-db.repository";
+import { MirrorLeagueRepository } from "../repositories/mirror-league.repository";
 import { MmrService } from "./mmr";
 import { AlertService } from "./alert";
-// import { LeagueDbRepository } from "../repositories/league-db.repository";
 
 // This file creates all the singleton services
 export const huggingFaceService = new HuggingFaceService();
@@ -33,8 +34,13 @@ export const scrimService = new ScrimService(
   alertService,
 );
 const leagueSheetRepository = new LeagueSheetRepository(nhostDb);
-// const leagueDbRepository = new LeagueDbRepository(nhostDb)
-export const leagueService = new LeagueService(leagueSheetRepository);
+const leagueDbRepository = new LeagueDbRepository(nhostDb);
+const mirrorLeagueRepository = new MirrorLeagueRepository(
+  leagueSheetRepository,
+  leagueDbRepository,
+  alertService,
+);
+export const leagueService = new LeagueService(mirrorLeagueRepository);
 export const prioService = new PrioService(
   nhostDb,
   leagueService,
