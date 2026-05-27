@@ -49,6 +49,27 @@ export class PrioService {
           `Failed to fetch league roster, defaulting to date-only sort: ${e}`,
         );
       }
+      // Positive regular prio is ignored for league scrims, but low prio still applies
+      const playersWithPrio = await this.db.getPrio(scrim.dateTime);
+      const playerMap = this.generatePlayerMap(playersWithPrio, []);
+      for (const team of teams) {
+        const lowPrioReasons: string[] = [];
+        for (const player of team.players) {
+          const prioEntry = playerMap.get(player.discordId);
+          if (prioEntry && prioEntry.amount < 0) {
+            lowPrioReasons.push(`${player.displayName}: ${prioEntry.reason}`);
+          }
+        }
+        if (lowPrioReasons.length > 0) {
+          const leagueReasons = team.prio?.reasons ?? "";
+          team.prio = {
+            amount: -1,
+            reasons:
+              lowPrioReasons.join("; ") +
+              (leagueReasons ? "; " + leagueReasons : ""),
+          };
+        }
+      }
       return teams;
     }
     const playersWithPrio = await this.db.getPrio(scrim.dateTime);

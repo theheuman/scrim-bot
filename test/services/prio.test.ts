@@ -211,6 +211,60 @@ describe("Prio", () => {
         reasons: "fewer than 2 players from same league team",
       });
     });
+
+    it("should override to low prio when a player has low prio, ignoring league tier", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["alpha2", "Alpha"],
+            ["alpha3", "Alpha"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "alpha2", "alpha3"]);
+      team.players[2].displayName = "BadBoi";
+      jest.spyOn(dbMock, "getPrio").mockResolvedValueOnce([
+        {
+          id: "alpha3",
+          discordId: "alpha3",
+          amount: -1,
+          reason: "griefing",
+        },
+      ]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      expect(team.prio).toEqual({
+        amount: -1,
+        reasons: "BadBoi: griefing; 3/3 players from Alpha",
+      });
+    });
+
+    it("should not apply positive regular prio for league scrims", async () => {
+      jest
+        .spyOn(leagueServiceMock, "getRosterDiscordIds")
+        .mockResolvedValueOnce(
+          new Map([
+            ["alpha1", "Alpha"],
+            ["alpha2", "Alpha"],
+            ["alpha3", "Alpha"],
+          ]),
+        );
+      const team = makeTeam(["alpha1", "alpha2", "alpha3"]);
+      jest.spyOn(dbMock, "getPrio").mockResolvedValueOnce([
+        {
+          id: "alpha1",
+          discordId: "alpha1",
+          amount: 1,
+          reason: "good behavior",
+        },
+      ]);
+      await prioService.getTeamPrioForScrim(leagueScrim, [team], []);
+      // Positive regular prio is ignored; league tier still applies
+      expect(team.prio).toEqual({
+        amount: 5,
+        reasons: "3/3 players from Alpha",
+      });
+    });
   });
 
   describe("getTeamPrioForScrim - tournament type", () => {
