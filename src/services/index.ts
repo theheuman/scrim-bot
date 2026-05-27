@@ -54,6 +54,7 @@ export const signupsService = new SignupService(
   banService,
   scrimService,
   alertService,
+  staticValueService,
 );
 export const rosterService = new RosterService(
   nhostDb,

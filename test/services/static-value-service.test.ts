@@ -81,6 +81,37 @@ describe("Static value service", () => {
     );
   });
 
+  describe("requireOverstatForSignup()", () => {
+    it("should default to true when key is absent", async () => {
+      jest.spyOn(dbMock, "get").mockResolvedValue([]);
+      await expect(service.requireOverstatForSignup()).resolves.toBe(true);
+    });
+
+    it("should return true when DB value is 'true'", async () => {
+      jest.spyOn(dbMock, "get").mockResolvedValue([{ value: "true" }]);
+      await expect(service.requireOverstatForSignup()).resolves.toBe(true);
+    });
+
+    it("should return true when DB value is 'TRUE' (case-insensitive)", async () => {
+      jest.spyOn(dbMock, "get").mockResolvedValue([{ value: "TRUE" }]);
+      await expect(service.requireOverstatForSignup()).resolves.toBe(true);
+    });
+
+    it("should return false when DB value is 'false'", async () => {
+      jest.spyOn(dbMock, "get").mockResolvedValue([{ value: "false" }]);
+      await expect(service.requireOverstatForSignup()).resolves.toBe(false);
+    });
+
+    it("should cache the result and not hit the DB on subsequent calls", async () => {
+      const getSpy = jest
+        .spyOn(dbMock, "get")
+        .mockResolvedValue([{ value: "true" }]);
+      await service.requireOverstatForSignup();
+      await service.requireOverstatForSignup();
+      expect(getSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("should correctly bridge to the previous day for a late-night/early-morning scrim", async () => {
     // Scrim is at 1 AM UTC, so the dates will fall on the previous day.
     const scrimDate = new Date("2025-08-25T01:00:00.000Z");

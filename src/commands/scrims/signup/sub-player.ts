@@ -2,7 +2,12 @@ import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { RosterService } from "../../../services/rosters";
 import { AlertService } from "../../../services/alert";
-import { isGuildMember } from "../../../utility/utility";
+import { StaticValueService } from "../../../services/static-values";
+import {
+  buildOverstatWarningMessage,
+  isGuildMember,
+} from "../../../utility/utility";
+import { ScrimSignup } from "../../../models/Scrims";
 
 export class SubPlayerCommand extends MemberCommand {
   inputNames = {
@@ -13,6 +18,7 @@ export class SubPlayerCommand extends MemberCommand {
   constructor(
     alertService: AlertService,
     private rosterService: RosterService,
+    private staticValueService: StaticValueService,
   ) {
     super(alertService, "sub-player", "Replace a player on a team");
     this.addStringInput(this.inputNames.teamName, "team name", {
@@ -44,8 +50,9 @@ export class SubPlayerCommand extends MemberCommand {
     );
     await interaction.reply("Fetched all input and working on your request!");
 
+    let team: ScrimSignup;
     try {
-      const team = await this.rosterService.replaceTeammate(
+      team = await this.rosterService.replaceTeammate(
         interaction.member,
         interaction.channelId,
         teamName,
@@ -58,6 +65,24 @@ export class SubPlayerCommand extends MemberCommand {
       );
     } catch (error) {
       await interaction.editReply("Sub not made. " + error);
+      return;
+    }
+
+    const newPlayer = team.players.find((p) => p.discordId === playerToAdd.id);
+    if (newPlayer && !newPlayer.overstatId) {
+      try {
+        const requireOverstat =
+          await this.staticValueService.requireOverstatForSignup();
+        const content = buildOverstatWarningMessage(
+          [newPlayer.displayName],
+          requireOverstat,
+        );
+        await interaction.followUp({ content, ephemeral: true });
+      } catch (e) {
+        await this.alertService.warn(
+          `Failed to send overstat warning after sub in channel ${interaction.channelId}: ${e}`,
+        );
+      }
     }
   }
 }

@@ -1,12 +1,16 @@
 import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { SignupService } from "../../../services/signups";
-import { isGuildMember } from "../../../utility/utility";
+import {
+  buildOverstatWarningMessage,
+  isGuildMember,
+} from "../../../utility/utility";
 import { ScrimType, ScrimSignup } from "../../../models/Scrims";
 import { Player } from "../../../models/Player";
 import { PrioService } from "../../../services/prio";
 import { ScrimService } from "../../../services/scrim-service";
 import { AlertService } from "../../../services/alert";
+import { StaticValueService } from "../../../services/static-values";
 
 export class SignupCommand extends MemberCommand {
   constructor(
@@ -14,6 +18,7 @@ export class SignupCommand extends MemberCommand {
     private signupService: SignupService,
     private prioService: PrioService,
     private scrimService: ScrimService,
+    private staticValueService: StaticValueService,
   ) {
     super(alertService, "signup", "Creates a new scrim signup");
     this.addStringInput("teamname", "Team name", {
@@ -59,26 +64,36 @@ export class SignupCommand extends MemberCommand {
       return;
     }
 
-    await this.warnMissingOverstat(signup.players, interaction);
-    await this.warnPrioEntries(interaction, signup);
+    try {
+      await this.warnMissingOverstat(signup.players, interaction);
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to send overstat warning after signup in channel ${channelId}: ${e}`,
+      );
+    }
+    try {
+      await this.warnPrioEntries(interaction, signup);
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to send prio warning after signup in channel ${channelId}: ${e}`,
+      );
+    }
   }
 
   private async warnMissingOverstat(
     players: Player[],
     interaction: CustomInteraction,
   ) {
-    const warnings = [];
-    for (const player of players) {
-      if (!player.overstatId) {
-        warnings.push(`${player.displayName} is missing overstat id.`);
-      }
+    const missingNames = players
+      .filter((p) => !p.overstatId)
+      .map((p) => p.displayName);
+    if (missingNames.length === 0) {
+      return;
     }
-    if (warnings.length > 0) {
-      await interaction.followUp({
-        content: `Your admin role overrode missing overstats.\n${warnings.join("\n")}`,
-        ephemeral: true,
-      });
-    }
+    const requireOverstat =
+      await this.staticValueService.requireOverstatForSignup();
+    const content = buildOverstatWarningMessage(missingNames, requireOverstat);
+    await interaction.followUp({ content, ephemeral: true });
   }
 
   private async warnPrioEntries(

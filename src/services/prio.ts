@@ -6,51 +6,6 @@ import { Player } from "../models/Player";
 import { LeagueService } from "./league";
 import { AlertService } from "./alert";
 
-function getLeagueTierInfo(
-  players: Player[],
-  rosterMap: Map<string, string>,
-): { tier: number; reason: string } {
-  const teamCounts = new Map<string, number>();
-  for (const player of players) {
-    const teamName = rosterMap.get(player.discordId);
-    if (teamName) {
-      teamCounts.set(teamName, (teamCounts.get(teamName) ?? 0) + 1);
-    }
-  }
-
-  const maxSameTeam =
-    teamCounts.size > 0 ? Math.max(...teamCounts.values()) : 0;
-
-  if (maxSameTeam === 3) {
-    const teamName = [...teamCounts.keys()][0];
-    return { tier: 5, reason: `3/3 players from ${teamName}` };
-  }
-  if (maxSameTeam === 2) {
-    const dominantTeam = [...teamCounts.entries()].find(
-      ([, count]) => count === 2,
-    )![0];
-    const otherTeam = [...teamCounts.keys()].find((t) => t !== dominantTeam);
-    if (otherTeam) {
-      return {
-        tier: 4,
-        reason: `2/3 players from ${dominantTeam}, 1 from ${otherTeam}`,
-      };
-    }
-    return {
-      tier: 3,
-      reason: `2/3 players from ${dominantTeam}, 1 not in league`,
-    };
-  }
-  if (teamCounts.size === 3) {
-    const teams = [...teamCounts.keys()].join(", ");
-    return {
-      tier: 2,
-      reason: `all 3 players from different league teams: ${teams}`,
-    };
-  }
-  return { tier: 1, reason: "fewer than 2 players from same league team" };
-}
-
 export class PrioService {
   constructor(
     private db: DB,
@@ -93,6 +48,27 @@ export class PrioService {
         await this.alertService.warn(
           `Failed to fetch league roster, defaulting to date-only sort: ${e}`,
         );
+      }
+      // Positive regular prio is ignored for league scrims, but low prio still applies
+      const playersWithPrio = await this.db.getPrio(scrim.dateTime);
+      const playerMap = this.generatePlayerMap(playersWithPrio, []);
+      for (const team of teams) {
+        const lowPrioReasons: string[] = [];
+        for (const player of team.players) {
+          const prioEntry = playerMap.get(player.discordId);
+          if (prioEntry && prioEntry.amount < 0) {
+            lowPrioReasons.push(`${player.displayName}: ${prioEntry.reason}`);
+          }
+        }
+        if (lowPrioReasons.length > 0) {
+          const leagueReasons = team.prio?.reasons ?? "";
+          team.prio = {
+            amount: -1,
+            reasons:
+              lowPrioReasons.join("; ") +
+              (leagueReasons ? "; " + leagueReasons : ""),
+          };
+        }
       }
       return teams;
     }
@@ -204,4 +180,49 @@ export class PrioService {
       };
     }
   }
+}
+
+function getLeagueTierInfo(
+  players: Player[],
+  rosterMap: Map<string, string>,
+): { tier: number; reason: string } {
+  const teamCounts = new Map<string, number>();
+  for (const player of players) {
+    const teamName = rosterMap.get(player.discordId);
+    if (teamName) {
+      teamCounts.set(teamName, (teamCounts.get(teamName) ?? 0) + 1);
+    }
+  }
+
+  const maxSameTeam =
+    teamCounts.size > 0 ? Math.max(...teamCounts.values()) : 0;
+
+  if (maxSameTeam === 3) {
+    const teamName = [...teamCounts.keys()][0];
+    return { tier: 5, reason: `3/3 players from ${teamName}` };
+  }
+  if (maxSameTeam === 2) {
+    const dominantTeam = [...teamCounts.entries()].find(
+      ([, count]) => count === 2,
+    )![0];
+    const otherTeam = [...teamCounts.keys()].find((t) => t !== dominantTeam);
+    if (otherTeam) {
+      return {
+        tier: 4,
+        reason: `2/3 players from ${dominantTeam}, 1 from ${otherTeam}`,
+      };
+    }
+    return {
+      tier: 3,
+      reason: `2/3 players from ${dominantTeam}, 1 not in league`,
+    };
+  }
+  if (teamCounts.size === 3) {
+    const teams = [...teamCounts.keys()].join(", ");
+    return {
+      tier: 2,
+      reason: `all 3 players from different league teams: ${teams}`,
+    };
+  }
+  return { tier: 1, reason: "fewer than 2 players from same league team" };
 }
