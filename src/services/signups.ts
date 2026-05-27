@@ -11,6 +11,7 @@ import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
 import { AlertService } from "./alert";
 import { StaticValueService } from "./static-values";
+import { OVERSTAT_LINK_CHANNEL_URL } from "../utility/utility";
 
 export class SignupService {
   constructor(
@@ -105,7 +106,7 @@ export class SignupService {
     for (const player of players) {
       if (!player.overstatId) {
         throw Error(
-          `No overstat linked for ${player.displayName}. Use /link-overstat in https://discord.com/channels/1043350338574495764/1341877592139104376. Don't have an overstat? Create a https://discord.com/channels/1043350338574495764/1335824833757450263 and let an admin know your signup information so they can complete it for you`,
+          `No overstat linked for ${player.displayName}. Use /link-overstat in ${OVERSTAT_LINK_CHANNEL_URL}. Don't have an overstat? Create a https://discord.com/channels/1043350338574495764/1335824833757450263 and let an admin know your signup information so they can complete it for you`,
         );
       }
     }

@@ -92,9 +92,23 @@ describe("Static value service", () => {
       await expect(service.requireOverstatForSignup()).resolves.toBe(true);
     });
 
+    it("should return true when DB value is 'TRUE' (case-insensitive)", async () => {
+      jest.spyOn(dbMock, "get").mockResolvedValue([{ value: "TRUE" }]);
+      await expect(service.requireOverstatForSignup()).resolves.toBe(true);
+    });
+
     it("should return false when DB value is 'false'", async () => {
       jest.spyOn(dbMock, "get").mockResolvedValue([{ value: "false" }]);
       await expect(service.requireOverstatForSignup()).resolves.toBe(false);
+    });
+
+    it("should cache the result and not hit the DB on subsequent calls", async () => {
+      const getSpy = jest
+        .spyOn(dbMock, "get")
+        .mockResolvedValue([{ value: "true" }]);
+      await service.requireOverstatForSignup();
+      await service.requireOverstatForSignup();
+      expect(getSpy).toHaveBeenCalledTimes(1);
     });
   });
 

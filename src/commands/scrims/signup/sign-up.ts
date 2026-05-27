@@ -1,7 +1,10 @@
 import { MemberCommand } from "../../command";
 import { CustomInteraction } from "../../interaction";
 import { SignupService } from "../../../services/signups";
-import { isGuildMember } from "../../../utility/utility";
+import {
+  buildOverstatWarningMessage,
+  isGuildMember,
+} from "../../../utility/utility";
 import { ScrimType, ScrimSignup } from "../../../models/Scrims";
 import { Player } from "../../../models/Player";
 import { PrioService } from "../../../services/prio";
@@ -61,29 +64,35 @@ export class SignupCommand extends MemberCommand {
       return;
     }
 
-    await this.warnMissingOverstat(signup.players, interaction);
-    await this.warnPrioEntries(interaction, signup);
+    try {
+      await this.warnMissingOverstat(signup.players, interaction);
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to send overstat warning after signup in channel ${channelId}: ${e}`,
+      );
+    }
+    try {
+      await this.warnPrioEntries(interaction, signup);
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to send prio warning after signup in channel ${channelId}: ${e}`,
+      );
+    }
   }
 
   private async warnMissingOverstat(
     players: Player[],
     interaction: CustomInteraction,
   ) {
-    const warnings = [];
-    for (const player of players) {
-      if (!player.overstatId) {
-        warnings.push(player.displayName);
-      }
-    }
-    if (warnings.length === 0) {
+    const missingNames = players
+      .filter((p) => !p.overstatId)
+      .map((p) => p.displayName);
+    if (missingNames.length === 0) {
       return;
     }
     const requireOverstat =
       await this.staticValueService.requireOverstatForSignup();
-    const playerList = warnings.join(", ");
-    const content = requireOverstat
-      ? `Your admin role overrode missing overstats for: ${playerList}`
-      : `The following players have not linked their Overstat: ${playerList}. To accurately sort your team in the future, please let them know to link their Overstat by following the pinned instructions in https://discord.com/channels/1043350338574495764/1341877592139104376`;
+    const content = buildOverstatWarningMessage(missingNames, requireOverstat);
     await interaction.followUp({ content, ephemeral: true });
   }
 

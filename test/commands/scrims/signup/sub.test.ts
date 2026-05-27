@@ -152,7 +152,7 @@ describe("Sub player", () => {
     );
     await command.run(basicInteraction);
     expect(followUpSpy).toHaveBeenCalledWith({
-      content: "Your admin role overrode missing overstat for: Player 2",
+      content: "Your admin role overrode missing overstats for: Player 2",
       ephemeral: true,
     });
   });

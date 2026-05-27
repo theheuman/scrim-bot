@@ -12,6 +12,7 @@ export class StaticValueService {
   private instructionTextCache: Partial<Record<ScrimType, string>> = {};
   private scrimPassRoleId: string | undefined;
   private subApprovalRoleId: string | undefined;
+  private cachedRequireOverstat: boolean | undefined;
 
   constructor(private db: DB) {}
 
@@ -57,9 +58,13 @@ export class StaticValueService {
   }
 
   async requireOverstatForSignup(): Promise<boolean> {
+    if (this.cachedRequireOverstat !== undefined) {
+      return this.cachedRequireOverstat;
+    }
     const value = await this.fetchStaticValue("require_overstat_for_signup");
-    if (value === undefined) return true;
-    return value === "true";
+    this.cachedRequireOverstat =
+      value === undefined ? true : value.toLowerCase() === "true";
+    return this.cachedRequireOverstat;
   }
 
   private async fetchStaticValue(key: string): Promise<string | undefined> {
