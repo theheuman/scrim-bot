@@ -6,13 +6,11 @@ CREATE TABLE public.league_teams (
   days_unable_to_play text        NOT NULL,
   comp_knowledge      text        NOT NULL,
   additional_comments text,
-  signup_number       integer     NOT NULL,
   status              text        NOT NULL DEFAULT 'pending',
   submitted_at        timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX league_teams_season_id_team_name_idx ON public.league_teams(season_id, team_name);
-CREATE UNIQUE INDEX league_teams_season_id_signup_number_idx ON public.league_teams(season_id, signup_number);
 
 -- Step 2: league_team_players
 CREATE TABLE public.league_team_players (

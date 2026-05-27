@@ -731,12 +731,7 @@ export abstract class DB {
     },
     players: LeagueTeamPlayerInsert[],
   ): Promise<{ teamId: string; signupNumber: number }> {
-    const existingTeams = await this.get(
-      DbTable.leagueTeams,
-      { fieldName: "season_id", comparator: "eq", value: seasonId },
-      ["id"],
-    );
-    const signupNumber = existingTeams.length + 1;
+    const submittedAt = new Date();
 
     const [teamId] = await this.post(DbTable.leagueTeams, [
       {
@@ -745,9 +740,8 @@ export abstract class DB {
         days_unable_to_play: team.daysUnableToPlay,
         comp_knowledge: team.compKnowledge,
         additional_comments: team.additionalComments,
-        signup_number: signupNumber,
         status: "pending",
-        submitted_at: new Date(),
+        submitted_at: submittedAt,
       },
     ]);
 
@@ -764,6 +758,26 @@ export abstract class DB {
         elo: p.elo,
       })),
     );
+
+    const countQuery = `
+      query GetLeagueTeamSignupNumber {
+        league_teams_aggregate(
+          where: {
+            season_id: { _eq: "${seasonId}" }
+            status: { _neq: "dropped" }
+            submitted_at: { _lte: "${submittedAt.toISOString()}" }
+          }
+        ) {
+          aggregate {
+            count
+          }
+        }
+      }
+    `;
+    const countResult = (await this.customQuery(countQuery)) as {
+      league_teams_aggregate: { aggregate: { count: number } };
+    };
+    const signupNumber = countResult.league_teams_aggregate.aggregate.count;
 
     return { teamId, signupNumber };
   }
