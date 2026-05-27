@@ -43,7 +43,11 @@ export class LeagueService {
     playerInDivision: string,
     commandUser: GuildMember,
     additionalComments: string,
-  ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
+  ): Promise<{
+    rowNumber: number | null;
+    sheetUrl: string | null;
+    tabName: string | null;
+  }> {
     const result = await this.repository.writeSubRequest({
       teamDivision,
       teamName,
@@ -68,7 +72,11 @@ export class LeagueService {
     playerIn: LeaguePlayer,
     commandUser: GuildMember,
     additionalComments: string,
-  ): Promise<{ rowNumber: number | null; sheetUrl: string; tabName: string }> {
+  ): Promise<{
+    rowNumber: number | null;
+    sheetUrl: string | null;
+    tabName: string | null;
+  }> {
     const result = await this.repository.writeRosterChange({
       teamDivision,
       teamName,

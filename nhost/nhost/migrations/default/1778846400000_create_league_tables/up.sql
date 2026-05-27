@@ -12,6 +12,7 @@ CREATE TABLE public.league_teams (
 );
 
 CREATE INDEX league_teams_season_id_team_name_idx ON public.league_teams(season_id, team_name);
+CREATE UNIQUE INDEX league_teams_season_id_signup_number_idx ON public.league_teams(season_id, signup_number);
 
 -- Step 2: league_team_players
 CREATE TABLE public.league_team_players (

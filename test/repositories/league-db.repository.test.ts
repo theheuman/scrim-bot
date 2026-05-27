@@ -14,6 +14,8 @@ import { GuildMember } from "discord.js";
 import { DbMock } from "../mocks/db.mock";
 import { Player } from "../../src/models/Player";
 import { LeagueTeamPlayerInsert } from "../../src/db/table.interfaces";
+import { OverstatService } from "../../src/services/overstat";
+import { provideMagickalMock } from "../mocks/magickal-mock";
 import SpyInstance = jest.SpyInstance;
 
 describe("LeagueDbRepository", () => {
@@ -107,7 +109,15 @@ describe("LeagueDbRepository", () => {
 
   beforeEach(() => {
     mockDb = new DbMock();
-    repo = new LeagueDbRepository(mockDb);
+    const overstatService = provideMagickalMock(OverstatService);
+    jest
+      .spyOn(overstatService, "validateLinkUrl")
+      .mockImplementation((link) => {
+        const match = link.match(/\/player\/([0-9]+)\//);
+        if (!match) throw new Error("Not a valid overstat link");
+        return match[1];
+      });
+    repo = new LeagueDbRepository(mockDb, overstatService);
 
     getActiveLeagueSeasonSpy = jest
       .spyOn(mockDb, "getActiveLeagueSeason")
@@ -363,10 +373,10 @@ describe("LeagueDbRepository", () => {
       expect(insertArg.teamName).toBe("Dude Cube");
     });
 
-    it("Should return rowNumber null and empty url/tabName", async () => {
+    it("Should return rowNumber null and null url/tabName", async () => {
       const result = await repo.writeSubRequest(subRequestData);
 
-      expect(result).toEqual({ rowNumber: null, url: "", tabName: "" });
+      expect(result).toEqual({ rowNumber: null, url: null, tabName: null });
     });
 
     it("Should throw if no active season", async () => {
@@ -453,10 +463,10 @@ describe("LeagueDbRepository", () => {
       expect(insertArg.teamId).toBeNull();
     });
 
-    it("Should return rowNumber null and empty url/tabName", async () => {
+    it("Should return rowNumber null and null url/tabName", async () => {
       const result = await repo.writeRosterChange(rosterChangeData);
 
-      expect(result).toEqual({ rowNumber: null, url: "", tabName: "" });
+      expect(result).toEqual({ rowNumber: null, url: null, tabName: null });
     });
 
     it("Should throw if no active season", async () => {

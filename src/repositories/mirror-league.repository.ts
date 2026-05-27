@@ -30,8 +30,12 @@ export class MirrorLeagueRepository implements LeagueDataRepository {
     ]);
 
     if (shadowResult.status === "rejected") {
+      const reason =
+        shadowResult.reason instanceof Error
+          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
+          : String(shadowResult.reason);
       await this.alertService.error(
-        `MirrorLeagueRepository: shadow writeSignup failed: ${shadowResult.reason}`,
+        `MirrorLeagueRepository: shadow writeSignup failed: ${reason}`,
       );
     }
 
@@ -49,8 +53,12 @@ export class MirrorLeagueRepository implements LeagueDataRepository {
     ]);
 
     if (shadowResult.status === "rejected") {
+      const reason =
+        shadowResult.reason instanceof Error
+          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
+          : String(shadowResult.reason);
       await this.alertService.error(
-        `MirrorLeagueRepository: shadow writeSubRequest failed: ${shadowResult.reason}`,
+        `MirrorLeagueRepository: shadow writeSubRequest failed: ${reason}`,
       );
     }
 
@@ -68,8 +76,12 @@ export class MirrorLeagueRepository implements LeagueDataRepository {
     ]);
 
     if (shadowResult.status === "rejected") {
+      const reason =
+        shadowResult.reason instanceof Error
+          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
+          : String(shadowResult.reason);
       await this.alertService.error(
-        `MirrorLeagueRepository: shadow writeRosterChange failed: ${shadowResult.reason}`,
+        `MirrorLeagueRepository: shadow writeRosterChange failed: ${reason}`,
       );
     }
 

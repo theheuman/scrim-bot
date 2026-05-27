@@ -41,8 +41,8 @@ export interface RosterChangeData {
 
 export interface WriteResult {
   rowNumber: number | null;
-  url: string;
-  tabName: string;
+  url: string | null;
+  tabName: string | null;
 }
 
 export interface LeagueDataRepository {

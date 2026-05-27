@@ -34,7 +34,7 @@ export const scrimService = new ScrimService(
   alertService,
 );
 const leagueSheetRepository = new LeagueSheetRepository(nhostDb);
-const leagueDbRepository = new LeagueDbRepository(nhostDb);
+const leagueDbRepository = new LeagueDbRepository(nhostDb, overstatService);
 const mirrorLeagueRepository = new MirrorLeagueRepository(
   leagueSheetRepository,
   leagueDbRepository,

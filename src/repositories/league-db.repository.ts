@@ -1,5 +1,6 @@
 import { DB } from "../db/db";
 import { Platform, PlayerRank, VesaDivision } from "../models/league-models";
+import { OverstatService } from "../services/overstat";
 import {
   LeagueDataRepository,
   RosterChangeData,
@@ -10,7 +11,10 @@ import {
 } from "./league-data.repository";
 
 export class LeagueDbRepository implements LeagueDataRepository {
-  constructor(private db: DB) {}
+  constructor(
+    private db: DB,
+    private overstatService: OverstatService,
+  ) {}
 
   async writeSignup(data: SignupData): Promise<SignupResult | null> {
     const activeSeason = await this.db.getActiveLeagueSeason();
@@ -38,6 +42,11 @@ export class LeagueDbRepository implements LeagueDataRepository {
         elo: data.player3.elo,
       },
     ]);
+    if (!dbPlayer1 || !dbPlayer2 || !dbPlayer3) {
+      throw new Error(
+        "Failed to resolve all three players — each player must have a unique Discord ID.",
+      );
+    }
 
     const { signupNumber } = await this.db.insertLeagueSignup(
       activeSeason.id,
@@ -113,6 +122,11 @@ export class LeagueDbRepository implements LeagueDataRepository {
           displayName: data.commandUser.displayName,
         },
       ]);
+    if (!playerOutDb || !playerInDb || !requestedByDb) {
+      throw new Error(
+        "Failed to resolve all players — playerOut, playerIn, and requestedBy must each have a unique Discord ID.",
+      );
+    }
 
     const teamId = await this.db.getLeagueTeamIdByName(
       activeSeason.id,
@@ -134,7 +148,7 @@ export class LeagueDbRepository implements LeagueDataRepository {
       additionalComments: data.additionalComments || null,
     });
 
-    return { rowNumber: null, url: "", tabName: "" };
+    return { rowNumber: null, url: null, tabName: null };
   }
 
   async writeRosterChange(data: RosterChangeData): Promise<WriteResult> {
@@ -160,6 +174,11 @@ export class LeagueDbRepository implements LeagueDataRepository {
           displayName: data.commandUser.displayName,
         },
       ]);
+    if (!playerOutDb || !playerInDb || !requestedByDb) {
+      throw new Error(
+        "Failed to resolve all players — playerOut, playerIn, and requestedBy must each have a unique Discord ID.",
+      );
+    }
 
     const teamId = await this.db.getLeagueTeamIdByName(
       activeSeason.id,
@@ -179,7 +198,7 @@ export class LeagueDbRepository implements LeagueDataRepository {
       additionalComments: data.additionalComments || null,
     });
 
-    return { rowNumber: null, url: "", tabName: "" };
+    return { rowNumber: null, url: null, tabName: null };
   }
 
   async getRosterDiscordIds(): Promise<Map<string, string>> {
@@ -191,13 +210,14 @@ export class LeagueDbRepository implements LeagueDataRepository {
     return this.db.getLeagueRosterMap(activeSeason.id);
   }
 
-  // Extracts the numeric player ID from a full overstat URL.
-  // e.g. "https://overstat.gg/player/123/overview" → "123"
   private extractOverstatId(
     overstatLink: string | undefined,
   ): string | undefined {
     if (!overstatLink) return undefined;
-    const match = overstatLink.match(/\/player\/([^/]+)\//);
-    return match?.[1];
+    try {
+      return this.overstatService.validateLinkUrl(overstatLink);
+    } catch {
+      return undefined;
+    }
   }
 }
