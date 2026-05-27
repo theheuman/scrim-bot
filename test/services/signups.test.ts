@@ -18,6 +18,7 @@ import { DiscordService } from "../../src/services/discord";
 import { BanService } from "../../src/services/ban";
 import { ScrimService } from "../../src/services/scrim-service";
 import { AlertService } from "../../src/services/alert";
+import { StaticValueService } from "../../src/services/static-values";
 import { provideMagickalMock } from "../mocks/magickal-mock";
 
 jest.mock("../../src/config", () => {
@@ -35,6 +36,7 @@ describe("Signups", () => {
   let authServiceMock: AuthService;
   let mockBanService: BanService;
   let scrimServiceMock: ScrimService;
+  let staticValueServiceMock: StaticValueService;
   const correctDiscordChannelId = "a forum post";
   const correctScrimId = "32451";
 
@@ -46,6 +48,10 @@ describe("Signups", () => {
     mockBanService = provideMagickalMock(BanService);
     authServiceMock = provideMagickalMock(AuthService);
     scrimServiceMock = provideMagickalMock(ScrimService);
+    staticValueServiceMock = provideMagickalMock(StaticValueService);
+    jest
+      .spyOn(staticValueServiceMock, "requireOverstatForSignup")
+      .mockResolvedValue(true);
     signups = new SignupService(
       dbMock,
       prioServiceMock,
@@ -54,6 +60,7 @@ describe("Signups", () => {
       mockBanService,
       scrimServiceMock,
       provideMagickalMock(AlertService),
+      staticValueServiceMock,
     );
     jest
       .spyOn(mockBanService, "teamHasBan")
@@ -369,11 +376,26 @@ describe("Signups", () => {
         );
       });
 
-      it("Should add a team because signup member is an admin", async () => {
+      it("Should add a team because signup member is an admin overriding missing overstat id", async () => {
         const actualSignup = await signups.addTeam(
           correctDiscordChannelId,
           "Dude Cube",
           theheuman as unknown as GuildMember,
+          [theheuman, supreme, mikey],
+        );
+
+        expect(actualSignup).toBeDefined();
+      });
+
+      it("Should add a team because overstat is not required (set by db feature flag)", async () => {
+        jest
+          .spyOn(staticValueServiceMock, "requireOverstatForSignup")
+          .mockResolvedValueOnce(false);
+
+        const actualSignup = await signups.addTeam(
+          correctDiscordChannelId,
+          "Dude Cube",
+          supreme as unknown as GuildMember,
           [theheuman, supreme, mikey],
         );
 

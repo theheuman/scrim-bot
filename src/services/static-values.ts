@@ -56,6 +56,12 @@ export class StaticValueService {
     return this.fetchStaticValue("alert_ping_user_id");
   }
 
+  async requireOverstatForSignup(): Promise<boolean> {
+    const value = await this.fetchStaticValue("require_overstat_for_signup");
+    if (value === undefined) return true;
+    return value === "true";
+  }
+
   private async fetchStaticValue(key: string): Promise<string | undefined> {
     const dbResult: { value: DbValue }[] = await this.db.get(
       DbTable.staticKeyValues,

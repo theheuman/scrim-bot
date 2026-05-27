@@ -10,6 +10,7 @@ import { DiscordService } from "./discord";
 import { BanService } from "./ban";
 import { ScrimService } from "./scrim-service";
 import { AlertService } from "./alert";
+import { StaticValueService } from "./static-values";
 
 export class SignupService {
   constructor(
@@ -20,6 +21,7 @@ export class SignupService {
     private banService: BanService,
     private scrimService: ScrimService,
     private alertService: AlertService,
+    private staticValueService: StaticValueService,
   ) {}
 
   async addTeam(
@@ -94,6 +96,9 @@ export class SignupService {
     players: Player[],
     commandMember: GuildMember,
   ) {
+    if (!(await this.staticValueService.requireOverstatForSignup())) {
+      return;
+    }
     if (await this.authService.memberIsAdmin(commandMember)) {
       return;
     }
