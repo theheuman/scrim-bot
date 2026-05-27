@@ -7,6 +7,7 @@ import { Player } from "../../../models/Player";
 import { PrioService } from "../../../services/prio";
 import { ScrimService } from "../../../services/scrim-service";
 import { AlertService } from "../../../services/alert";
+import { StaticValueService } from "../../../services/static-values";
 
 export class SignupCommand extends MemberCommand {
   constructor(
@@ -14,6 +15,7 @@ export class SignupCommand extends MemberCommand {
     private signupService: SignupService,
     private prioService: PrioService,
     private scrimService: ScrimService,
+    private staticValueService: StaticValueService,
   ) {
     super(alertService, "signup", "Creates a new scrim signup");
     this.addStringInput("teamname", "Team name", {
@@ -70,15 +72,19 @@ export class SignupCommand extends MemberCommand {
     const warnings = [];
     for (const player of players) {
       if (!player.overstatId) {
-        warnings.push(`${player.displayName} is missing overstat id.`);
+        warnings.push(player.displayName);
       }
     }
-    if (warnings.length > 0) {
-      await interaction.followUp({
-        content: `Your admin role overrode missing overstats.\n${warnings.join("\n")}`,
-        ephemeral: true,
-      });
+    if (warnings.length === 0) {
+      return;
     }
+    const requireOverstat =
+      await this.staticValueService.requireOverstatForSignup();
+    const playerList = warnings.join(", ");
+    const content = requireOverstat
+      ? `Your admin role overrode missing overstats for: ${playerList}`
+      : `The following players have not linked their Overstat: ${playerList}. To accurately sort your team in the future, please let them know to link their Overstat by following the pinned instructions in https://discord.com/channels/1043350338574495764/1341877592139104376`;
+    await interaction.followUp({ content, ephemeral: true });
   }
 
   private async warnPrioEntries(

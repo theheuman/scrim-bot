@@ -15,6 +15,7 @@ import { PrioService } from "../../../../src/services/prio";
 import { SignupService } from "../../../../src/services/signups";
 import { ScrimService } from "../../../../src/services/scrim-service";
 import { AlertService } from "../../../../src/services/alert";
+import { StaticValueService } from "../../../../src/services/static-values";
 import { provideMagickalMock } from "../../../mocks/magickal-mock";
 
 describe("Sign up", () => {
@@ -56,6 +57,7 @@ describe("Sign up", () => {
   const mockScrimSignups = provideMagickalMock(SignupService);
   const mockPrioService = provideMagickalMock(PrioService);
   const mockScrimService = provideMagickalMock(ScrimService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
 
   const player1 = {
     displayName: "Player 1",
@@ -133,15 +135,19 @@ describe("Sign up", () => {
     editReplySpy.mockClear();
     followUpSpy.mockClear();
     signupAddTeamSpy.mockClear();
+    jest
+      .spyOn(mockStaticValueService, "requireOverstatForSignup")
+      .mockResolvedValue(true);
     command = new SignupCommand(
       provideMagickalMock(AlertService),
       mockScrimSignups,
       mockPrioService,
       mockScrimService,
+      mockStaticValueService,
     );
   });
 
-  it("Should complete signup but include overstat warnings", async () => {
+  it("Should complete signup and show admin override warning when overstat is required", async () => {
     await command.run(basicInteraction);
     expect(signupAddTeamSpy).toHaveBeenCalledWith(
       "forum thread id",
@@ -154,7 +160,19 @@ describe("Sign up", () => {
     );
     expect(followUpSpy).toHaveBeenCalledWith({
       content:
-        "Your admin role overrode missing overstats.\nPlayer 1 is missing overstat id.\nPlayer 2 is missing overstat id.\nPlayer 3 is missing overstat id.",
+        "Your admin role overrode missing overstats for: Player 1, Player 2, Player 3",
+      ephemeral: true,
+    });
+  });
+
+  it("Should complete signup and show overstat encouragement when overstat is not required", async () => {
+    jest
+      .spyOn(mockStaticValueService, "requireOverstatForSignup")
+      .mockResolvedValueOnce(false);
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith({
+      content:
+        "The following players have not linked their Overstat: Player 1, Player 2, Player 3. To accurately sort your team in the future, please let them know to link their Overstat by following the pinned instructions in https://discord.com/channels/1043350338574495764/1341877592139104376",
       ephemeral: true,
     });
   });
