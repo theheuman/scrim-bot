@@ -28,6 +28,9 @@ describe("Rosters", () => {
     banServiceMock = provideMagickalMock(BanService);
     staticValueService = provideMagickalMock(StaticValueService);
     jest
+      .spyOn(staticValueService, "requireOverstatForSignup")
+      .mockResolvedValue(true);
+    jest
       .spyOn(staticValueService, "getScrimInfoTimes")
       .mockImplementation(async (scrimDate: Date) => {
         const lobbyPostDate = new Date(
@@ -457,6 +460,52 @@ describe("Rosters", () => {
       );
 
       expect(dbSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it("Should replace teammate without overstat when overstat is not required", async () => {
+      jest
+        .spyOn(staticValueService, "requireOverstatForSignup")
+        .mockResolvedValueOnce(false);
+      jest
+        .spyOn(authService, "memberIsAdmin")
+        .mockReturnValueOnce(Promise.resolve(false));
+      const futureDate = new Date();
+      futureDate.setFullYear(futureDate.getFullYear() + 1);
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: futureDate,
+        active: true,
+        discordChannel,
+        scrimType: ScrimType.regular,
+      };
+      const dudeCube: ScrimSignup = {
+        teamName: "Dude Cube",
+        players: [zboy.player, supreme, mikey],
+        signupId: "214",
+        signupPlayer: theheuman.player,
+        date: new Date(),
+      };
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
+      jest
+        .spyOn(dbMock, "insertPlayerIfNotExists")
+        .mockReturnValue(Promise.resolve(theheuman.player));
+
+      const dbSpy = jest.spyOn(dbMock, "replaceTeammateNoAuth");
+
+      await rosters.replaceTeammate(
+        theheuman.member,
+        discordChannel,
+        dudeCube.teamName,
+        zboy.user,
+        theheuman.user,
+      );
+
+      expect(dbSpy).toHaveBeenCalledTimes(1);
     });
 
     it("Should not replace teammate because new player is scrim banned", async () => {

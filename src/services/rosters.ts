@@ -69,6 +69,7 @@ export class RosterService {
       id: newPlayer.id,
       discordId: newUser.id as string,
       displayName: newUser.displayName,
+      overstatId: newPlayer.overstatId,
     };
     return teamToBeChanged;
   }
@@ -78,7 +79,9 @@ export class RosterService {
     newPlayer: Player,
     isAdmin: boolean,
   ) {
-    if (!newPlayer.overstatId && !isAdmin) {
+    const requireOverstat =
+      await this.staticValueService.requireOverstatForSignup();
+    if (requireOverstat && !newPlayer.overstatId && !isAdmin) {
       throw Error("New player has no overstat set");
     }
     const { rosterLockDate } = await this.staticValueService.getScrimInfoTimes(

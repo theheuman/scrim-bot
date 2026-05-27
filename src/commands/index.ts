@@ -82,8 +82,14 @@ export const scrimCommands: Command[] = [
 
   new ChangeTeamNameCommand(alertService, rosterService),
   new DropoutCommand(alertService, rosterService),
-  new SignupCommand(alertService, signupsService, prioService, scrimService),
-  new SubPlayerCommand(alertService, rosterService),
+  new SignupCommand(
+    alertService,
+    signupsService,
+    prioService,
+    scrimService,
+    staticValueService,
+  ),
+  new SubPlayerCommand(alertService, rosterService, staticValueService),
   new CurrentPositionCommand(
     alertService,
     signupsService,
