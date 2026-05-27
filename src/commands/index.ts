@@ -89,7 +89,7 @@ export const scrimCommands: Command[] = [
     scrimService,
     staticValueService,
   ),
-  new SubPlayerCommand(alertService, rosterService),
+  new SubPlayerCommand(alertService, rosterService, staticValueService),
   new CurrentPositionCommand(
     alertService,
     signupsService,

@@ -12,6 +12,7 @@ import { CustomInteraction } from "../../../../src/commands/interaction";
 import { SubPlayerCommand } from "../../../../src/commands/scrims/signup/sub-player";
 import { RosterService } from "../../../../src/services/rosters";
 import { AlertService } from "../../../../src/services/alert";
+import { StaticValueService } from "../../../../src/services/static-values";
 import { provideMagickalMock } from "../../../mocks/magickal-mock";
 import { ScrimSignup } from "../../../../src/models/Scrims";
 import { Player } from "../../../../src/models/Player";
@@ -29,6 +30,11 @@ describe("Sub player", () => {
     [options: string | InteractionEditReplyOptions | MessagePayload],
     string
   >;
+  let followUpSpy: SpyInstance<
+    Promise<Message<boolean>>,
+    [reply: string | InteractionReplyOptions | MessagePayload],
+    string
+  >;
   let replaceTeammateSpy: SpyInstance<
     Promise<ScrimSignup>,
     [
@@ -44,6 +50,7 @@ describe("Sub player", () => {
   let command: SubPlayerCommand;
 
   const mockRosterService = provideMagickalMock(RosterService);
+  const mockStaticValueService = provideMagickalMock(StaticValueService);
 
   const player1 = {
     displayName: "Player 1",
@@ -67,6 +74,7 @@ describe("Sub player", () => {
       channelId: "forum thread id",
       reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
       options: {
         getUser: (key: string) => {
           if (key === "add-player") {
@@ -80,14 +88,15 @@ describe("Sub player", () => {
     } as unknown as CustomInteraction;
     replySpy = jest.spyOn(basicInteraction, "reply");
     editReplySpy = jest.spyOn(basicInteraction, "editReply");
+    followUpSpy = jest.spyOn(basicInteraction, "followUp");
     replaceTeammateSpy = jest.spyOn(mockRosterService, "replaceTeammate");
     replaceTeammateSpy.mockReturnValue(
       Promise.resolve({
         teamName: "team name",
         players: [
-          { discordId: "unchangedPlayer1" },
-          { discordId: "unchangedPlayer2" },
-          { discordId: "player2id" },
+          { discordId: "unchangedPlayer1", overstatId: "os1" },
+          { discordId: "unchangedPlayer2", overstatId: "os2" },
+          { discordId: "player2id", overstatId: "os3" },
         ] as Player[],
         signupPlayer: player1 as unknown as Player,
         signupId: "",
@@ -99,10 +108,15 @@ describe("Sub player", () => {
   beforeEach(() => {
     replySpy.mockClear();
     editReplySpy.mockClear();
+    followUpSpy.mockClear();
     replaceTeammateSpy.mockClear();
+    jest
+      .spyOn(mockStaticValueService, "requireOverstatForSignup")
+      .mockResolvedValue(true);
     command = new SubPlayerCommand(
       provideMagickalMock(AlertService),
       mockRosterService,
+      mockStaticValueService,
     );
   });
 
@@ -119,6 +133,53 @@ describe("Sub player", () => {
       `Sub made. <@player1id> replaced by <@player2id>.\n` +
         `__team name__ new roster: <@unchangedPlayer1>, <@unchangedPlayer2>, <@player2id>`,
     );
+    expect(followUpSpy).not.toHaveBeenCalled();
+  });
+
+  it("Should warn with admin override message when new player has no overstat and overstat is required", async () => {
+    replaceTeammateSpy.mockReturnValueOnce(
+      Promise.resolve({
+        teamName: "team name",
+        players: [
+          { discordId: "unchangedPlayer1", overstatId: "os1" },
+          { discordId: "unchangedPlayer2", overstatId: "os2" },
+          { discordId: "player2id", displayName: "Player 2" },
+        ] as Player[],
+        signupPlayer: player1 as unknown as Player,
+        signupId: "",
+        date: new Date(),
+      }),
+    );
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith({
+      content: "Your admin role overrode missing overstat for: Player 2",
+      ephemeral: true,
+    });
+  });
+
+  it("Should warn with encouragement message when new player has no overstat and overstat is not required", async () => {
+    jest
+      .spyOn(mockStaticValueService, "requireOverstatForSignup")
+      .mockResolvedValueOnce(false);
+    replaceTeammateSpy.mockReturnValueOnce(
+      Promise.resolve({
+        teamName: "team name",
+        players: [
+          { discordId: "unchangedPlayer1", overstatId: "os1" },
+          { discordId: "unchangedPlayer2", overstatId: "os2" },
+          { discordId: "player2id", displayName: "Player 2" },
+        ] as Player[],
+        signupPlayer: player1 as unknown as Player,
+        signupId: "",
+        date: new Date(),
+      }),
+    );
+    await command.run(basicInteraction);
+    expect(followUpSpy).toHaveBeenCalledWith({
+      content:
+        "The following players have not linked their Overstat: Player 2. To accurately sort your team in the future, please let them know to link their Overstat by following the pinned instructions in https://discord.com/channels/1043350338574495764/1341877592139104376",
+      ephemeral: true,
+    });
   });
 
   describe("errors", () => {
