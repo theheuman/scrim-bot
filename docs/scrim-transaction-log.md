@@ -10,7 +10,7 @@ The fix is an append-only `scrim_transaction_log` table that records each of the
 
 ## DB Table
 
-Create the following table in Nhost (Hasura). The table name must match exactly.
+Create the following table in Nhost (Hasura).
 
 ```
 scrim_transaction_log
