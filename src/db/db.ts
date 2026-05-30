@@ -796,7 +796,7 @@ export abstract class DB {
       },
       ["id"],
     );
-    return (teams[0]?.id as string) ?? null;
+    return teams.length === 1 ? (teams[0].id as string) : null;
   }
 
   async insertLeagueSubRequest(data: LeagueSubRequestInsert): Promise<string> {
