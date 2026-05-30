@@ -49,9 +49,7 @@ export interface LeagueSubRequestInsert {
   division: string;
   weekNumber: string;
   playerOutId: string;
-  playerOutOverstatLink: string | null;
   playerInId: string;
-  playerInOverstatLink: string | null;
   playerInDivision: string;
   requestedById: string;
   additionalComments: string | null;
@@ -63,9 +61,7 @@ export interface LeagueRosterChangeInsert {
   teamName: string;
   division: string;
   playerOutId: string;
-  playerOutOverstatLink: string | null;
   playerInId: string;
-  playerInOverstatLink: string | null;
   requestedById: string;
   additionalComments: string | null;
 }
