@@ -139,6 +139,17 @@ describe("MirrorLeagueRepository", () => {
         expect.stringContaining("shadow writeSignup failed"),
       );
     });
+
+    it("returns primary result even when shadow fails and alertService.error throws", async () => {
+      jest
+        .spyOn(shadow, "writeSignup")
+        .mockRejectedValue(new Error("Nhost down"));
+      alertService.error.mockRejectedValue(new Error("Discord API error"));
+
+      const result = await mirror.writeSignup(makeSignupData());
+
+      expect(result).toEqual(primary.writeSignupResponse);
+    });
   });
 
   // ---------------------------------------------------------------------------

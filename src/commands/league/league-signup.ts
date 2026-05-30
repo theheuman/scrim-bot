@@ -238,12 +238,6 @@ export class LeagueSignupCommand extends MemberCommand {
         );
         return;
       }
-      if (signupResult.rowNumber === null) {
-        await interaction.followUp(
-          "Problem parsing signup number from response, please verify signup went through before resubmitting",
-        );
-        return;
-      }
       const signupString = this.formatTeam({
         teamName,
         players: [player1, player2, player3],

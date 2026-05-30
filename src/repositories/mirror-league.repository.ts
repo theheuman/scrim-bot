@@ -24,75 +24,61 @@ export class MirrorLeagueRepository implements LeagueDataRepository {
   ) {}
 
   async writeSignup(data: SignupData): Promise<SignupResult | null> {
-    const [primaryResult, shadowResult] = await Promise.allSettled([
-      this.primary.writeSignup(data),
-      this.shadow.writeSignup(data),
-    ]);
-
-    if (shadowResult.status === "rejected") {
-      const reason =
-        shadowResult.reason instanceof Error
-          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
-          : String(shadowResult.reason);
-      await this.alertService.error(
-        `MirrorLeagueRepository: shadow writeSignup failed: ${reason}`,
-      );
-    }
-
-    if (primaryResult.status === "rejected") {
-      throw primaryResult.reason;
-    }
-
-    return primaryResult.value;
+    return this.runMirrored(
+      "writeSignup",
+      () => this.primary.writeSignup(data),
+      () => this.shadow.writeSignup(data),
+    );
   }
 
   async writeSubRequest(data: SubRequestData): Promise<WriteResult> {
-    const [primaryResult, shadowResult] = await Promise.allSettled([
-      this.primary.writeSubRequest(data),
-      this.shadow.writeSubRequest(data),
-    ]);
-
-    if (shadowResult.status === "rejected") {
-      const reason =
-        shadowResult.reason instanceof Error
-          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
-          : String(shadowResult.reason);
-      await this.alertService.error(
-        `MirrorLeagueRepository: shadow writeSubRequest failed: ${reason}`,
-      );
-    }
-
-    if (primaryResult.status === "rejected") {
-      throw primaryResult.reason;
-    }
-
-    return primaryResult.value;
+    return this.runMirrored(
+      "writeSubRequest",
+      () => this.primary.writeSubRequest(data),
+      () => this.shadow.writeSubRequest(data),
+    );
   }
 
   async writeRosterChange(data: RosterChangeData): Promise<WriteResult> {
-    const [primaryResult, shadowResult] = await Promise.allSettled([
-      this.primary.writeRosterChange(data),
-      this.shadow.writeRosterChange(data),
-    ]);
-
-    if (shadowResult.status === "rejected") {
-      const reason =
-        shadowResult.reason instanceof Error
-          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
-          : String(shadowResult.reason);
-      await this.alertService.error(
-        `MirrorLeagueRepository: shadow writeRosterChange failed: ${reason}`,
-      );
-    }
-
-    if (primaryResult.status === "rejected") {
-      throw primaryResult.reason;
-    }
-
-    return primaryResult.value;
+    return this.runMirrored(
+      "writeRosterChange",
+      () => this.primary.writeRosterChange(data),
+      () => this.shadow.writeRosterChange(data),
+    );
   }
 
   async getRosterDiscordIds(): Promise<Map<string, string>> {
     return this.primary.getRosterDiscordIds();
+  }
+
+  private async runMirrored<T>(
+    opName: string,
+    primary: () => Promise<T>,
+    shadow: () => Promise<T>,
+  ): Promise<T> {
+    const [primaryResult, shadowResult] = await Promise.allSettled([
+      primary(),
+      shadow(),
+    ]);
+
+    if (shadowResult.status === "rejected") {
+      const reason =
+        shadowResult.reason instanceof Error
+          ? (shadowResult.reason.stack ?? shadowResult.reason.message)
+          : String(shadowResult.reason);
+      try {
+        await this.alertService.error(
+          `MirrorLeagueRepository: shadow ${opName} failed: ${reason}`,
+        );
+      } catch {
+        // Alert failure must not mask the primary result
+      }
+    }
+
+    if (primaryResult.status === "rejected") {
+      throw primaryResult.reason;
+    }
+
+    return primaryResult.value;
   }
 }
