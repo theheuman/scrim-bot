@@ -754,7 +754,6 @@ export abstract class DB {
         apex_rank: p.apexRank,
         platform: p.platform,
         prev_season_division: p.prevSeasonDivision,
-        overstat_link: p.overstatLink,
         elo: p.elo,
       })),
     );

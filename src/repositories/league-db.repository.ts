@@ -64,7 +64,6 @@ export class LeagueDbRepository implements LeagueDataRepository {
           platform: Platform[data.player1.platform],
           prevSeasonDivision:
             VesaDivision[data.player1.previous_season_vesa_division],
-          overstatLink: data.player1.overstatLink ?? null,
           elo: data.player1.elo ?? null,
         },
         {
@@ -74,7 +73,6 @@ export class LeagueDbRepository implements LeagueDataRepository {
           platform: Platform[data.player2.platform],
           prevSeasonDivision:
             VesaDivision[data.player2.previous_season_vesa_division],
-          overstatLink: data.player2.overstatLink ?? null,
           elo: data.player2.elo ?? null,
         },
         {
@@ -84,7 +82,6 @@ export class LeagueDbRepository implements LeagueDataRepository {
           platform: Platform[data.player3.platform],
           prevSeasonDivision:
             VesaDivision[data.player3.previous_season_vesa_division],
-          overstatLink: data.player3.overstatLink ?? null,
           elo: data.player3.elo ?? null,
         },
       ],

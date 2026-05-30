@@ -16,58 +16,70 @@ Before running any commands, confirm:
 
 ## Phase 1 — League Signup
 
-### Test 1.1 — Happy path, all overstat links provided
+### Test 1.1 — Happy path, all overstat links None ✅
 
-Run `/league-signup` with:
-- `team-name`: `Test Team Alpha`
-- `comp-experience`: `~2 days/wk, 1 yr, EEC`
-- `player1` through `player3`: three real Discord users (the user submitting must be one of them)
-- Ranks, platforms, and previous VESA divisions set for all three
-- All three overstat links: valid `https://overstat.gg/player/<id>/overview` URLs
-- `days-unable-to-play`: `Mondays`
+```
+/league-signup team-name: Test Team Alpha comp-experience: 2 days a week player1: @TheHeuman player2: @Newton-test player3: @Nefericus player1-rank: Gold player2-rank: Plat player3-rank: HighDiamond player1-platform: pc player2-platform: playstation player3-platform: xbox player1-overstat-link: None player2-overstat-link: None player3-overstat-link: None player1-previous-vesa-division: Division1 player2-previous-vesa-division: Division2 player3-previous-vesa-division: Division3 days-unable-to-play: Mondays additional-comments: Test signup 1
+```
 
 **Expected Discord response**: signup confirmation showing `Signup #1`
 
 **Verify in Nhost**:
 - `league_teams`: 1 row, `team_name = 'Test Team Alpha'`, `status = 'pending'`
 - `league_team_players`: 3 rows linked to that team with correct slots, ranks, and platforms
-- `players`: 3 rows with `overstat_id` populated from the provided links
+- `players`: 3 rows with `overstat_id = null` (all links were None)
 
 **Verify in Sheets**: row appears in the signup tab
 
 ---
 
-### Test 1.2 — Signup with "None" overstat for one player
+### Test 1.2 — Signup with a valid overstat link
 
-Run `/league-signup` with a different team name and the same structure, but set one player's overstat link to `None`.
+```
+/league-signup team-name: Test Team Beta comp-experience: 3 days a week player1: @TheHeuman player2: @Newton-test player3: @Nefericus player1-rank: Silver player2-rank: Bronze player3-rank: Gold player1-platform: pc player2-platform: pc player3-platform: pc player1-overstat-link: https://overstat.gg/player/111111/overview player2-overstat-link: None player3-overstat-link: None player1-previous-vesa-division: None player2-previous-vesa-division: None player3-previous-vesa-division: None additional-comments: Test signup 2
+```
 
 **Expected Discord response**: signup confirmation showing `Signup #2`
 
 **Verify in Nhost**:
-- The player with `None` overstat has `overstat_id = null` in `players`
-- That player's row in `league_team_players` has `overstat_link = null`
+- @TheHeuman's row in `players` has `overstat_id = '111111'`
+- @TheHeuman's row in `league_team_players` has `overstat_link = 'https://overstat.gg/player/111111/overview'`
+- @Newton-test and @Nefericus have `overstat_id = null` and `overstat_link = null`
 
 ---
 
 ### Test 1.3 — Signup number reflects active teams, not all-time count
 
-Manually mark the first team as dropped in Nhost:
+Mark Test Team Alpha as dropped:
 ```sql
 UPDATE league_teams SET status = 'dropped' WHERE team_name = 'Test Team Alpha';
 ```
 
-Run `/league-signup` with a third team (different players, different team name).
+Then sign up a third team:
+```
+/league-signup team-name: Test Team Gamma comp-experience: 1 day a week player1: @TheHeuman player2: @Newton-test player3: @Nefericus player1-rank: Diamond player2-rank: Diamond player3-rank: Diamond player1-platform: xbox player2-platform: xbox player3-platform: xbox player1-overstat-link: None player2-overstat-link: None player3-overstat-link: None player1-previous-vesa-division: Division4 player2-previous-vesa-division: Division4 player3-previous-vesa-division: Division4 additional-comments: Test signup 3
+```
 
-**Expected Discord response**: `Signup #2` — only one active team exists, so the new team is second
+**Expected Discord response**: `Signup #2` — Test Team Alpha is dropped, so only Test Team Beta is active ahead of this signup
 
 ---
 
 ### Test 1.4 — Rejections (nothing written to Sheets or DB)
 
-Run the following and confirm neither Sheets nor DB gains a row in each case:
+Submitting user is not on the team:
+```
+/league-signup team-name: Test Team Delta comp-experience: 1 day a week player1: @Newton-test player2: @Newton-test player3: @Nefericus player1-rank: Gold player2-rank: Gold player3-rank: Gold player1-platform: pc player2-platform: pc player3-platform: pc player1-overstat-link: None player2-overstat-link: None player3-overstat-link: None player1-previous-vesa-division: None player2-previous-vesa-division: None player3-previous-vesa-division: None
+```
+*(Run this as @TheHeuman, who is not listed as a player)*
 
-- Submitting user is not one of the three players → invisible error: "User signing team up must be a player on the team"
-- Invalid overstat link (e.g. `https://overstat.gg/notavalidpath`) → invisible error about invalid overstat link
+**Expected**: invisible error "User signing team up must be a player on the team". No rows written.
+
+Invalid overstat link:
+```
+/league-signup team-name: Test Team Delta comp-experience: 1 day a week player1: @TheHeuman player2: @Newton-test player3: @Nefericus player1-rank: Gold player2-rank: Gold player3-rank: Gold player1-platform: pc player2-platform: pc player3-platform: pc player1-overstat-link: https://overstat.gg/notavalidpath player2-overstat-link: None player3-overstat-link: None player1-previous-vesa-division: None player2-previous-vesa-division: None player3-previous-vesa-division: None
+```
+
+**Expected**: invisible error about invalid overstat link. No rows written.
 
 ---
 
@@ -75,7 +87,9 @@ Run the following and confirm neither Sheets nor DB gains a row in each case:
 
 ### Test 2.1 — Placement week (no DB write expected)
 
-Run `/sub-request` with `week-number: PlacementDay1`. Any otherwise valid inputs.
+```
+/sub-request team-name: Test Team Beta team-division: Division4 week-number: PlacementDay1 player-out: @Newton-test player-in: @Nefericus player-in-overstat-link: None player-in-division: Division4
+```
 
 **Expected**: Discord confirmation message is sent
 
@@ -85,27 +99,27 @@ Run `/sub-request` with `week-number: PlacementDay1`. Any otherwise valid inputs
 
 ### Test 2.2 — Regular week, team name resolves to known team
 
-Run `/sub-request` with:
-- `team-name`: name of an active team from Phase 1
-- `team-division`: any valid division
-- `week-number`: `Week1`
-- `player-out`: one of that team's Discord users
-- `player-in`: a different Discord user
-- `player-in-overstat-link`: valid link or `None`
-- `player-in-division`: same or lower division than the team
+```
+/sub-request team-name: Test Team Beta team-division: Division4 week-number: Week1 player-out: @Newton-test player-in: @Nefericus player-in-overstat-link: None player-in-division: Division4 additional-comments: Test sub 1
+```
 
 **Expected Discord response**: confirmation with sheet row info
 
 **Verify in Nhost**:
-- 1 row in `league_sub_requests` with correct `season_id`, `team_id` resolved (name matched an existing team), `player_out_id`, `player_in_id`, `requested_by_id`
+- 1 row in `league_sub_requests`
+- `team_id` is populated (resolved from `team_name = 'Test Team Beta'`)
+- `player_out_id`, `player_in_id`, and `requested_by_id` all set correctly
+- `week_number = 'Week1'`
 
-**Verify in Sheets**: row in sub sheet
+**Verify in Sheets**: row in the sub sheet
 
 ---
 
 ### Test 2.3 — Regular week, team name does not resolve
 
-Run `/sub-request` with `team-name: Unknown Team XYZ` (no matching team in the DB). All other inputs valid.
+```
+/sub-request team-name: Unknown Team XYZ team-division: Division4 week-number: Week1 player-out: @Newton-test player-in: @Nefericus player-in-overstat-link: None player-in-division: Division4 additional-comments: Test sub unresolved team
+```
 
 **Expected Discord response**: confirmation still succeeds
 
@@ -115,11 +129,11 @@ Run `/sub-request` with `team-name: Unknown Team XYZ` (no matching team in the D
 
 ### Test 2.4 — Rejection: player in higher division than team
 
-Run `/sub-request` where `player-in-division` is `Division1` and `team-division` is `Division4`.
+```
+/sub-request team-name: Test Team Beta team-division: Division4 week-number: Week1 player-out: @Newton-test player-in: @Nefericus player-in-overstat-link: None player-in-division: Division1
+```
 
-**Expected**: invisible error "player subbing in is in Division1 which is a higher division than the team's division"
-
-No rows written to Sheets or DB.
+**Expected**: invisible error "player subbing in is in Division1 which is a higher division than the team's division". No rows written.
 
 ---
 
@@ -127,27 +141,30 @@ No rows written to Sheets or DB.
 
 ### Test 3.1 — Happy path, player-out overstat omitted
 
-Run `/roster-change` with:
-- `team-name`: name of an active team from Phase 1
-- `team-division`: any valid division (not None)
-- `player-out`: one of the team's current Discord users
-- `player-in`: a new Discord user
-- `player-in-overstat-link`: valid link or `None`
-- Leave `player-out-overstat-link` blank
+```
+/roster-change team-name: Test Team Beta team-division: Division4 player-out: @Newton-test player-in: @Nefericus player-in-overstat-link: None additional-comments: Test roster change 1
+```
+
+*(Leave `player-out-overstat-link` blank)*
 
 **Expected Discord response**: confirmation
 
-**Verify in Nhost**: 1 row in `league_roster_changes` with correct fields and `team_id` resolved
+**Verify in Nhost**:
+- 1 row in `league_roster_changes`
+- `team_id` resolved from `team_name = 'Test Team Beta'`
+- `player_out_overstat_link = null`, `player_in_overstat_link = null`
 
 **Verify in Sheets**: row in the roster change sheet
 
 ---
 
-### Test 3.2 — Both players have no overstat
+### Test 3.2 — Player-out overstat explicitly set to None
 
-Run `/roster-change` with `player-in-overstat-link: None` and `player-out-overstat-link` left blank.
+```
+/roster-change team-name: Test Team Beta team-division: Division4 player-out: @Newton-test player-in: @Nefericus player-in-overstat-link: None player-out-overstat-link: None additional-comments: Test roster change 2
+```
 
-**Expected**: still succeeds
+**Expected**: succeeds
 
 **Verify in Nhost**: both `player_out_overstat_link` and `player_in_overstat_link` are `null`
 
@@ -157,20 +174,31 @@ Run `/roster-change` with `player-in-overstat-link: None` and `player-out-overst
 
 ### Test 4.1 — DB unreachable, Sheets still writes
 
-Stop local Nhost (`nhost down` or stop the relevant Docker containers). Run `/league-signup` with a new team.
+Stop local Nhost:
+```
+nhost down
+```
+
+Then run:
+```
+/league-signup team-name: Test Team Epsilon comp-experience: 1 day a week player1: @TheHeuman player2: @Newton-test player3: @Nefericus player1-rank: Gold player2-rank: Gold player3-rank: Gold player1-platform: pc player2-platform: pc player3-platform: pc player1-overstat-link: None player2-overstat-link: None player3-overstat-link: None player1-previous-vesa-division: None player2-previous-vesa-division: None player3-previous-vesa-division: None additional-comments: Shadow failure test
+```
 
 **Expected**:
 - Discord response succeeds (primary Sheets write completes normally)
 - An alert fires to the configured alert channel: `MirrorLeagueRepository: shadow writeSignup failed: ...`
-- Sheets gains the new row; DB does not
+- Sheets gains a new row for Test Team Epsilon; DB does not
 
-Restart Nhost before continuing.
+Restart Nhost before continuing:
+```
+nhost up
+```
 
 ---
 
 ## Phase 5 — Roster Map Read (getRosterDiscordIds)
 
-This DB read is used by the prio service to identify players currently on a league team. Run `/signup` (scrim signup) for a player whose Discord ID appears in one of the league teams created above, and verify that the prio or league-member logic treats them correctly.
+Run a scrim `/signup` command for a player whose Discord ID appears in one of the league teams above (@TheHeuman, @Newton-test, or @Nefericus) and verify that prio or league-member logic is applied correctly. This confirms `getRosterDiscordIds` is reading the shadow DB successfully.
 
 ---
 
@@ -178,8 +206,8 @@ This DB read is used by the prio service to identify players currently on a leag
 
 | Table | Expected rows |
 |---|---|
-| `league_teams` | 2 active + 1 dropped |
-| `league_team_players` | 6–9 rows (3 per active team) |
+| `league_teams` | 2 active (Beta, Gamma) + 1 dropped (Alpha) |
+| `league_team_players` | 6 rows (3 per active team) |
 | `league_sub_requests` | 2 rows (Tests 2.2 and 2.3) |
 | `league_roster_changes` | 2 rows (Tests 3.1 and 3.2) |
-| `players` | all Discord users from all commands upserted correctly |
+| `players` | @TheHeuman, @Newton-test, @Nefericus all upserted; @TheHeuman has `overstat_id = '111111'` from Test 1.2 |

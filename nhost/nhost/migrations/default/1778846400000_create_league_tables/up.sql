@@ -21,7 +21,6 @@ CREATE TABLE public.league_team_players (
   apex_rank            text    NOT NULL,
   platform             text    NOT NULL,
   prev_season_division text    NOT NULL,
-  overstat_link        text,
   elo                  integer
 );
 

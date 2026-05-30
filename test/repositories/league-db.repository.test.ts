@@ -189,7 +189,6 @@ describe("LeagueDbRepository", () => {
           apexRank: "Bronze",
           platform: "pc",
           prevSeasonDivision: "Division1",
-          overstatLink: "https://overstat.gg/player/111/overview",
           elo: null,
         },
         {
@@ -198,7 +197,6 @@ describe("LeagueDbRepository", () => {
           apexRank: "Silver",
           platform: "playstation",
           prevSeasonDivision: "Division2",
-          overstatLink: "https://overstat.gg/player/222/overview",
           elo: null,
         },
         {
@@ -207,7 +205,6 @@ describe("LeagueDbRepository", () => {
           apexRank: "Gold",
           platform: "xbox",
           prevSeasonDivision: "None",
-          overstatLink: null,
           elo: null,
         },
       ];

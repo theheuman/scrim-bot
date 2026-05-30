@@ -39,7 +39,6 @@ export interface LeagueTeamPlayerInsert {
   apexRank: string;
   platform: string;
   prevSeasonDivision: string;
-  overstatLink: string | null;
   elo: number | null;
 }
 
