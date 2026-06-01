@@ -1,0 +1,19 @@
+table:
+  name: league_roster_changes
+  schema: public
+object_relationships:
+  - name: player_in
+    using:
+      foreign_key_constraint_on: player_in_id
+  - name: player_out
+    using:
+      foreign_key_constraint_on: player_out_id
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_id
+  - name: season
+    using:
+      foreign_key_constraint_on: season_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id

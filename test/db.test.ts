@@ -1248,6 +1248,60 @@ describe("DB connection", () => {
     });
   });
 
+  describe("getLeagueTeamIdByName()", () => {
+    const seasonId = "season-uuid";
+    const teamName = "Test Team";
+    const expectedQuery = `
+      query {
+        league_teams(where: { _and: [{ season_id: { _eq: "${seasonId}" } }, { team_name: { _eq: "${teamName}" } }] }) {
+          id
+        }
+      }
+    `;
+
+    it("Should return the team id when exactly one team matches", async () => {
+      mockRequest = (query) => {
+        expect(query).toEqual(expectedQuery);
+        return Promise.resolve({
+          data: { league_teams: [{ id: "team-uuid" }] },
+        });
+      };
+
+      const result = await nhostDb.getLeagueTeamIdByName(seasonId, teamName);
+
+      expect(result).toBe("team-uuid");
+      expect.assertions(2);
+    });
+
+    it("Should return null when no teams match", async () => {
+      mockRequest = (query) => {
+        expect(query).toEqual(expectedQuery);
+        return Promise.resolve({ data: { league_teams: [] } });
+      };
+
+      const result = await nhostDb.getLeagueTeamIdByName(seasonId, teamName);
+
+      expect(result).toBeNull();
+      expect.assertions(2);
+    });
+
+    it("Should return null when multiple teams match the same name", async () => {
+      mockRequest = (query) => {
+        expect(query).toEqual(expectedQuery);
+        return Promise.resolve({
+          data: {
+            league_teams: [{ id: "team-uuid-1" }, { id: "team-uuid-2" }],
+          },
+        });
+      };
+
+      const result = await nhostDb.getLeagueTeamIdByName(seasonId, teamName);
+
+      expect(result).toBeNull();
+      expect.assertions(2);
+    });
+  });
+
   it("Should remove admin roles", async () => {
     mockRequest = (query) => {
       const expected = `

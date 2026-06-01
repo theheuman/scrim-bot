@@ -1,0 +1,10 @@
+table:
+  name: league_team_lobbies
+  schema: public
+object_relationships:
+  - name: lobby
+    using:
+      foreign_key_constraint_on: lobby_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id

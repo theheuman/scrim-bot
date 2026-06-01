@@ -5,9 +5,41 @@ object_relationships:
   - name: roster_change_sheet
     using:
       foreign_key_constraint_on: roster_change_sheet_id
+  - name: roster_sheet
+    using:
+      foreign_key_constraint_on: roster_sheet_id
   - name: signup_sheet
     using:
       foreign_key_constraint_on: signup_sheet_id
   - name: sub_sheet
     using:
       foreign_key_constraint_on: sub_sheet_id
+array_relationships:
+  - name: league_lobbies
+    using:
+      foreign_key_constraint_on:
+        column: season_id
+        table:
+          name: league_lobbies
+          schema: public
+  - name: league_roster_changes
+    using:
+      foreign_key_constraint_on:
+        column: season_id
+        table:
+          name: league_roster_changes
+          schema: public
+  - name: league_sub_requests
+    using:
+      foreign_key_constraint_on:
+        column: season_id
+        table:
+          name: league_sub_requests
+          schema: public
+  - name: league_teams
+    using:
+      foreign_key_constraint_on:
+        column: season_id
+        table:
+          name: league_teams
+          schema: public

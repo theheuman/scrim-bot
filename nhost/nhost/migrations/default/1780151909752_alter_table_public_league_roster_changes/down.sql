@@ -1,0 +1,4 @@
+-- Could not auto-generate a down migration
+-- Please write an appropriate down migration for the SQL below:
+-- ALTER TABLE public.league_roster_changes DROP COLUMN IF EXISTS player_out_overstat_link;
+-- ALTER TABLE public.league_roster_changes DROP COLUMN IF EXISTS player_in_overstat_link;

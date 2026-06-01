@@ -11,6 +11,9 @@ import { client } from "../Client";
 import { BanService } from "./ban";
 import { HuggingFaceService } from "./hugging-face";
 import { LeagueService } from "./league";
+import { LeagueSheetRepository } from "../repositories/league-sheet.repository";
+import { LeagueDbRepository } from "../repositories/league-db.repository";
+import { MirrorLeagueRepository } from "../repositories/mirror-league.repository";
 import { MmrService } from "./mmr";
 import { AlertService } from "./alert";
 
@@ -30,7 +33,14 @@ export const scrimService = new ScrimService(
   huggingFaceService,
   alertService,
 );
-export const leagueService = new LeagueService(nhostDb);
+const leagueSheetRepository = new LeagueSheetRepository(nhostDb);
+const leagueDbRepository = new LeagueDbRepository(nhostDb, overstatService);
+const mirrorLeagueRepository = new MirrorLeagueRepository(
+  leagueSheetRepository,
+  leagueDbRepository,
+  alertService,
+);
+export const leagueService = new LeagueService(mirrorLeagueRepository);
 export const prioService = new PrioService(
   nhostDb,
   leagueService,

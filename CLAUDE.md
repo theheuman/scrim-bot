@@ -40,8 +40,9 @@ test/
   db.test.ts      # DB layer tests
 
 docs/
-  adr/            # Architecture Decision Records (ADR-0001 through ADR-0010)
-  league-data-repository-refactor.md  # Planned refactor: decouple LeagueService from Sheets
+  adr/            # Architecture Decision Records (ADR-0001 through ADR-0011)
+  league-data-repository-refactor.md  # Planned refactor: decouple LeagueService from Sheets (complete)
+  league-staff-db-roadmap.md          # Roadmap for full staff management via Nhost (scoring, divisions, adjustments)
 ```
 
 ---
@@ -291,3 +292,4 @@ The `docs/adr/` directory contains detailed write-ups of the key design decision
 | ADR-0008 | `AlertService` routes operational errors to a Discord channel |
 | ADR-0009 | Commands deployed to separate scrim and league guilds via three command arrays |
 | ADR-0010 | Custom GraphQL query builder; known issue: strings not escaped (injection risk) |
+| ADR-0011 | Mirror league repository — Sheets primary, Nhost shadow, silent shadow failures |
