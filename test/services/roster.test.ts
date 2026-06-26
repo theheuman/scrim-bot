@@ -131,6 +131,36 @@ describe("Rosters", () => {
       );
       expect(dbSpy).toHaveBeenCalledWith("Fineapples", scrim.id);
     });
+    //  test for making sure the transaction log is being called after successful removal
+    it("Should log dropout transaction after successful removal", async () => {
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel,
+        scrimType: ScrimType.regular,
+      };
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([getFineapples()]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
+      const logSpy = jest.spyOn(dbMock, "addScrimTransactionLog");
+
+      await rosters.removeSignup(
+        zboy.member,
+        discordChannel,
+        getFineapples().teamName,
+      );
+
+      expect(logSpy).toHaveBeenCalledWith({
+        scrimId: scrim.id,
+        eventType: "dropout",
+        actingPlayerId: dbMock.insertPlayerIfNotExistsResponse.id,
+        teamName: "Fineapples",
+      });
+    });
 
     it("Should not remove a team because there is no scrim with that id", async () => {
       jest
@@ -247,6 +277,39 @@ describe("Rosters", () => {
       );
       expect(dbSpy).toHaveBeenCalledWith(scrim.id, "Fineapples", "Dude Cube");
     });
+    //  test for making sure the transaction log is being called after successful name change
+    it("Should log name change transaction after successful rename", async () => {
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel,
+        scrimType: ScrimType.regular,
+      };
+      const fineapples = getFineapples();
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([fineapples]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
+      const logSpy = jest.spyOn(dbMock, "addScrimTransactionLog");
+
+      await rosters.changeTeamName(
+        zboy.member,
+        discordChannel,
+        fineapples.teamName,
+        "Dude Cube",
+      );
+
+      expect(logSpy).toHaveBeenCalledWith({
+        scrimId: scrim.id,
+        eventType: "teamNameChange",
+        actingPlayerId: dbMock.insertPlayerIfNotExistsResponse.id,
+        teamName: "Dude Cube",
+        oldTeamName: "Fineapples",
+      });
+    });
 
     it("Should not change team name because team name already taken", async () => {
       const scrim: Scrim = {
@@ -328,6 +391,50 @@ describe("Rosters", () => {
         theheuman.player.id,
         zboy.player.id,
       );
+    });
+    // test for making sure the transaction log is being called after successful replacement
+    it("Should log sub transaction after successful sub", async () => {
+      const scrim: Scrim = {
+        id: "231478",
+        dateTime: new Date("2024-10-14T20:10:35.706+00:00"),
+        active: true,
+        discordChannel,
+        scrimType: ScrimType.regular,
+      };
+      const dudeCube: ScrimSignup = {
+        teamName: "Dude Cube",
+        players: [revy, theheuman.player, cTreazy],
+        signupId: "214",
+        signupPlayer: theheuman.player,
+        date: new Date(),
+      };
+      jest
+        .spyOn(signupServiceMock, "getRawSignups")
+        .mockReturnValue(Promise.resolve([dudeCube]));
+      jest
+        .spyOn(scrimServiceMock, "getScrim")
+        .mockReturnValue(Promise.resolve(scrim));
+      jest
+        .spyOn(dbMock, "insertPlayerIfNotExists")
+        .mockReturnValue(Promise.resolve(zboy.player));
+      const logSpy = jest.spyOn(dbMock, "addScrimTransactionLog");
+
+      await rosters.replaceTeammate(
+        theheuman.member,
+        discordChannel,
+        dudeCube.teamName,
+        theheuman.user,
+        zboy.user,
+      );
+
+      expect(logSpy).toHaveBeenCalledWith({
+        scrimId: scrim.id,
+        eventType: "sub",
+        actingPlayerId: zboy.player.id,
+        teamName: dudeCube.teamName,
+        oldPlayerId: theheuman.player.id,
+        newPlayerId: zboy.player.id,
+      });
     });
 
     it("Should not replace teammate because player already on another team", async () => {

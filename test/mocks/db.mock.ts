@@ -200,4 +200,18 @@ export class DbMock extends DB {
   > {
     return Promise.resolve([]);
   }
+  override async addScrimTransactionLog(entry: {
+    scrimId: string;
+    eventType: "signup" | "dropout" | "sub" | "teamNameChange";
+    actingPlayerId: string;
+    teamName: string;
+    playerOneId?: string;
+    playerTwoId?: string;
+    playerThreeId?: string;
+    oldPlayerId?: string;
+    newPlayerId?: string;
+    oldTeamName?: string;
+  }): Promise<void> {
+    return Promise.resolve();
+  }
 }

@@ -737,4 +737,32 @@ export abstract class DB {
         }
     `;
   }
+
+  async addScrimTransactionLog(entry: {
+    scrimId: string;
+    eventType: "signup" | "dropout" | "sub" | "teamNameChange";
+    actingPlayerId: string;
+    teamName: string;
+    playerOneId?: string;
+    playerTwoId?: string;
+    playerThreeId?: string;
+    oldPlayerId?: string;
+    newPlayerId?: string;
+    oldTeamName?: string;
+  }): Promise<void> {
+    await this.post(DbTable.scrimTransactionLog, [
+      {
+        scrim_id: entry.scrimId,
+        event_type: entry.eventType,
+        acting_player_id: entry.actingPlayerId,
+        team_name: entry.teamName,
+        player_one_id: entry.playerOneId ?? null,
+        player_two_id: entry.playerTwoId ?? null,
+        player_three_id: entry.playerThreeId ?? null,
+        old_player_id: entry.oldPlayerId ?? null,
+        new_player_id: entry.newPlayerId ?? null,
+        old_team_name: entry.oldTeamName ?? null,
+      },
+    ]);
+  }
 }

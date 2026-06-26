@@ -1,0 +1,3 @@
+table:
+  name: scrim_transaction_log
+  schema: public

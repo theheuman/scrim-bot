@@ -194,6 +194,28 @@ describe("Signups", () => {
       ]);
       expect.assertions(8);
     });
+    //   test for making sure the transaction log is being called after successful signup
+    it("Should log signup transaction after successful signup", async () => {
+      jest.spyOn(dbMock, "addScrimSignup").mockResolvedValue("signupId");
+      const logSpy = jest.spyOn(dbMock, "addScrimTransactionLog");
+
+      await signups.addTeam(
+        correctDiscordChannelId,
+        "testingteam",
+        theheuman as unknown as GuildMember,
+        [theheuman, zboy, supreme],
+      );
+
+      expect(logSpy).toHaveBeenCalledWith({
+        scrimId: correctScrimId,
+        eventType: "signup",
+        actingPlayerId: "111",
+        teamName: "testingteam",
+        playerOneId: "111",
+        playerTwoId: "444",
+        playerThreeId: "777",
+      });
+    });
 
     it("Should not add a team because there is no scrim for that channel", async () => {
       jest

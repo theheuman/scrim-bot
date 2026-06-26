@@ -17,6 +17,7 @@
 - "!include public_scrim_bans.yaml"
 - "!include public_scrim_player_stats.yaml"
 - "!include public_scrim_signups.yaml"
+- "!include public_scrim_transaction_log.yaml"
 - "!include public_scrims.yaml"
 - "!include public_static_key_value.yaml"
 - "!include storage_buckets.yaml"

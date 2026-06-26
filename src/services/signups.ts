@@ -78,6 +78,21 @@ export class SignupService {
       insertedPlayers[3].id,
       signupDate,
     );
+    try {
+      await this.db.addScrimTransactionLog({
+        scrimId: scrim.id,
+        eventType: "signup",
+        actingPlayerId: insertedPlayers[0].id,
+        teamName,
+        playerOneId: insertedPlayers[1].id,
+        playerTwoId: insertedPlayers[2].id,
+        playerThreeId: insertedPlayers[3].id,
+      });
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to log signup transaction for scrim ${scrim.id}: ${e}`,
+      );
+    }
     const scrimSignup: ScrimSignup = {
       teamName: teamName,
       players: insertedPlayers.slice(1),

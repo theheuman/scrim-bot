@@ -65,6 +65,24 @@ export class RosterService {
       oldPlayerId,
       newPlayer.id,
     );
+    try {
+      const actingPlayer = await this.db.insertPlayerIfNotExists(
+        memberUsingCommand.id,
+        memberUsingCommand.displayName,
+      );
+      await this.db.addScrimTransactionLog({
+        scrimId: scrim.id,
+        eventType: "sub",
+        actingPlayerId: actingPlayer.id,
+        teamName,
+        oldPlayerId,
+        newPlayerId: newPlayer.id,
+      });
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to log sub transaction for scrim ${scrim.id}: ${e}`,
+      );
+    }
     teamToBeChanged.players[oldPlayerIndex] = {
       id: newPlayer.id,
       discordId: newUser.id as string,
@@ -106,6 +124,22 @@ export class RosterService {
       teamName,
     );
     await this.db.removeScrimSignup(teamToBeChanged.teamName, scrim.id);
+    try {
+      const actingPlayer = await this.db.insertPlayerIfNotExists(
+        memberUsingCommand.id,
+        memberUsingCommand.displayName,
+      );
+      await this.db.addScrimTransactionLog({
+        scrimId: scrim.id,
+        eventType: "dropout",
+        actingPlayerId: actingPlayer.id,
+        teamName: teamToBeChanged.teamName,
+      });
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to log dropout transaction for scrim ${scrim.id}: ${e}`,
+      );
+    }
     signups.splice(signups.indexOf(teamToBeChanged), 1);
     this.updateScrimSignupCount(discordChannel);
   }
@@ -131,6 +165,23 @@ export class RosterService {
       teamToBeChanged.teamName,
       newTeamName,
     );
+    try {
+      const actingPlayer = await this.db.insertPlayerIfNotExists(
+        memberUsingCommand.id,
+        memberUsingCommand.displayName,
+      );
+      await this.db.addScrimTransactionLog({
+        scrimId: scrim.id,
+        eventType: "teamNameChange",
+        actingPlayerId: actingPlayer.id,
+        teamName: newTeamName,
+        oldTeamName: teamToBeChanged.teamName,
+      });
+    } catch (e) {
+      await this.alertService.warn(
+        `Failed to log name change transaction for scrim ${scrim.id}: ${e}`,
+      );
+    }
     teamToBeChanged.teamName = newTeamName;
   }
 
