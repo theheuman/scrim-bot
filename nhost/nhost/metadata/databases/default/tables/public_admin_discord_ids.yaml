@@ -1,0 +1,3 @@
+table:
+  name: admin_discord_ids
+  schema: public

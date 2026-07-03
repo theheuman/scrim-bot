@@ -65,6 +65,13 @@ rating = 'g'
 [auth.session.accessToken]
 expiresIn = 900
 
+# Custom JWT claim consumed by VESAWeb to gate the staff admin dashboard.
+# Resolves from auth.users -> public.admin_users (adminMembership relationship).
+# Null for non-admins; the web reads it via nhost.auth.getHasuraClaim('is-admin').
+[[auth.session.accessToken.customClaims]]
+key = 'is-admin'
+value = 'adminMembership.is_admin'
+
 [auth.session.refreshToken]
 expiresIn = 2592000
 
@@ -95,7 +102,9 @@ enabled = false
 enabled = false
 
 [auth.method.oauth.discord]
-enabled = false
+enabled = true
+clientId = '{{ secrets.DISCORD_CLIENT_ID }}'
+clientSecret = '{{ secrets.DISCORD_CLIENT_SECRET }}'
 
 [auth.method.oauth.facebook]
 enabled = false

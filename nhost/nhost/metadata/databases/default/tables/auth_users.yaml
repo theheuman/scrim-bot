@@ -91,6 +91,13 @@ object_relationships:
   - name: defaultRoleByRole
     using:
       foreign_key_constraint_on: default_role
+  - name: adminMembership
+    using:
+      foreign_key_constraint_on:
+        column: user_id
+        table:
+          name: admin_users
+          schema: public
 array_relationships:
   - name: refreshTokens
     using:
