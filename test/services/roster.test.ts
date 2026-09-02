@@ -608,7 +608,7 @@ describe("Rosters", () => {
       };
 
       await expect(causeException).rejects.toThrow(
-        "It is past the roster lock time. Rosters are locked, please create a ticket if you need to sub",
+        "It is past the roster lock time. Rosters are locked, please use #admin-requests and ping your host to report the substitution",
       );
 
       expect(dbSpy).toHaveBeenCalledTimes(0);
