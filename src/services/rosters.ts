@@ -89,7 +89,7 @@ export class RosterService {
     );
     if (new Date() > rosterLockDate && !isAdmin) {
       throw new Error(
-        "It is past the roster lock time. Rosters are locked, please use #admin-requests and ping your host to report the substitution",
+        "It is past the roster lock time. Rosters are locked, please use https://discord.com/channels/1043350338574495764/1139220442046005298 and ping your host to report the substitution",
       );
     }
     const ban = await this.banService.teamHasBan(scrim, [newPlayer]);
