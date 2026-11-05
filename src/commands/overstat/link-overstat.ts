@@ -38,21 +38,18 @@ export class LinkOverstatCommand extends MemberCommand {
       : false;
 
     try {
-      console.log("Trying to assign someone else", tryingToAssignSomeoneElse);
       if (
         tryingToAssignSomeoneElse &&
         !(await this.authService.memberIsAdmin(
           interaction.member as GuildMember,
         ))
       ) {
-        console.log("Killing interaction");
         await interaction.editReply(
           "Admin permissions not found for this user. You may only run this command for yourself.",
         );
         return;
       }
 
-      console.log("Interaction continuing");
       const player = otherPlayer === null ? commandUser : otherPlayer;
 
       await this.overstatService.addPlayerOverstatLink(player, link);
