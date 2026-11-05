@@ -23,13 +23,17 @@ export class GetOverstatCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    const overstatUser = interaction.user;
-    const otherPlayer = interaction.options.getUser("player", false);
+    const commandUser = interaction.user;
+    const otherPlayer = interaction.options.getUser("player");
     await interaction.invisibleReply("Fetched all input, working on request");
+
+    const tryingToGetSomeoneElse = otherPlayer?.id
+      ? otherPlayer.id !== commandUser.id
+      : false;
 
     try {
       if (
-        otherPlayer !== null &&
+        tryingToGetSomeoneElse &&
         !(await this.authService.memberIsAdmin(
           interaction.member as GuildMember,
         ))
@@ -40,7 +44,7 @@ export class GetOverstatCommand extends MemberCommand {
         return;
       }
 
-      const player = otherPlayer === null ? overstatUser : otherPlayer;
+      const player = otherPlayer === null ? commandUser : otherPlayer;
 
       const link = await this.overstatService.getPlayerOverstat(player);
       await interaction.editReply(`<@${player.id}>'s overstat is ${link}`);

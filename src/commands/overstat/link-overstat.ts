@@ -28,17 +28,18 @@ export class LinkOverstatCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    const overstatUser = interaction.user;
+    const commandUser = interaction.user;
     const link = interaction.options.getString(this.inputNames.overstat, true);
-    const otherPlayer = interaction.options.getUser(
-      this.inputNames.player,
-      false,
-    );
+    const otherPlayer = interaction.options.getUser(this.inputNames.player);
     await interaction.invisibleReply("Fetched all input, working on request");
+
+    const tryingToAssignSomeoneElse = otherPlayer?.id
+      ? otherPlayer.id !== commandUser.id
+      : false;
 
     try {
       if (
-        otherPlayer !== null &&
+        tryingToAssignSomeoneElse &&
         !(await this.authService.memberIsAdmin(
           interaction.member as GuildMember,
         ))
@@ -49,7 +50,7 @@ export class LinkOverstatCommand extends MemberCommand {
         return;
       }
 
-      const player = otherPlayer === null ? overstatUser : otherPlayer;
+      const player = otherPlayer === null ? commandUser : otherPlayer;
 
       await this.overstatService.addPlayerOverstatLink(player, link);
       await interaction.deleteReply();
