@@ -28,28 +28,32 @@ export class LinkOverstatCommand extends MemberCommand {
   }
 
   async run(interaction: CustomInteraction) {
-    const overstatUser = interaction.user;
+    const commandUser = interaction.user;
     const link = interaction.options.getString(this.inputNames.overstat, true);
-    const otherPlayer = interaction.options.getUser(
-      this.inputNames.player,
-      false,
-    );
+    const otherPlayer = interaction.options.getUser(this.inputNames.player);
     await interaction.invisibleReply("Fetched all input, working on request");
 
+    const tryingToAssignSomeoneElse = otherPlayer?.id
+      ? otherPlayer.id !== commandUser.id
+      : false;
+
     try {
+      console.log("Trying to assign someone else", tryingToAssignSomeoneElse);
       if (
-        otherPlayer !== null &&
+        tryingToAssignSomeoneElse &&
         !(await this.authService.memberIsAdmin(
           interaction.member as GuildMember,
         ))
       ) {
+        console.log("Killing interaction");
         await interaction.editReply(
           "Admin permissions not found for this user. You may only run this command for yourself.",
         );
         return;
       }
 
-      const player = otherPlayer === null ? overstatUser : otherPlayer;
+      console.log("Interaction continuing");
+      const player = otherPlayer === null ? commandUser : otherPlayer;
 
       await this.overstatService.addPlayerOverstatLink(player, link);
       await interaction.deleteReply();

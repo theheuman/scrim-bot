@@ -84,6 +84,37 @@ describe("Link overstat", () => {
     );
   });
 
+  it("Should add overstat id to normal member trying to assign themselves", async () => {
+    const selfInteraction = {
+      options: {
+        getUser: () => ({
+          id: "discord command user id",
+          displayName: "display name",
+        }),
+        getString: () => "overstat link",
+      },
+      user: { id: "discord command user id" },
+      member: { id: "discord command user id" },
+      invisibleReply: jest.fn(),
+      editReply: jest.fn(),
+      followUp: jest.fn(),
+      deleteReply: jest.fn(),
+    } as unknown as CustomInteraction;
+
+    followUpSpy = jest.spyOn(selfInteraction, "followUp");
+    followUpSpy.mockClear();
+
+    linkOverstatSpy.mockReturnValueOnce(Promise.resolve("db id"));
+    await command.run(selfInteraction);
+    expect(linkOverstatSpy).toHaveBeenCalledWith(
+      { displayName: "display name", id: "discord command user id" },
+      "overstat link",
+    );
+    expect(followUpSpy).toHaveBeenCalledWith(
+      "<@discord command user id>'s overstat set to overstat link",
+    );
+  });
+
   it("Should add overstat id to a member when admin using command", async () => {
     const adminInteraction = {
       options: {

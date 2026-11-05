@@ -58,10 +58,37 @@ describe("Get overstat", () => {
       );
   });
 
-  it("Should get overstat id to normal member", async () => {
+  it("Should get overstat id for a normal member", async () => {
     getOverstatSpy.mockReturnValueOnce(Promise.resolve("overstat link"));
     await command.run(basicInteraction);
     expect(getOverstatSpy).toHaveBeenCalledWith({
+      id: "discord command user id",
+    });
+    expect(editReplySpy).toHaveBeenCalledWith(
+      "<@discord command user id>'s overstat is overstat link",
+    );
+  });
+
+  it("Should get overstat for normal member if the user they send is themselves", async () => {
+    const selfInteraction = {
+      options: {
+        getUser: () => ({
+          id: "discord command user id",
+          displayName: "display name",
+        }),
+      },
+      user: { id: "discord command user id" },
+      member: { id: "discord command user id" },
+      invisibleReply: jest.fn(),
+      editReply: jest.fn(),
+    } as unknown as CustomInteraction;
+
+    editReplySpy = jest.spyOn(selfInteraction, "editReply");
+    editReplySpy.mockClear();
+    getOverstatSpy.mockReturnValueOnce(Promise.resolve("overstat link"));
+    await command.run(selfInteraction);
+    expect(getOverstatSpy).toHaveBeenCalledWith({
+      displayName: "display name",
       id: "discord command user id",
     });
     expect(editReplySpy).toHaveBeenCalledWith(
